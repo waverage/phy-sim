@@ -26,6 +26,16 @@ make check
 Sionna runs on CPU on Apple Silicon (the Metal backend fails inside the
 LDPC encoder as of Sionna 2.2.0). Long sweeps belong on a CUDA machine.
 
+## Setup (Windows, WSL2 Ubuntu 24.04)
+
+As in `HANDOFF.md`, with two differences found on the first install:
+Ubuntu's Verilator (5.020) is older than cocotb 2 accepts (5.036), so build
+the `stable` branch from source into `/usr/local`; and install the CUDA
+build of torch (`--index-url https://download.pytorch.org/whl/cu126`)
+before `requirements.txt`. Keep the clone on the Linux filesystem
+(`~/phy-sim`), not under `/mnt/<drive>`. Experiments pick `cuda:0`
+automatically when it exists (`harness.sweep.default_device`).
+
 ## Workflow
 
 1. A hypothesis is a script in `experiments/`. Copy the closest one, change the
@@ -38,6 +48,16 @@ LDPC encoder as of Sionna 2.2.0). Long sweeps belong on a CUDA machine.
    reference curve.
 
 `harness/waveform.py` is the single source of the numerology and MCS table.
-`harness/chain.py` holds the Sionna chains. `harness/sweep.py` is the Monte
-Carlo runner: each SNR point runs until 100 frame errors or the frame cap,
-and a sweep stops once a point shows zero errors at the cap.
+`harness/chain.py` holds the Sionna chains: `AwgnLink` (per-RE, M1) and
+`OfdmLink` (time-domain OFDM with Kronecker pilots, LS / genie-LMMSE /
+perfect channel estimation, an optional TDL fading channel, and impairment
+hooks). `harness/impairments.py` has the RF models as plain torch functions
+`fn(x, fs)`: CFO, sampling clock offset, Wiener phase noise, Rapp PA, IQ
+imbalance, AGC plus ADC, a Wi-Fi burst, and an `oversampled()` wrapper for
+nonlinearities. `harness/sweep.py` is the Monte Carlo runner: each SNR point
+runs until 100 frame errors or the frame cap, and a sweep stops once a
+point shows zero errors at the cap.
+
+Experiments from e002 on take `--profile quick|reference` (`make e002
+PROFILE=quick`). Quick runs write `results/<name>.quick.json`, which is not
+committed; rank hypotheses with them, then commit the reference run.

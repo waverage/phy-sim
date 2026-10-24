@@ -8,3 +8,5 @@ rtl/**/results.xml
 modem/zig-out/
 modem/.zig-cache/
 vectors/*.bin
+results/*.quick.json
+results/*.quick.log

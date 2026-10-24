@@ -100,3 +100,30 @@ def write_result(name: str, payload: dict) -> pathlib.Path:
 def sweep_kwargs(profile: str = "reference", seed: int = 1) -> dict:
     p = PROFILES[profile]
     return dict(batch=p["batch"], min_frame_errors=p["min_frame_errors"], max_frames=p["max_frames"], seed=seed)
+
+
+def default_device() -> str:
+    """The first CUDA GPU if there is one; Sionna accepts only cpu and cuda:N."""
+    return "cuda:0" if torch.cuda.is_available() else "cpu"
+
+
+def run_curve(link, start_db: float, span_db: float, profile: str = "reference", seed: int = 1,
+              log=print) -> dict:
+    """Sweep one link from start_db upward and summarise it the way every
+    experiment's JSON does."""
+    pts = run_sweep(link, snr_grid(start_db, span_db, profile), **sweep_kwargs(profile, seed), log=log)
+    return {"points": pts, "esno_db_at_fer10": snr_at_fer(pts, 0.10), "esno_db_at_fer1": snr_at_fer(pts, 0.01)}
+
+
+def reference_esno(mcs_name: str, key: str = "esno_db_at_fer10") -> float:
+    """A point of the committed e001 AWGN baseline, to start sweeps near the knee."""
+    ref = json.loads((RESULTS_DIR / "e001_awgn_baseline.json").read_text())
+    return ref["curves"][mcs_name][key]
+
+
+def profile_arg(default: str = "quick") -> str:
+    """`--profile quick|reference` from the command line."""
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--profile", choices=sorted(PROFILES), default=default)
+    return ap.parse_args().profile
