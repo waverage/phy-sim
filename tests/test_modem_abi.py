@@ -1,11 +1,13 @@
 """M0 gate: the Zig library loads through ctypes and its exports behave."""
 import ctypes
 import pathlib
+import sys
 
 import numpy as np
 import pytest
 
-LIB = pathlib.Path(__file__).resolve().parents[1] / "modem" / "zig-out" / "lib" / "libnestuaphy.dylib"
+LIB = (pathlib.Path(__file__).resolve().parents[1] / "modem" / "zig-out" / "lib"
+       / ("libnestuaphy.dylib" if sys.platform == "darwin" else "libnestuaphy.so"))
 
 
 @pytest.fixture(scope="module")

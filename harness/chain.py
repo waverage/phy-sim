@@ -19,18 +19,20 @@ class AwgnLink:
     def __init__(self, num: Numerology, mcs: MCS, device: str = "cpu", num_iter: int = 20):
         self.num, self.mcs, self.device = num, mcs, device
         self.plan = plan_codewords(num, mcs)
-        self.source = BinarySource()
-        self.encoder = LDPC5GEncoder(self.plan.k, self.plan.n).to(device)
-        self.decoder = LDPC5GDecoder(self.encoder, num_iter=num_iter, hard_out=True).to(device)
-        self.mapper = Mapper(mcs.constellation, mcs.bits_per_symbol).to(device)
-        self.demapper = Demapper("app", mcs.constellation, mcs.bits_per_symbol).to(device)
-        self.awgn = AWGN().to(device)
+        # device= at construction, not .to() afterwards: .to() leaves the LDPC
+        # index tables on Sionna's default device (cuda:0 when a GPU exists)
+        self.source = BinarySource(device=device)
+        self.encoder = LDPC5GEncoder(self.plan.k, self.plan.n, device=device)
+        self.decoder = LDPC5GDecoder(self.encoder, num_iter=num_iter, hard_out=True, device=device)
+        self.mapper = Mapper(mcs.constellation, mcs.bits_per_symbol, device=device)
+        self.demapper = Demapper("app", mcs.constellation, mcs.bits_per_symbol, device=device)
+        self.awgn = AWGN(device=device)
 
     def run(self, batch: int, esno_db: float) -> dict:
         """One batch of `batch` frames at Es/N0 = esno_db (per resource element)."""
         p = self.plan
         no = torch.tensor(10 ** (-esno_db / 10), device=self.device)
-        b = self.source([batch * p.num_codewords, p.k]).to(self.device)
+        b = self.source([batch * p.num_codewords, p.k])
         c = self.encoder(b)
         x = self.mapper(c)
         y = self.awgn(x, no)
