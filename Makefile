@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem
+.PHONY: check test-harness test-modem test-rtl modem e001
 
 check: test-harness test-modem test-rtl
 
@@ -20,3 +20,7 @@ test-rtl:
 	rtl/run.sh reg_passthrough
 	rtl/run.sh reg_passthrough SIM=icarus clean
 	rtl/run.sh reg_passthrough SIM=icarus
+
+# Experiments. Each writes results/<name>.json (committed) and a PNG (not).
+e001:
+	$(PY) -I experiments/e001_awgn_baseline.py

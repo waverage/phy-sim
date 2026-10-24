@@ -25,3 +25,19 @@ make check
 
 Sionna runs on CPU on Apple Silicon (the Metal backend fails inside the
 LDPC encoder as of Sionna 2.2.0). Long sweeps belong on a CUDA machine.
+
+## Workflow
+
+1. A hypothesis is a script in `experiments/`. Copy the closest one, change the
+   waveform or MCS table it imports, run it with `make <name>` or
+   `.venv/bin/python -I experiments/<name>.py`.
+2. It writes `results/<name>.json` (parameters, git revision, every SNR point
+   with frame and error counts, the Es/N0 at 10 % and 1 % FER) and a PNG.
+3. Commit the JSON. `make check` includes the gates in `tests/`, which read the
+   committed JSON and fail on implausible numbers or on drift from the
+   reference curve.
+
+`harness/waveform.py` is the single source of the numerology and MCS table.
+`harness/chain.py` holds the Sionna chains. `harness/sweep.py` is the Monte
+Carlo runner: each SNR point runs until 100 frame errors or the frame cap,
+and a sweep stops once a point shows zero errors at the cap.
