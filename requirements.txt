@@ -1,0 +1,6 @@
+sionna==2.2.0
+torch>=2.9
+numpy>=2.0
+pytest>=8
+cocotb>=2.0
+matplotlib>=3.8
