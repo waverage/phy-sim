@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M3 done, M4 next
+## State: M0 to M4 done, M5 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -21,7 +21,8 @@ and `make check` gates everything.
 | M1 AWGN baseline curves | done, bdc1d88 | `results/e001_awgn_baseline.json`, `tests/test_e001_reference.py` |
 | M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision in the hardware plan ("M2 result", then the e006-e010 follow-ups) | `results/e002..e010*.json`, `tests/test_m2_ofdm.py`, `tests/test_e002_reference.py`, `tests/test_m2_impairments_reference.py`, `tests/test_e010_reference.py` |
 | M3 Zig modem, floating point first | done 2026-10-25 | `modem/src/*.zig`, `harness/modem.py`, `results/e011_zig_overlay.json`, `tests/test_m3_modem.py`, `tests/test_e011_reference.py` |
-| M4 fixed point and NumPy twins | not started | |
+| M4 fixed point and NumPy twins | done 2026-10-25 | `modem/src/fx*.zig`, `harness/twin.py`, `vectors/`, `results/e012_decoder_fixed.json`, `results/e013_fixed_point.json`, `tests/test_m4_twins.py`, `tests/test_m4_vectors.py`, `tests/test_e012_reference.py`, `tests/test_e013_reference.py` |
+| M5 synchronisation under stress | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -83,22 +84,83 @@ The whole TX and RX chain in Zig, f32, behind a C ABI:
   fixed filter designed for worst-case statistics (and separable, for
   the FPGA); that is M4 work.
 
-## Next: M4, and the synchroniser
+## What M4 decided and built (README "The fixed-point modem")
 
-M4 (plan): every block in integer arithmetic with chosen widths, a NumPy
-twin per block, golden vectors in `vectors/`, bit-exact tests, and
-fixed-point loss under 0.3 dB against the e011 curves. Decide first:
-- the estimator filter structure (separable time and frequency, fixed
-  taps per SNR range);
-- the pilot sequence and interleaver as generated tables, not Python RNG
-  output;
-- the LLR width and the decoder's message width (offset min-sum is the
-  usual hardware choice; measure its loss against boxplus-phi with
-  `ldpc_decode` first).
+The product modem in integer arithmetic (`modem/src/fxmodem.zig`), a
+float twin of the same algorithm, a bit-exact NumPy twin of every block
+(`harness/twin.py`), and golden vectors (`vectors/`, `make vectors`).
+Gate met: e013 decodes every frame with three receivers (genie f32,
+product float, product fixed). The fixed-point loss is +0.07 dB at worst
+on 17 curves (tolerance 0.3), and under +0.05 on most.
 
-Synchronisation (preamble, coarse CFO, timing) is still genie: the Zig
-receiver takes `l_min` and assumes CFO under ~300 Hz. Worth an experiment
-before M4 freezes the frame.
+Decisions, each from a measurement:
+- **Decoder (e012):** layered offset min-sum with 6-bit channel LLRs,
+  6-bit messages, an 8-bit APP, 0.25 nat per LSB, offset 2 LSB and 20
+  iterations with early stop. It is 0.12 to 0.23 dB *better* than Sionna's
+  flooding sum-product, because layering converges faster. Max-log costs
+  0.00 dB. A 7-bit APP floors at 1e-3, 5-bit LLRs lose 0.4 dB, and
+  10 iterations lose 0.1 to 0.4 dB.
+- **Estimator (`harness/design.py`):** separable and fixed, one tap set
+  per 3 dB of SNR.
+  - Frequency: 32 taps over an exponential 300 ns PDP to the CP.
+  - Time: Jakes weights at 1000 Hz for two pilot symbols, 1500 Hz for
+    three.
+  - Both are constrained to unit DC gain. A plain Wiener filter designed
+    for more Doppler than the channel has scales the estimate by 1.17 mid
+    frame and costs 64-QAM 1 to 3 dB.
+- **Phase tracker:** removes half the fitted ramp for two pilot symbols,
+  and none for three. It cannot tell residual CFO from the line-of-sight
+  Doppler (Sionna's TDL-D puts it at 0.7 fd). Removing all of it shifts
+  the diffuse paths' spectrum beyond what the pilots interpolate: 64-QAM
+  with 100 Hz CFO lost 3.3 dB at full gain and 0.1 dB at half.
+- **LLR scale:** a / (N0 LSB) per frame, capped at 8 / (a P_agc).
+  Uncapped, every LLR saturates at high SNR, and 64-QAM on TDL-C floored
+  above 1 % FER.
+- **Tables:** pilots from the 38.211 Gold sequence (c_init 0x4E5354),
+  and the interleaver from a xorshift32 Fisher-Yates shuffle. The
+  interleaver is a ROM in hardware: 14,328 x 14 bits for 64-QAM.
+- **Widths:** 12-bit ADC and DAC, 16-bit FFT data with Q16 twiddles,
+  16-bit channel estimates, Q15 frequency taps, Q14 time weights,
+  16-bit CORDIC angles.
+
+What the product algorithm costs against the genie (float - genie, e013):
+- **Up to 16-QAM, and the tracked and three-pilot cases:** 0.3 dB or less.
+- **AWGN:** 0.1 to 0.2 dB, because the genie knows the channel is static.
+- **64-QAM in fading:** 0.6 to 1.0 dB, the most on TDL-C 300 ns with no
+  line of sight. An estimator that chooses its design from the measured
+  channel (pilot correlation for Doppler, delay spread) would recover part
+  of it.
+
+Throughput of the fixed receiver: 9,000 to 24,000 frames/s on the 5900X.
+
+## Next: M5, synchronisation under stress
+
+Synchronisation is still genie: the receiver takes `l_min` and starts with
+the residual CFO small. M5 is the preamble, coarse CFO and timing,
+tested at full CFO, Doppler and the lowest-MCS SNR (sync success above
+99 %). Carry over:
+- **The AFC will also lock to the line-of-sight Doppler,** just as the
+  tracker does. Check the tracker gain with the real sync in the loop.
+- **The adaptive estimator design** (Doppler class per frame) is the
+  cheapest remaining dB on 64-QAM.
+
+## Gotchas found in M4
+
+- **Round half up has a bias** that adds up coherently in an FFT (14 LSB
+  at DC, 8 at bin 1). The FFT rounds half to even; everything else rounds
+  half up, where products have random fractions.
+- **Min-sum LLR scaling is free but not irrelevant.** The scale must keep
+  typical LLRs inside the 6-bit range, and the offset is in LSBs, so too
+  small a scale (a cap of 2 or 4) breaks the float decoder too.
+- **Fading curves are shallow at 1 % FER.** With 100 frame errors per point
+  the 1 % crossing moves by about ±0.3 dB, even with common samples, so
+  the receiver-vs-genie numbers are that noisy. The fixed-vs-float gate is
+  not, because those two receivers fail on the same frames.
+- **Sionna's TDL draws are not fully pinned by `torch.manual_seed`.** Tests
+  that depend on the channel realisation need statistical margins.
+- **The Bash tool's shell breaks on apostrophes, even inside a quoted
+  heredoc.** Write files with the editor tools, or keep scripts free of
+  them.
 
 ## Gotchas found in M3
 

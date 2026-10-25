@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011
+.PHONY: check test-harness test-modem test-rtl modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013
 
 check: test-harness test-modem test-rtl
 
@@ -51,3 +51,12 @@ e010:
 
 e011: modem
 	$(PY) -I experiments/e011_zig_overlay.py --profile $(PROFILE)
+e012: modem
+	$(PY) -I experiments/e012_decoder_fixed.py --profile $(PROFILE)
+e013: modem
+	$(PY) -I experiments/e013_fixed_point.py --profile $(PROFILE)
+
+# Golden vectors for the RTL (committed); regenerate only for an intended
+# change to a fixed-point block.
+vectors: modem
+	$(PY) -I tools/make_vectors.py

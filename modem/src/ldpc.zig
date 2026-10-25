@@ -267,7 +267,7 @@ pub const Code = struct {
 };
 
 /// acc[i] ^= x[(i + s) mod z]
-fn xorShifted(acc: []u8, x: []const u8, s: u32) void {
+pub fn xorShifted(acc: []u8, x: []const u8, s: u32) void {
     const z = acc.len;
     for (0..z - s) |i| acc[i] ^= x[i + s];
     for (z - s..z) |i| acc[i] ^= x[i + s - z];

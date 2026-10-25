@@ -92,3 +92,39 @@ blocks (`ldpc_encode`, `ldpc_decode`, `qam_map`, `qam_demap`) are exported
 for tests. On the 5900X the receiver decodes about 1,600 frames/s
 (16qam-1/2, 24 threads, 20 iterations at the waterfall; early stop makes it
 faster above).
+
+## The fixed-point modem (L2, M4)
+
+`src/fxmodem.zig` is the product modem: the whole frame in integer
+arithmetic with chosen widths, the golden model for the RTL.
+`FxModem(true)` is fixed point; `FxModem(false)` is the same algorithm in
+floating point (no rounding or saturation), which the fixed-point loss is
+measured against. The blocks:
+- **Shared pieces:** `src/fx.zig` holds rounding, saturation, CORDIC and the
+  16-bit radix-2 FFT with Q16 twiddles. `src/fxldpc.zig` is the layered
+  offset min-sum decoder. `src/tables.zig` generates the Gold-sequence
+  pilots and the interleaver.
+- **TX:** integer QAM levels, a 16-bit IFFT and a 12-bit DAC.
+- **RX, from 12-bit ADC samples:** FFT, LS without division, then the
+  separable estimator: a 32-tap frequency FIR per pilot symbol and time
+  weights per data symbol. Then the CORDIC phase tracker, removing half the
+  fitted ramp. The max-log demapper needs no division (metric `u L^2 - 2 z L`
+  with `z = Y h*`, `u = a |h|^2`) and produces 6-bit LLRs at 0.25 nat per
+  LSB, with the per-frame scale capped. Decoding uses 6-bit messages and an
+  8-bit APP.
+
+`harness/twin.py` is the NumPy twin of every block, written to be read,
+not to be fast. `tests/test_m4_twins.py` holds it bit exact against the Zig
+modem, from the tables to the decoded bits of whole frames through Sionna's
+channel. `harness/design.py` designs the estimator offline (constrained
+Wiener, unbiased, one tap set per 3 dB of SNR). `harness/fxmodem.py` has
+the wrappers: `FxModem`, `FixedPoint` (the widths), `agc_adc`, and
+`FxOfdmLink`, which runs the genie f32, product float and product fixed
+receivers on the same samples.
+
+`make vectors` writes the golden vectors to `vectors/` (committed). Each
+frame file carries its configuration, taps, inputs and every intermediate
+result. `tests/test_m4_vectors.py` replays them through the Zig modem and
+the twin, so any change to a fixed-point block shows up as a vector diff.
+Regenerate the vectors only for an intended change. The fixed receiver
+decodes 9,000 to 24,000 frames/s on the 5900X.

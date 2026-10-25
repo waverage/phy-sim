@@ -1,0 +1,4545 @@
+{
+ "experiment": "e012_decoder_fixed",
+ "date": "2026-10-25T20:11:33",
+ "git": "c964dbc",
+ "sionna": "2.2.0",
+ "torch": "2.14.1+cu126",
+ "profile": "reference",
+ "baseline": "bp exact",
+ "decoders": {
+  "bp exact": {
+   "demapper": "exact",
+   "algo": "bp",
+   "kwargs": {},
+   "llr_step_nat": 1.0
+  },
+  "bp maxlog": {
+   "demapper": "maxlog",
+   "algo": "bp",
+   "kwargs": {},
+   "llr_step_nat": 1.0
+  },
+  "oms float o0.25": {
+   "demapper": "maxlog",
+   "algo": "oms-float",
+   "kwargs": {
+    "offset": 0.25
+   },
+   "llr_step_nat": 1.0
+  },
+  "oms float o0.5": {
+   "demapper": "maxlog",
+   "algo": "oms-float",
+   "kwargs": {
+    "offset": 0.5
+   },
+   "llr_step_nat": 1.0
+  },
+  "oms float o0.75": {
+   "demapper": "maxlog",
+   "algo": "oms-float",
+   "kwargs": {
+    "offset": 0.75
+   },
+   "llr_step_nat": 1.0
+  },
+  "q5/5/7 d1 o1": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 5,
+    "msg_bits": 5,
+    "app_bits": 7,
+    "offset": 1
+   },
+   "llr_step_nat": 1.0
+  },
+  "q6/6/8 d0.75 o1": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 6,
+    "msg_bits": 6,
+    "app_bits": 8,
+    "offset": 1
+   },
+   "llr_step_nat": 0.75
+  },
+  "q6/6/8 d0.5 o1": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 6,
+    "msg_bits": 6,
+    "app_bits": 8,
+    "offset": 1
+   },
+   "llr_step_nat": 0.5
+  },
+  "q6/6/7 d0.5 o1": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 6,
+    "msg_bits": 6,
+    "app_bits": 7,
+    "offset": 1
+   },
+   "llr_step_nat": 0.5
+  },
+  "q6/6/8 d0.25 o2": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 6,
+    "msg_bits": 6,
+    "app_bits": 8,
+    "offset": 2
+   },
+   "llr_step_nat": 0.25
+  },
+  "q7/7/9 d0.25 o2": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 7,
+    "msg_bits": 7,
+    "app_bits": 9,
+    "offset": 2
+   },
+   "llr_step_nat": 0.25
+  },
+  "q6/6/8 d0.5 o1 it10": {
+   "demapper": "maxlog",
+   "algo": "oms-fixed",
+   "kwargs": {
+    "llr_bits": 6,
+    "msg_bits": 6,
+    "app_bits": 8,
+    "offset": 1,
+    "num_iter": 10
+   },
+   "llr_step_nat": 0.5
+  }
+ },
+ "results": {
+  "qpsk-1/2": {
+   "k": 2388,
+   "n": 4776,
+   "points": [
+    {
+     "esno_db": 0.6558773244236213,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.987,
+      "errors": 1974,
+      "iters": 19.996
+     },
+     "bp maxlog": {
+      "bler": 0.987,
+      "errors": 1974,
+      "iters": 19.996
+     },
+     "oms float o0.25": {
+      "bler": 0.9885,
+      "errors": 1977,
+      "iters": 19.9735
+     },
+     "oms float o0.5": {
+      "bler": 0.915,
+      "errors": 1830,
+      "iters": 19.807
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.955,
+      "errors": 1910,
+      "iters": 19.9135
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.955,
+      "errors": 1910,
+      "iters": 19.9135
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.926,
+      "errors": 1852,
+      "iters": 19.857
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.926,
+      "errors": 1852,
+      "iters": 19.852
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 0.7808773244236213,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.9225,
+      "errors": 1845,
+      "iters": 19.9425
+     },
+     "bp maxlog": {
+      "bler": 0.9225,
+      "errors": 1845,
+      "iters": 19.9425
+     },
+     "oms float o0.25": {
+      "bler": 0.944,
+      "errors": 1888,
+      "iters": 19.824
+     },
+     "oms float o0.5": {
+      "bler": 0.727,
+      "errors": 1454,
+      "iters": 19.094
+     },
+     "oms float o0.75": {
+      "bler": 0.986,
+      "errors": 1972,
+      "iters": 19.9845
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.997,
+      "errors": 1994,
+      "iters": 19.998
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.809,
+      "errors": 1618,
+      "iters": 19.4305
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.8095,
+      "errors": 1619,
+      "iters": 19.4325
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.751,
+      "errors": 1502,
+      "iters": 19.2005
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.751,
+      "errors": 1502,
+      "iters": 19.191
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9995,
+      "errors": 1999,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 0.9058773244236213,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.7635,
+      "errors": 1527,
+      "iters": 19.7835
+     },
+     "bp maxlog": {
+      "bler": 0.7635,
+      "errors": 1527,
+      "iters": 19.7835
+     },
+     "oms float o0.25": {
+      "bler": 0.8455,
+      "errors": 1691,
+      "iters": 19.431
+     },
+     "oms float o0.5": {
+      "bler": 0.4355,
+      "errors": 871,
+      "iters": 17.553
+     },
+     "oms float o0.75": {
+      "bler": 0.926,
+      "errors": 1852,
+      "iters": 19.878
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.9825,
+      "errors": 1965,
+      "iters": 19.973
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.5545,
+      "errors": 1109,
+      "iters": 18.2975
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.5545,
+      "errors": 1109,
+      "iters": 18.2975
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.47,
+      "errors": 940,
+      "iters": 17.805
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.47,
+      "errors": 940,
+      "iters": 17.7535
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.992,
+      "errors": 1984,
+      "iters": 9.9985
+     }
+    },
+    {
+     "esno_db": 1.0308773244236213,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.473,
+      "errors": 946,
+      "iters": 19.224
+     },
+     "bp maxlog": {
+      "bler": 0.473,
+      "errors": 946,
+      "iters": 19.224
+     },
+     "oms float o0.25": {
+      "bler": 0.608,
+      "errors": 1216,
+      "iters": 18.1055
+     },
+     "oms float o0.5": {
+      "bler": 0.167,
+      "errors": 334,
+      "iters": 15.0795
+     },
+     "oms float o0.75": {
+      "bler": 0.668,
+      "errors": 1336,
+      "iters": 19.1125
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.859,
+      "errors": 1718,
+      "iters": 19.735
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.2455,
+      "errors": 491,
+      "iters": 15.9905
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.2455,
+      "errors": 491,
+      "iters": 15.9905
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.18,
+      "errors": 360,
+      "iters": 15.3455
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.179,
+      "errors": 358,
+      "iters": 15.28
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9555,
+      "errors": 1911,
+      "iters": 9.996
+     }
+    },
+    {
+     "esno_db": 1.1558773244236213,
+     "codewords": 6000,
+     "bp exact": {
+      "bler": 0.2225,
+      "errors": 1335,
+      "iters": 18.164166666666667
+     },
+     "bp maxlog": {
+      "bler": 0.2225,
+      "errors": 1335,
+      "iters": 18.164166666666667
+     },
+     "oms float o0.25": {
+      "bler": 0.36,
+      "errors": 2160,
+      "iters": 16.123333333333335
+     },
+     "oms float o0.5": {
+      "bler": 0.0455,
+      "errors": 273,
+      "iters": 12.773666666666667
+     },
+     "oms float o0.75": {
+      "bler": 0.31483333333333335,
+      "errors": 1889,
+      "iters": 17.207333333333334
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 6000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.5521666666666667,
+      "errors": 3313,
+      "iters": 18.587666666666667
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.07966666666666666,
+      "errors": 478,
+      "iters": 13.597
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.07966666666666666,
+      "errors": 478,
+      "iters": 13.597
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0515,
+      "errors": 309,
+      "iters": 13.107
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.051833333333333335,
+      "errors": 311,
+      "iters": 12.976666666666667
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.8075,
+      "errors": 4845,
+      "iters": 9.936666666666667
+     }
+    },
+    {
+     "esno_db": 1.2808773244236213,
+     "codewords": 32000,
+     "bp exact": {
+      "bler": 0.06621875,
+      "errors": 2119,
+      "iters": 16.73809375
+     },
+     "bp maxlog": {
+      "bler": 0.06621875,
+      "errors": 2119,
+      "iters": 16.73809375
+     },
+     "oms float o0.25": {
+      "bler": 0.14303125,
+      "errors": 4577,
+      "iters": 13.57271875
+     },
+     "oms float o0.5": {
+      "bler": 0.00653125,
+      "errors": 209,
+      "iters": 10.84609375
+     },
+     "oms float o0.75": {
+      "bler": 0.0705625,
+      "errors": 2258,
+      "iters": 14.49871875
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.99946875,
+      "errors": 31983,
+      "iters": 19.99959375
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.19775,
+      "errors": 6328,
+      "iters": 16.218
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.01346875,
+      "errors": 431,
+      "iters": 11.43571875
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.013625,
+      "errors": 436,
+      "iters": 11.4364375
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.007625,
+      "errors": 244,
+      "iters": 11.16703125
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.00753125,
+      "errors": 241,
+      "iters": 10.99334375
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.539875,
+      "errors": 17276,
+      "iters": 9.7355625
+     }
+    },
+    {
+     "esno_db": 1.4058773244236213,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.013375,
+      "errors": 535,
+      "iters": 15.235975
+     },
+     "bp maxlog": {
+      "bler": 0.013375,
+      "errors": 535,
+      "iters": 15.235975
+     },
+     "oms float o0.25": {
+      "bler": 0.038675,
+      "errors": 1547,
+      "iters": 11.24645
+     },
+     "oms float o0.5": {
+      "bler": 0.000575,
+      "errors": 23,
+      "iters": 9.452775
+     },
+     "oms float o0.75": {
+      "bler": 0.0082,
+      "errors": 328,
+      "iters": 12.0792
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.98415,
+      "errors": 39366,
+      "iters": 19.9831
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0331,
+      "errors": 1324,
+      "iters": 13.43405
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.001225,
+      "errors": 49,
+      "iters": 9.8543
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.001475,
+      "errors": 59,
+      "iters": 9.85595
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.000775,
+      "errors": 31,
+      "iters": 9.767225
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.00075,
+      "errors": 30,
+      "iters": 9.552275
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.2425,
+      "errors": 9700,
+      "iters": 9.27255
+     }
+    },
+    {
+     "esno_db": 1.5308773244236213,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.00175,
+      "errors": 70,
+      "iters": 13.93775
+     },
+     "bp maxlog": {
+      "bler": 0.00175,
+      "errors": 70,
+      "iters": 13.93775
+     },
+     "oms float o0.25": {
+      "bler": 0.007525,
+      "errors": 301,
+      "iters": 9.551675
+     },
+     "oms float o0.5": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 8.452025
+     },
+     "oms float o0.75": {
+      "bler": 0.00055,
+      "errors": 22,
+      "iters": 10.3824
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.829475,
+      "errors": 33179,
+      "iters": 19.684775
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.002775,
+      "errors": 111,
+      "iters": 11.3021
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 8.7455
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0002,
+      "errors": 8,
+      "iters": 8.7465
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.000225,
+      "errors": 9,
+      "iters": 8.785775
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 8.52445
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.07265,
+      "errors": 2906,
+      "iters": 8.60025
+     }
+    },
+    {
+     "esno_db": 1.6558773244236213,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 12.85705
+     },
+     "bp maxlog": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 12.85705
+     },
+     "oms float o0.25": {
+      "bler": 0.000975,
+      "errors": 39,
+      "iters": 8.370925
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.686675
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.1693
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.410425,
+      "errors": 16417,
+      "iters": 18.077025
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.000175,
+      "errors": 7,
+      "iters": 9.819925
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.909825
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000175,
+      "errors": 7,
+      "iters": 7.911375
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 8.071325
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.74305
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.014675,
+      "errors": 587,
+      "iters": 7.883175
+     }
+    },
+    {
+     "esno_db": 1.7808773244236213,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.92125
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.92125
+     },
+     "oms float o0.25": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 7.491075
+     },
+     "oms float o0.5": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.0532
+     },
+     "oms float o0.75": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 8.238125
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.07995,
+      "errors": 3198,
+      "iters": 15.005425
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 8.718575
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.2255
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 7.226675
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 7.469275
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.103075
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.001175,
+      "errors": 47,
+      "iters": 7.2234
+     }
+    },
+    {
+     "esno_db": 1.9058773244236213,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.13865
+     },
+     "bp maxlog": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.13865
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.844225
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.5466
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.515875
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.005525,
+      "errors": 221,
+      "iters": 12.2155
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.88925
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.686375
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 6.6871
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 7.013225
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.5845
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 6.686125
+     }
+    },
+    {
+     "esno_db": 2.0308773244236216,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.45415
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.45415
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.298875
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.10735
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.9121
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.000225,
+      "errors": 9,
+      "iters": 10.3174
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.2079
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.220275
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000175,
+      "errors": 7,
+      "iters": 6.22215
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 6.63835
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.136775
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.22025
+     }
+    }
+   ],
+   "decoders": {
+    "bp exact": {
+     "esno_db_at_bler1": 1.423750657237498,
+     "esno_db_at_bler10": 1.2383629924285913,
+     "iters_near_bler1": 15.235975,
+     "loss_db": 0.0
+    },
+    "bp maxlog": {
+     "esno_db_at_bler1": 1.423750657237498,
+     "esno_db_at_bler10": 1.2383629924285913,
+     "iters_near_bler1": 15.235975,
+     "loss_db": 0.0
+    },
+    "oms float o0.25": {
+     "esno_db_at_bler1": 1.509163764442046,
+     "esno_db_at_bler10": 1.3150830389281243,
+     "iters_near_bler1": 9.551675,
+     "loss_db": 0.08541310720454787
+    },
+    "oms float o0.5": {
+     "esno_db_at_bler1": 1.253445476724175,
+     "esno_db_at_bler10": 1.0801766138244955,
+     "iters_near_bler1": 10.84609375,
+     "loss_db": -0.1703051805133231
+    },
+    "oms float o0.75": {
+     "esno_db_at_bler1": 1.3943521551607476,
+     "esno_db_at_bler10": 1.251734817218252,
+     "iters_near_bler1": 12.0792,
+     "loss_db": -0.029398502076750432
+    },
+    "q5/5/7 d1 o1": {
+     "esno_db_at_bler1": 1.8781230391063586,
+     "esno_db_at_bler10": 1.763777902681626,
+     "iters_near_bler1": 12.2155,
+     "loss_db": 0.45437238186886053
+    },
+    "q6/6/8 d0.75 o1": {
+     "esno_db_at_bler1": 1.4662345707029325,
+     "esno_db_at_bler10": 1.3285587748093877,
+     "iters_near_bler1": 13.43405,
+     "loss_db": 0.04248391346543445
+    },
+    "q6/6/8 d0.5 o1": {
+     "esno_db_at_bler1": 1.2964036863745734,
+     "esno_db_at_bler10": 1.1306296685435762,
+     "iters_near_bler1": 11.43571875,
+     "loss_db": -0.12734697086292468
+    },
+    "q6/6/7 d0.5 o1": {
+     "esno_db_at_bler1": 1.298268614034264,
+     "esno_db_at_bler10": 1.1306296685435762,
+     "iters_near_bler1": 11.4364375,
+     "loss_db": -0.12548204320323397
+    },
+    "q6/6/8 d0.25 o2": {
+     "esno_db_at_bler1": 1.2631331130016317,
+     "esno_db_at_bler10": 1.0895914033968404,
+     "iters_near_bler1": 11.16703125,
+     "loss_db": -0.16061754423586638
+    },
+    "q7/7/9 d0.25 o2": {
+     "esno_db_at_bler1": 1.2625045848433996,
+     "esno_db_at_bler10": 1.089599084804908,
+     "iters_near_bler1": 10.99334375,
+     "loss_db": -0.1612460723940985
+    },
+    "q6/6/8 d0.5 o1 it10": {
+     "esno_db_at_bler1": 1.674866380107585,
+     "esno_db_at_bler10": 1.4977420067550282,
+     "iters_near_bler1": 7.883175,
+     "loss_db": 0.2511157228700869
+    }
+   }
+  },
+  "16qam-1/2": {
+   "k": 4776,
+   "n": 9552,
+   "points": [
+    {
+     "esno_db": 5.776349306526924,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "bp maxlog": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "oms float o0.25": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "oms float o0.5": {
+      "bler": 0.9975,
+      "errors": 1995,
+      "iters": 19.999
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.998,
+      "errors": 1996,
+      "iters": 19.999
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.998,
+      "errors": 1996,
+      "iters": 19.999
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 5.901349306526924,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.9945,
+      "errors": 1989,
+      "iters": 19.9985
+     },
+     "bp maxlog": {
+      "bler": 0.997,
+      "errors": 1994,
+      "iters": 19.999
+     },
+     "oms float o0.25": {
+      "bler": 0.999,
+      "errors": 1998,
+      "iters": 19.9975
+     },
+     "oms float o0.5": {
+      "bler": 0.956,
+      "errors": 1912,
+      "iters": 19.94
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.989,
+      "errors": 1978,
+      "iters": 19.9795
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.989,
+      "errors": 1978,
+      "iters": 19.9795
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.9685,
+      "errors": 1937,
+      "iters": 19.962
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.9685,
+      "errors": 1937,
+      "iters": 19.959
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 6.026349306526924,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.9495,
+      "errors": 1899,
+      "iters": 19.994
+     },
+     "bp maxlog": {
+      "bler": 0.9695,
+      "errors": 1939,
+      "iters": 20.0
+     },
+     "oms float o0.25": {
+      "bler": 0.993,
+      "errors": 1986,
+      "iters": 19.989
+     },
+     "oms float o0.5": {
+      "bler": 0.787,
+      "errors": 1574,
+      "iters": 19.562
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.912,
+      "errors": 1824,
+      "iters": 19.857
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.912,
+      "errors": 1824,
+      "iters": 19.857
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.828,
+      "errors": 1656,
+      "iters": 19.676
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.8275,
+      "errors": 1655,
+      "iters": 19.6615
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 6.151349306526924,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.7815,
+      "errors": 1563,
+      "iters": 19.9105
+     },
+     "bp maxlog": {
+      "bler": 0.8325,
+      "errors": 1665,
+      "iters": 19.9475
+     },
+     "oms float o0.25": {
+      "bler": 0.9495,
+      "errors": 1899,
+      "iters": 19.897
+     },
+     "oms float o0.5": {
+      "bler": 0.4625,
+      "errors": 925,
+      "iters": 18.293
+     },
+     "oms float o0.75": {
+      "bler": 0.985,
+      "errors": 1970,
+      "iters": 19.99
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.6685,
+      "errors": 1337,
+      "iters": 19.1615
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.6685,
+      "errors": 1337,
+      "iters": 19.1615
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.504,
+      "errors": 1008,
+      "iters": 18.623
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.5045,
+      "errors": 1009,
+      "iters": 18.542
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 6.276349306526924,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.435,
+      "errors": 870,
+      "iters": 19.5315
+     },
+     "bp maxlog": {
+      "bler": 0.476,
+      "errors": 952,
+      "iters": 19.6425
+     },
+     "oms float o0.25": {
+      "bler": 0.808,
+      "errors": 1616,
+      "iters": 19.4535
+     },
+     "oms float o0.5": {
+      "bler": 0.1355,
+      "errors": 271,
+      "iters": 15.8685
+     },
+     "oms float o0.75": {
+      "bler": 0.834,
+      "errors": 1668,
+      "iters": 19.776
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.9795,
+      "errors": 1959,
+      "iters": 19.987
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.2695,
+      "errors": 539,
+      "iters": 17.218
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.271,
+      "errors": 542,
+      "iters": 17.219
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.161,
+      "errors": 322,
+      "iters": 16.4675
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.1635,
+      "errors": 327,
+      "iters": 16.234
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9975,
+      "errors": 1995,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 6.401349306526924,
+     "codewords": 10000,
+     "bp exact": {
+      "bler": 0.1417,
+      "errors": 1417,
+      "iters": 18.5987
+     },
+     "bp maxlog": {
+      "bler": 0.1532,
+      "errors": 1532,
+      "iters": 18.7552
+     },
+     "oms float o0.25": {
+      "bler": 0.5177,
+      "errors": 5177,
+      "iters": 18.0645
+     },
+     "oms float o0.5": {
+      "bler": 0.0212,
+      "errors": 212,
+      "iters": 13.4257
+     },
+     "oms float o0.75": {
+      "bler": 0.3769,
+      "errors": 3769,
+      "iters": 18.4068
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 10000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.8055,
+      "errors": 8055,
+      "iters": 19.71
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0595,
+      "errors": 595,
+      "iters": 14.6429
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.061,
+      "errors": 610,
+      "iters": 14.6478
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0274,
+      "errors": 274,
+      "iters": 14.1695
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0264,
+      "errors": 264,
+      "iters": 13.7137
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9606,
+      "errors": 9606,
+      "iters": 9.9984
+     }
+    },
+    {
+     "esno_db": 6.526349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.023625,
+      "errors": 945,
+      "iters": 17.2477
+     },
+     "bp maxlog": {
+      "bler": 0.02435,
+      "errors": 974,
+      "iters": 17.3932
+     },
+     "oms float o0.25": {
+      "bler": 0.233275,
+      "errors": 9331,
+      "iters": 15.817775
+     },
+     "oms float o0.5": {
+      "bler": 0.0016,
+      "errors": 64,
+      "iters": 11.5933
+     },
+     "oms float o0.75": {
+      "bler": 0.06285,
+      "errors": 2514,
+      "iters": 15.726825
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 40000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.34065,
+      "errors": 13626,
+      "iters": 18.173375
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.006125,
+      "errors": 245,
+      "iters": 12.458225
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00715,
+      "errors": 286,
+      "iters": 12.4626
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0022,
+      "errors": 88,
+      "iters": 12.408925
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.002075,
+      "errors": 83,
+      "iters": 11.798675
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.792475,
+      "errors": 31699,
+      "iters": 9.97455
+     }
+    },
+    {
+     "esno_db": 6.651349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.00265,
+      "errors": 106,
+      "iters": 15.859975
+     },
+     "bp maxlog": {
+      "bler": 0.0023,
+      "errors": 92,
+      "iters": 15.965025
+     },
+     "oms float o0.25": {
+      "bler": 0.065075,
+      "errors": 2603,
+      "iters": 13.321
+     },
+     "oms float o0.5": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 10.281725
+     },
+     "oms float o0.75": {
+      "bler": 0.00325,
+      "errors": 130,
+      "iters": 13.194675
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 40000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.04685,
+      "errors": 1874,
+      "iters": 15.3458
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0003,
+      "errors": 12,
+      "iters": 10.889925
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000925,
+      "errors": 37,
+      "iters": 10.8943
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 11.149225
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 10.4284
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.449875,
+      "errors": 17995,
+      "iters": 9.837725
+     }
+    },
+    {
+     "esno_db": 6.776349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.000325,
+      "errors": 13,
+      "iters": 14.667475
+     },
+     "bp maxlog": {
+      "bler": 0.0003,
+      "errors": 12,
+      "iters": 14.7423
+     },
+     "oms float o0.25": {
+      "bler": 0.0114,
+      "errors": 456,
+      "iters": 11.326675
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.310775
+     },
+     "oms float o0.75": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.43145
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.994775,
+      "errors": 39791,
+      "iters": 19.997275
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.002,
+      "errors": 80,
+      "iters": 12.88275
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.746725
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000725,
+      "errors": 29,
+      "iters": 9.7523
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 10.228225
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 9.4185
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.14665,
+      "errors": 5866,
+      "iters": 9.440625
+     }
+    },
+    {
+     "esno_db": 6.901349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 13.638875
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 13.693025
+     },
+     "oms float o0.25": {
+      "bler": 0.001075,
+      "errors": 43,
+      "iters": 9.881625
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.534675
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.16465
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.830925,
+      "errors": 33237,
+      "iters": 19.826625
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.168175
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.870975
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0007,
+      "errors": 28,
+      "iters": 8.876925
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.473775
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.6222
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.02445,
+      "errors": 978,
+      "iters": 8.817025
+     }
+    },
+    {
+     "esno_db": 7.026349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.779675
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.819875
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.874325
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.91915
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.212125
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.263575,
+      "errors": 10543,
+      "iters": 18.139625
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 9.958975
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.1845
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000625,
+      "errors": 25,
+      "iters": 8.190425
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.89865
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.9868
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0019,
+      "errors": 76,
+      "iters": 8.179175
+     }
+    },
+    {
+     "esno_db": 7.151349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.0446
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.07325
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.11625
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.406375
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.46265
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.01335,
+      "errors": 534,
+      "iters": 14.932525
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.035875
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.61955
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00065,
+      "errors": 26,
+      "iters": 7.625925
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.364925
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.46075
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 7.619
+     }
+    },
+    {
+     "esno_db": 7.276349306526924,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.39495
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.41455
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.505825
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.9692
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.844225
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 12.454
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.302625
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.14265
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0008,
+      "errors": 32,
+      "iters": 7.151475
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.985175
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.012125
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.14265
+     }
+    }
+   ],
+   "decoders": {
+    "bp exact": {
+     "esno_db_at_bler1": 6.5754706650999655,
+     "esno_db_at_bler10": 6.425669716703749,
+     "iters_near_bler1": 17.2477,
+     "loss_db": 0.0
+    },
+    "bp maxlog": {
+     "esno_db_at_bler1": 6.573493853539919,
+     "esno_db_at_bler10": 6.43034093288248,
+     "iters_near_bler1": 17.3932,
+     "loss_db": -0.0019768115600466984
+    },
+    "oms float o0.25": {
+     "esno_db_at_bler1": 6.7832855634524885,
+     "esno_db_at_bler10": 6.609284091007588,
+     "iters_near_bler1": 11.326675,
+     "loss_db": 0.20781489835252298
+    },
+    "oms float o0.5": {
+     "esno_db_at_bler1": 6.437698803451593,
+     "esno_db_at_bler10": 6.296821428664795,
+     "iters_near_bler1": 13.4257,
+     "loss_db": -0.13777186164837207
+    },
+    "oms float o0.75": {
+     "esno_db_at_bler1": 6.603919626668727,
+     "esno_db_at_bler10": 6.493940045904397,
+     "iters_near_bler1": 13.194675,
+     "loss_db": 0.028448961568761533
+    },
+    "q5/5/7 d1 o1": {
+     "esno_db_at_bler1": 7.1587288861382286,
+     "esno_db_at_bler10": 7.0669638617341555,
+     "iters_near_bler1": 14.932525,
+     "loss_db": 0.5832582210382631
+    },
+    "q6/6/8 d0.75 o1": {
+     "esno_db_at_bler1": 6.712559752699823,
+     "esno_db_at_bler10": 6.603576142624994,
+     "iters_near_bler1": 15.3458,
+     "loss_db": 0.1370890875998576
+    },
+    "q6/6/8 d0.5 o1": {
+     "esno_db_at_bler1": 6.499398278230185,
+     "esno_db_at_bler10": 6.358386527141644,
+     "iters_near_bler1": 12.458225,
+     "loss_db": -0.07607238686978057
+    },
+    "q6/6/7 d0.5 o1": {
+     "esno_db_at_bler1": 6.506788319033704,
+     "esno_db_at_bler10": 6.359916113442863,
+     "iters_near_bler1": 12.4626,
+     "loss_db": -0.06868234606626178
+    },
+    "q6/6/8 d0.25 o2": {
+     "esno_db_at_bler1": 6.451305873187791,
+     "esno_db_at_bler10": 6.3099653049341855,
+     "iters_near_bler1": 14.1695,
+     "loss_db": -0.12416479191217444
+    },
+    "q7/7/9 d0.25 o2": {
+     "esno_db_at_bler1": 6.4490599412524094,
+     "esno_db_at_bler10": 6.310052114344127,
+     "iters_near_bler1": 13.7137,
+     "loss_db": -0.12641072384755603
+    },
+    "q6/6/8 d0.5 o1 it10": {
+     "esno_db_at_bler1": 6.945093112614581,
+     "esno_db_at_bler10": 6.803065466963704,
+     "iters_near_bler1": 8.817025,
+     "loss_db": 0.36962244751461526
+    }
+   }
+  },
+  "64qam-2/3": {
+   "k": 4776,
+   "n": 7164,
+   "points": [
+    {
+     "esno_db": 13.508778482422064,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.983,
+      "errors": 1966,
+      "iters": 19.998
+     },
+     "bp maxlog": {
+      "bler": 0.992,
+      "errors": 1984,
+      "iters": 20.0
+     },
+     "oms float o0.25": {
+      "bler": 0.9855,
+      "errors": 1971,
+      "iters": 19.9805
+     },
+     "oms float o0.5": {
+      "bler": 0.833,
+      "errors": 1666,
+      "iters": 19.6005
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.9075,
+      "errors": 1815,
+      "iters": 19.8205
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.908,
+      "errors": 1816,
+      "iters": 19.8215
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.8535,
+      "errors": 1707,
+      "iters": 19.6935
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.8495,
+      "errors": 1699,
+      "iters": 19.677
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 13.633778482422064,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.889,
+      "errors": 1778,
+      "iters": 19.959
+     },
+     "bp maxlog": {
+      "bler": 0.915,
+      "errors": 1830,
+      "iters": 19.9715
+     },
+     "oms float o0.25": {
+      "bler": 0.9235,
+      "errors": 1847,
+      "iters": 19.8055
+     },
+     "oms float o0.5": {
+      "bler": 0.5715,
+      "errors": 1143,
+      "iters": 18.546
+     },
+     "oms float o0.75": {
+      "bler": 0.978,
+      "errors": 1956,
+      "iters": 19.98
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.9975,
+      "errors": 1995,
+      "iters": 19.999
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.7015,
+      "errors": 1403,
+      "iters": 19.1115
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.7015,
+      "errors": 1403,
+      "iters": 19.1115
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.608,
+      "errors": 1216,
+      "iters": 18.75
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.603,
+      "errors": 1206,
+      "iters": 18.7275
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 13.758778482422064,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.6875,
+      "errors": 1375,
+      "iters": 19.8035
+     },
+     "bp maxlog": {
+      "bler": 0.712,
+      "errors": 1424,
+      "iters": 19.8415
+     },
+     "oms float o0.25": {
+      "bler": 0.7785,
+      "errors": 1557,
+      "iters": 19.285
+     },
+     "oms float o0.5": {
+      "bler": 0.2665,
+      "errors": 533,
+      "iters": 16.6145
+     },
+     "oms float o0.75": {
+      "bler": 0.8365,
+      "errors": 1673,
+      "iters": 19.756
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.9615,
+      "errors": 1923,
+      "iters": 19.9555
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.37,
+      "errors": 740,
+      "iters": 17.505
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.371,
+      "errors": 742,
+      "iters": 17.508
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.292,
+      "errors": 584,
+      "iters": 16.9305
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.2935,
+      "errors": 587,
+      "iters": 16.8405
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.996,
+      "errors": 1992,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 13.883778482422064,
+     "codewords": 4000,
+     "bp exact": {
+      "bler": 0.38075,
+      "errors": 1523,
+      "iters": 19.25625
+     },
+     "bp maxlog": {
+      "bler": 0.387,
+      "errors": 1548,
+      "iters": 19.31575
+     },
+     "oms float o0.25": {
+      "bler": 0.5225,
+      "errors": 2090,
+      "iters": 17.99075
+     },
+     "oms float o0.5": {
+      "bler": 0.07725,
+      "errors": 309,
+      "iters": 14.268
+     },
+     "oms float o0.75": {
+      "bler": 0.46775,
+      "errors": 1871,
+      "iters": 18.55475
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 4000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.74075,
+      "errors": 2963,
+      "iters": 19.49075
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.138,
+      "errors": 552,
+      "iters": 15.21375
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.141,
+      "errors": 564,
+      "iters": 15.22625
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0895,
+      "errors": 358,
+      "iters": 14.701
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.08575,
+      "errors": 343,
+      "iters": 14.5215
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9595,
+      "errors": 3838,
+      "iters": 9.9975
+     }
+    },
+    {
+     "esno_db": 14.008778482422064,
+     "codewords": 14000,
+     "bp exact": {
+      "bler": 0.1632142857142857,
+      "errors": 2285,
+      "iters": 18.321142857142856
+     },
+     "bp maxlog": {
+      "bler": 0.16078571428571428,
+      "errors": 2251,
+      "iters": 18.379714285714286
+     },
+     "oms float o0.25": {
+      "bler": 0.2681428571428571,
+      "errors": 3754,
+      "iters": 16.110785714285715
+     },
+     "oms float o0.5": {
+      "bler": 0.015571428571428571,
+      "errors": 218,
+      "iters": 12.351285714285714
+     },
+     "oms float o0.75": {
+      "bler": 0.13957142857142857,
+      "errors": 1954,
+      "iters": 16.28992857142857
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 14000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.3549285714285714,
+      "errors": 4969,
+      "iters": 17.965142857142858
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.03142857142857143,
+      "errors": 440,
+      "iters": 13.104642857142856
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.03535714285714286,
+      "errors": 495,
+      "iters": 13.125357142857142
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.01892857142857143,
+      "errors": 265,
+      "iters": 12.786214285714285
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.01807142857142857,
+      "errors": 253,
+      "iters": 12.543928571428571
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.8410714285714286,
+      "errors": 11775,
+      "iters": 9.970214285714286
+     }
+    },
+    {
+     "esno_db": 14.133778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0408,
+      "errors": 1632,
+      "iters": 17.051675
+     },
+     "bp maxlog": {
+      "bler": 0.03755,
+      "errors": 1502,
+      "iters": 17.090325
+     },
+     "oms float o0.25": {
+      "bler": 0.093475,
+      "errors": 3739,
+      "iters": 13.869575
+     },
+     "oms float o0.5": {
+      "bler": 0.0014,
+      "errors": 56,
+      "iters": 10.818125
+     },
+     "oms float o0.75": {
+      "bler": 0.0187,
+      "errors": 748,
+      "iters": 13.79225
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.99995,
+      "errors": 39998,
+      "iters": 19.999975
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0783,
+      "errors": 3132,
+      "iters": 15.410575
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.00405,
+      "errors": 162,
+      "iters": 11.36225
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0076,
+      "errors": 304,
+      "iters": 11.386025
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.002075,
+      "errors": 83,
+      "iters": 11.2475
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0019,
+      "errors": 76,
+      "iters": 10.952175
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.575275,
+      "errors": 23011,
+      "iters": 9.85335
+     }
+    },
+    {
+     "esno_db": 14.258778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.007275,
+      "errors": 291,
+      "iters": 15.775675
+     },
+     "bp maxlog": {
+      "bler": 0.0064,
+      "errors": 256,
+      "iters": 15.797025
+     },
+     "oms float o0.25": {
+      "bler": 0.02215,
+      "errors": 886,
+      "iters": 11.9045
+     },
+     "oms float o0.5": {
+      "bler": 0.00025,
+      "errors": 10,
+      "iters": 9.710075
+     },
+     "oms float o0.75": {
+      "bler": 0.001225,
+      "errors": 49,
+      "iters": 11.90375
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.983925,
+      "errors": 39357,
+      "iters": 19.98845
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.008225,
+      "errors": 329,
+      "iters": 13.062325
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.000575,
+      "errors": 23,
+      "iters": 10.106125
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00475,
+      "errors": 190,
+      "iters": 10.139025
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0004,
+      "errors": 16,
+      "iters": 10.098475
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.00035,
+      "errors": 14,
+      "iters": 9.808525
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.274175,
+      "errors": 10967,
+      "iters": 9.53385
+     }
+    },
+    {
+     "esno_db": 14.383778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.001075,
+      "errors": 43,
+      "iters": 14.635375
+     },
+     "bp maxlog": {
+      "bler": 0.0009,
+      "errors": 36,
+      "iters": 14.647025
+     },
+     "oms float o0.25": {
+      "bler": 0.003875,
+      "errors": 155,
+      "iters": 10.412675
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.86675
+     },
+     "oms float o0.75": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 10.5579
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.776225,
+      "errors": 31049,
+      "iters": 19.67805
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0004,
+      "errors": 16,
+      "iters": 11.36805
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 9.16415
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00295,
+      "errors": 118,
+      "iters": 9.1906
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.258325
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.94305
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0857,
+      "errors": 3428,
+      "iters": 9.004825
+     }
+    },
+    {
+     "esno_db": 14.508778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 13.672825
+     },
+     "bp maxlog": {
+      "bler": 0.0001,
+      "errors": 4,
+      "iters": 13.676625
+     },
+     "oms float o0.25": {
+      "bler": 0.00025,
+      "errors": 10,
+      "iters": 9.3129
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.1876
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.544075
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.27105,
+      "errors": 10842,
+      "iters": 17.923525
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.143825
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.419625
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.004125,
+      "errors": 165,
+      "iters": 8.460525
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.578575
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.2457
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0159,
+      "errors": 636,
+      "iters": 8.390475
+     }
+    },
+    {
+     "esno_db": 14.633778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.8175
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.82545
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.453025
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.617
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.728025
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.02605,
+      "errors": 1042,
+      "iters": 14.97165
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.191375
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.8035
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.003925,
+      "errors": 157,
+      "iters": 7.84495
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.9785
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.659775
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0018,
+      "errors": 72,
+      "iters": 7.7998
+     }
+    },
+    {
+     "esno_db": 14.758778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.087325
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 12.090925
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.788175
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.1356
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.066
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.000625,
+      "errors": 25,
+      "iters": 12.601125
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.437875
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.29145
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0045,
+      "errors": 180,
+      "iters": 7.3418
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.51495
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.172775
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 7.291125
+     }
+    },
+    {
+     "esno_db": 14.883778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.45175
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 11.455
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.2353
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.72345
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.517525
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.9682
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.8226
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.852075
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.003875,
+      "errors": 155,
+      "iters": 6.897225
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.0811
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.75565
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.85205
+     }
+    },
+    {
+     "esno_db": 15.008778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.870275
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.870475
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.75755
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.3583
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.0461
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.768475
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.297525
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.467125
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.004075,
+      "errors": 163,
+      "iters": 6.5161
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.7307
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.3839
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.466875
+     }
+    },
+    {
+     "esno_db": 15.133778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.35495
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.3558
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.3608
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.0425
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.634625
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.852475
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.8591
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.137175
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0037,
+      "errors": 148,
+      "iters": 6.183025
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.388475
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.06735
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.136925
+     }
+    },
+    {
+     "esno_db": 15.258778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.897325
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.898325
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.012475
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.75685
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.275425
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.11825
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.45875
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.841575
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0042,
+      "errors": 168,
+      "iters": 5.895525
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.0746
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.777975
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.841575
+     }
+    },
+    {
+     "esno_db": 15.383778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.464525
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.46635
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.697075
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.477525
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.97645
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.505675
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.125775
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.554825
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0038,
+      "errors": 152,
+      "iters": 5.603325
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.809325
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.4977
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.554075
+     }
+    },
+    {
+     "esno_db": 15.508778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.087775
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.089475
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.414725
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.24485
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.68675
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.00495
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.834975
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.305325
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0035,
+      "errors": 140,
+      "iters": 5.3521
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.570925
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.259175
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.305325
+     }
+    },
+    {
+     "esno_db": 15.633778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.719975
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.72085
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.17385
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.050225
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.398675
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.5553
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.53365
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.098375
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.003775,
+      "errors": 151,
+      "iters": 5.150625
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.34655
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.065225
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.098375
+     }
+    },
+    {
+     "esno_db": 15.758778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.391
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.39175
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.9606
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.875075
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.1713
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.180325
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.2679
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.9201
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.005425,
+      "errors": 217,
+      "iters": 4.995975
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.18265
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.884625
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.9201
+     }
+    },
+    {
+     "esno_db": 15.883778482422064,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.083225
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.082875
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.75185
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.6671
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.999275
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.874025
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.079125
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.716175
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00435,
+      "errors": 174,
+      "iters": 4.777175
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.03435
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.682
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.716175
+     }
+    },
+    {
+     "esno_db": 16.008778482422066,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.80065
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.80085
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.540725
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.4565
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.810725
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.547175
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.900275
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.50695
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.003625,
+      "errors": 145,
+      "iters": 4.55805
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.9391
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.468225
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.50695
+     }
+    }
+   ],
+   "decoders": {
+    "bp exact": {
+     "esno_db_at_bler1": 14.235714581845228,
+     "esno_db_at_bler10": 14.05294865213187,
+     "iters_near_bler1": 15.775675,
+     "loss_db": 0.0
+    },
+    "bp maxlog": {
+     "esno_db_at_bler1": 14.22724990560801,
+     "esno_db_at_bler10": 14.049594506931895,
+     "iters_near_bler1": 15.797025,
+     "loss_db": -0.008464676237217361
+    },
+    "oms float o0.25": {
+     "esno_db_at_bler1": 14.315800805659226,
+     "esno_db_at_bler10": 14.125774768613745,
+     "iters_near_bler1": 11.9045,
+     "loss_db": 0.0800862238139981
+    },
+    "oms float o0.5": {
+     "esno_db_at_bler1": 14.031757881712627,
+     "esno_db_at_bler10": 13.857722844263073,
+     "iters_near_bler1": 12.351285714285714,
+     "loss_db": -0.2039567001326006
+    },
+    "oms float o0.75": {
+     "esno_db_at_bler1": 14.1624851162132,
+     "esno_db_at_bler10": 14.029512159622465,
+     "iters_near_bler1": 13.79225,
+     "loss_db": -0.07322946563202848
+    },
+    "q5/5/7 d1 o1": {
+     "esno_db_at_bler1": 14.665863843777537,
+     "esno_db_at_bler10": 14.561992165369297,
+     "iters_near_bler1": 14.97165,
+     "loss_db": 0.43014926193230885
+    },
+    "q6/6/8 d0.75 o1": {
+     "esno_db_at_bler1": 14.247938781413426,
+     "esno_db_at_bler10": 14.113546610719244,
+     "iters_near_bler1": 13.062325,
+     "loss_db": 0.012224199568198202
+    },
+    "q6/6/8 d0.5 o1": {
+     "esno_db_at_bler1": 14.078637682997003,
+     "esno_db_at_bler10": 13.910990006550593,
+     "iters_near_bler1": 11.36225,
+     "loss_db": -0.1570768988482243
+    },
+    "q6/6/7 d0.5 o1": {
+     "esno_db_at_bler1": 14.111464398484319,
+     "esno_db_at_bler10": 13.914827403011929,
+     "iters_near_bler1": 11.386025,
+     "loss_db": -0.12425018336090865
+    },
+    "q6/6/8 d0.25 o2": {
+     "esno_db_at_bler1": 14.044857785894187,
+     "esno_db_at_bler10": 13.872052252299813,
+     "iters_near_bler1": 12.786214285714285,
+     "loss_db": -0.19085679595104033
+    },
+    "q7/7/9 d0.25 o2": {
+     "esno_db_at_bler1": 14.04161714912682,
+     "esno_db_at_bler10": 13.868160704850727,
+     "iters_near_bler1": 12.543928571428571,
+     "loss_db": -0.19409743271840796
+    },
+    "q6/6/8 d0.5 o1 it10": {
+     "esno_db_at_bler1": 14.535386648015395,
+     "esno_db_at_bler10": 14.367191121724245,
+     "iters_near_bler1": 8.390475,
+     "loss_db": 0.2996720661701673
+    }
+   }
+  },
+  "64qam-5/6": {
+   "k": 5970,
+   "n": 7164,
+   "points": [
+    {
+     "esno_db": 16.544939852127776,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.9905,
+      "errors": 1981,
+      "iters": 19.9975
+     },
+     "bp maxlog": {
+      "bler": 0.9905,
+      "errors": 1981,
+      "iters": 19.998
+     },
+     "oms float o0.25": {
+      "bler": 0.9445,
+      "errors": 1889,
+      "iters": 19.8245
+     },
+     "oms float o0.5": {
+      "bler": 0.9085,
+      "errors": 1817,
+      "iters": 19.757
+     },
+     "oms float o0.75": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.9295,
+      "errors": 1859,
+      "iters": 19.8415
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.9295,
+      "errors": 1859,
+      "iters": 19.8415
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.913,
+      "errors": 1826,
+      "iters": 19.7875
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.912,
+      "errors": 1824,
+      "iters": 19.7785
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 16.669939852127776,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.9435,
+      "errors": 1887,
+      "iters": 19.9535
+     },
+     "bp maxlog": {
+      "bler": 0.944,
+      "errors": 1888,
+      "iters": 19.9545
+     },
+     "oms float o0.25": {
+      "bler": 0.8105,
+      "errors": 1621,
+      "iters": 19.31
+     },
+     "oms float o0.5": {
+      "bler": 0.689,
+      "errors": 1378,
+      "iters": 18.9375
+     },
+     "oms float o0.75": {
+      "bler": 0.9965,
+      "errors": 1993,
+      "iters": 19.998
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.999,
+      "errors": 1998,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.7385,
+      "errors": 1477,
+      "iters": 19.1805
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.74,
+      "errors": 1480,
+      "iters": 19.185
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.706,
+      "errors": 1412,
+      "iters": 19.0535
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.6955,
+      "errors": 1391,
+      "iters": 19.019
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.9995,
+      "errors": 1999,
+      "iters": 10.0
+     }
+    },
+    {
+     "esno_db": 16.794939852127776,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.8065,
+      "errors": 1613,
+      "iters": 19.811
+     },
+     "bp maxlog": {
+      "bler": 0.807,
+      "errors": 1614,
+      "iters": 19.812
+     },
+     "oms float o0.25": {
+      "bler": 0.549,
+      "errors": 1098,
+      "iters": 18.013
+     },
+     "oms float o0.5": {
+      "bler": 0.344,
+      "errors": 688,
+      "iters": 17.1225
+     },
+     "oms float o0.75": {
+      "bler": 0.9505,
+      "errors": 1901,
+      "iters": 19.933
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.9805,
+      "errors": 1961,
+      "iters": 19.975
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.415,
+      "errors": 830,
+      "iters": 17.6325
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.422,
+      "errors": 844,
+      "iters": 17.645
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.375,
+      "errors": 750,
+      "iters": 17.357
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.3665,
+      "errors": 733,
+      "iters": 17.247
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.984,
+      "errors": 1968,
+      "iters": 9.999
+     }
+    },
+    {
+     "esno_db": 16.919939852127776,
+     "codewords": 2000,
+     "bp exact": {
+      "bler": 0.54,
+      "errors": 1080,
+      "iters": 19.3005
+     },
+     "bp maxlog": {
+      "bler": 0.5415,
+      "errors": 1083,
+      "iters": 19.299
+     },
+     "oms float o0.25": {
+      "bler": 0.2585,
+      "errors": 517,
+      "iters": 15.6745
+     },
+     "oms float o0.5": {
+      "bler": 0.109,
+      "errors": 218,
+      "iters": 14.4425
+     },
+     "oms float o0.75": {
+      "bler": 0.7035,
+      "errors": 1407,
+      "iters": 19.2565
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 2000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.813,
+      "errors": 1626,
+      "iters": 19.604
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.141,
+      "errors": 282,
+      "iters": 14.9595
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.1475,
+      "errors": 295,
+      "iters": 14.9725
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.12,
+      "errors": 240,
+      "iters": 14.734
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.1115,
+      "errors": 223,
+      "iters": 14.564
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.906,
+      "errors": 1812,
+      "iters": 9.9775
+     }
+    },
+    {
+     "esno_db": 17.044939852127776,
+     "codewords": 12000,
+     "bp exact": {
+      "bler": 0.23683333333333334,
+      "errors": 2842,
+      "iters": 18.125333333333334
+     },
+     "bp maxlog": {
+      "bler": 0.23675,
+      "errors": 2841,
+      "iters": 18.1235
+     },
+     "oms float o0.25": {
+      "bler": 0.07241666666666667,
+      "errors": 869,
+      "iters": 12.900666666666666
+     },
+     "oms float o0.5": {
+      "bler": 0.018666666666666668,
+      "errors": 224,
+      "iters": 11.869166666666667
+     },
+     "oms float o0.75": {
+      "bler": 0.27,
+      "errors": 3240,
+      "iters": 17.02475
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 1.0,
+      "errors": 12000,
+      "iters": 20.0
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.3895,
+      "errors": 4674,
+      "iters": 17.887
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.02775,
+      "errors": 333,
+      "iters": 12.266666666666667
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.036583333333333336,
+      "errors": 439,
+      "iters": 12.308583333333333
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.022833333333333334,
+      "errors": 274,
+      "iters": 12.193916666666667
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.019916666666666666,
+      "errors": 239,
+      "iters": 11.9715
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.665,
+      "errors": 7980,
+      "iters": 9.846333333333334
+     }
+    },
+    {
+     "esno_db": 17.169939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0717,
+      "errors": 2868,
+      "iters": 16.59895
+     },
+     "bp maxlog": {
+      "bler": 0.071425,
+      "errors": 2857,
+      "iters": 16.597775
+     },
+     "oms float o0.25": {
+      "bler": 0.01235,
+      "errors": 494,
+      "iters": 10.702175
+     },
+     "oms float o0.5": {
+      "bler": 0.001275,
+      "errors": 51,
+      "iters": 10.05425
+     },
+     "oms float o0.75": {
+      "bler": 0.04485,
+      "errors": 1794,
+      "iters": 13.99855
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.998575,
+      "errors": 39943,
+      "iters": 19.998425
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.082875,
+      "errors": 3315,
+      "iters": 14.90715
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.002125,
+      "errors": 85,
+      "iters": 10.33295
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00875,
+      "errors": 350,
+      "iters": 10.375775
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.001925,
+      "errors": 77,
+      "iters": 10.383775
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0016,
+      "errors": 64,
+      "iters": 10.127475
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.3343,
+      "errors": 13372,
+      "iters": 9.454025
+     }
+    },
+    {
+     "esno_db": 17.294939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.014575,
+      "errors": 583,
+      "iters": 15.02755
+     },
+     "bp maxlog": {
+      "bler": 0.01445,
+      "errors": 578,
+      "iters": 15.027
+     },
+     "oms float o0.25": {
+      "bler": 0.001175,
+      "errors": 47,
+      "iters": 9.12875
+     },
+     "oms float o0.5": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 8.780075
+     },
+     "oms float o0.75": {
+      "bler": 0.00295,
+      "errors": 118,
+      "iters": 11.53165
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.9555,
+      "errors": 38220,
+      "iters": 19.929375
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.007075,
+      "errors": 283,
+      "iters": 12.175425
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 8.97295
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.005425,
+      "errors": 217,
+      "iters": 9.0163
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.000175,
+      "errors": 7,
+      "iters": 9.1054
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 8.82605
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.1009,
+      "errors": 4036,
+      "iters": 8.750575
+     }
+    },
+    {
+     "esno_db": 17.419939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.00225,
+      "errors": 90,
+      "iters": 13.688525
+     },
+     "bp maxlog": {
+      "bler": 0.00225,
+      "errors": 90,
+      "iters": 13.687525
+     },
+     "oms float o0.25": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 8.009125
+     },
+     "oms float o0.5": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 7.84245
+     },
+     "oms float o0.75": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 9.85085
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.676325,
+      "errors": 27053,
+      "iters": 19.1265
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 10.290925
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 7.984625
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.004675,
+      "errors": 187,
+      "iters": 8.028275
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 8.17405
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.8767
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.017975,
+      "errors": 719,
+      "iters": 7.946325
+     }
+    },
+    {
+     "esno_db": 17.544939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.000275,
+      "errors": 11,
+      "iters": 12.560225
+     },
+     "bp maxlog": {
+      "bler": 0.0003,
+      "errors": 12,
+      "iters": 12.559475
+     },
+     "oms float o0.25": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.17475
+     },
+     "oms float o0.5": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.0954
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.6328
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.220325,
+      "errors": 8813,
+      "iters": 16.376275
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.950775
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.207325
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.004275,
+      "errors": 171,
+      "iters": 7.25115
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 5e-05,
+      "errors": 2,
+      "iters": 7.441375
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.121675
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.002075,
+      "errors": 83,
+      "iters": 7.202575
+     }
+    },
+    {
+     "esno_db": 17.669939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.629125
+     },
+     "bp maxlog": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 11.628625
+     },
+     "oms float o0.25": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.511625
+     },
+     "oms float o0.5": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.498625
+     },
+     "oms float o0.75": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.7113
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.023975,
+      "errors": 959,
+      "iters": 12.986375
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 7.955075
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.584475
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0036,
+      "errors": 144,
+      "iters": 6.62425
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.882875
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 6.521275
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.000125,
+      "errors": 5,
+      "iters": 6.5839
+     }
+    },
+    {
+     "esno_db": 17.794939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.8333
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.833175
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.967125
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.9945
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.97585
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.000725,
+      "errors": 29,
+      "iters": 10.58185
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.1707
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.0687
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0031,
+      "errors": 124,
+      "iters": 6.10515
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.36785
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.013775
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 7.5e-05,
+      "errors": 3,
+      "iters": 6.068625
+     }
+    },
+    {
+     "esno_db": 17.919939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.161975
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 10.1621
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.531675
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.572825
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.39095
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.044925
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.54485
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.633275
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.001925,
+      "errors": 77,
+      "iters": 5.657125
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.956075
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.59005
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.633275
+     }
+    },
+    {
+     "esno_db": 18.044939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.571125
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.5711
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.15395
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.21195
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.88835
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.941075
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.017925
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.2598
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.00235,
+      "errors": 94,
+      "iters": 5.289525
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 2.5e-05,
+      "errors": 1,
+      "iters": 5.609525
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.226475
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.2598
+     }
+    },
+    {
+     "esno_db": 18.169939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.048675
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 9.048775
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.82235
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.897625
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.463425
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.10115
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.571175
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.940575
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0018,
+      "errors": 72,
+      "iters": 4.964125
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.2923
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.910225
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.940575
+     }
+    },
+    {
+     "esno_db": 18.294939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.608875
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.608925
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.538775
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.6081
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.117275
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 6.439575
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.200875
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.64845
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.0013,
+      "errors": 52,
+      "iters": 4.666025
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.99315
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.61595
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.64845
+     }
+    },
+    {
+     "esno_db": 18.419939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.202025
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 8.202
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.290375
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.352125
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.808275
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.900425
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.89065
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.3814
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.001675,
+      "errors": 67,
+      "iters": 4.404525
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.7664
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.3592
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.3814
+     }
+    },
+    {
+     "esno_db": 18.544939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.835025
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.835075
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.08625
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.1483
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.502375
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.430325
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.57525
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.171075
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.001125,
+      "errors": 45,
+      "iters": 4.186675
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.585075
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.1543
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.171075
+     }
+    },
+    {
+     "esno_db": 18.669939852127776,
+     "codewords": 40000,
+     "bp exact": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.509075
+     },
+     "bp maxlog": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 7.509025
+     },
+     "oms float o0.25": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 3.9015
+     },
+     "oms float o0.5": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 3.97985
+     },
+     "oms float o0.75": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.254075
+     },
+     "q5/5/7 d1 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 5.0676
+     },
+     "q6/6/8 d0.75 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.3069
+     },
+     "q6/6/8 d0.5 o1": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.0002
+     },
+     "q6/6/7 d0.5 o1": {
+      "bler": 0.000825,
+      "errors": 33,
+      "iters": 4.01205
+     },
+     "q6/6/8 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.40855
+     },
+     "q7/7/9 d0.25 o2": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 3.98575
+     },
+     "q6/6/8 d0.5 o1 it10": {
+      "bler": 0.0,
+      "errors": 0,
+      "iters": 4.0002
+     }
+    }
+   ],
+   "decoders": {
+    "bp exact": {
+     "esno_db_at_bler1": 17.320143714570747,
+     "esno_db_at_bler10": 17.135136842513216,
+     "iters_near_bler1": 15.02755,
+     "loss_db": 0.0
+    },
+    "bp maxlog": {
+     "esno_db_at_bler1": 17.319681518429647,
+     "esno_db_at_bler10": 17.13483738490155,
+     "iters_near_bler1": 15.027,
+     "loss_db": -0.00046219614110043494
+    },
+    "oms float o0.25": {
+     "esno_db_at_bler1": 17.181155634646636,
+     "esno_db_at_bler10": 17.013236114021097,
+     "iters_near_bler1": 10.702175,
+     "loss_db": -0.13898807992411122
+    },
+    "oms float o0.5": {
+     "esno_db_at_bler1": 17.07401038109112,
+     "esno_db_at_bler10": 16.926044442551788,
+     "iters_near_bler1": 11.869166666666667,
+     "loss_db": -0.24613333347962651
+    },
+    "oms float o0.75": {
+     "esno_db_at_bler1": 17.238869134651665,
+     "esno_db_at_bler10": 17.114104012525374,
+     "iters_near_bler1": 11.53165,
+     "loss_db": -0.08127457991908216
+    },
+    "q5/5/7 d1 o1": {
+     "esno_db_at_bler1": 17.701181910245634,
+     "esno_db_at_bler10": 17.58945635011672,
+     "iters_near_bler1": 12.986375,
+     "loss_db": 0.3810381956748863
+    },
+    "q6/6/8 d0.75 o1": {
+     "esno_db_at_bler1": 17.277363127605568,
+     "esno_db_at_bler10": 17.154767554426684,
+     "iters_near_bler1": 12.175425,
+     "loss_db": -0.04278058696517917
+    },
+    "q6/6/8 d0.5 o1": {
+     "esno_db_at_bler1": 17.094592753091604,
+     "esno_db_at_bler10": 16.94636130866904,
+     "iters_near_bler1": 12.266666666666667,
+     "loss_db": -0.22555096147914355
+    },
+    "q6/6/7 d0.5 o1": {
+     "esno_db_at_bler1": 17.158271926021637,
+     "esno_db_at_bler10": 16.954784935166597,
+     "iters_near_bler1": 10.375775,
+     "loss_db": -0.1618717885491101
+    },
+    "q6/6/8 d0.25 o2": {
+     "esno_db_at_bler1": 17.086667395769684,
+     "esno_db_at_bler10": 16.933674922772404,
+     "iters_near_bler1": 12.193916666666667,
+     "loss_db": -0.23347631880106334
+    },
+    "q7/7/9 d0.25 o2": {
+     "esno_db_at_bler1": 17.079093989210396,
+     "esno_db_at_bler10": 16.927839449143633,
+     "iters_near_bler1": 11.9715,
+     "loss_db": -0.24104972536035163
+    },
+    "q6/6/8 d0.5 o1 it10": {
+     "esno_db_at_bler1": 17.453890244373518,
+     "esno_db_at_bler10": 17.295589053040402,
+     "iters_near_bler1": 7.946325,
+     "loss_db": 0.1337465298027709
+    }
+   }
+  }
+ },
+ "summary": "\nloss in dB at 1 % BLER vs 'bp exact' (iterations near 1 %)\ndecoder                        qpsk-1/2        16qam-1/2        64qam-2/3        64qam-5/6\nbp exact                   +0.00 (15.2)     +0.00 (17.2)     +0.00 (15.8)     +0.00 (15.0)\nbp maxlog                  +0.00 (15.2)     -0.00 (17.4)     -0.01 (15.8)     -0.00 (15.0)\noms float o0.25            +0.09 ( 9.6)     +0.21 (11.3)     +0.08 (11.9)     -0.14 (10.7)\noms float o0.5             -0.17 (10.8)     -0.14 (13.4)     -0.20 (12.4)     -0.25 (11.9)\noms float o0.75            -0.03 (12.1)     +0.03 (13.2)     -0.07 (13.8)     -0.08 (11.5)\nq5/5/7 d1 o1               +0.45 (12.2)     +0.58 (14.9)     +0.43 (15.0)     +0.38 (13.0)\nq6/6/8 d0.75 o1            +0.04 (13.4)     +0.14 (15.3)     +0.01 (13.1)     -0.04 (12.2)\nq6/6/8 d0.5 o1             -0.13 (11.4)     -0.08 (12.5)     -0.16 (11.4)     -0.23 (12.3)\nq6/6/7 d0.5 o1             -0.13 (11.4)     -0.07 (12.5)     -0.12 (11.4)     -0.16 (10.4)\nq6/6/8 d0.25 o2            -0.16 (11.2)     -0.12 (14.2)     -0.19 (12.8)     -0.23 (12.2)\nq7/7/9 d0.25 o2            -0.16 (11.0)     -0.13 (13.7)     -0.19 (12.5)     -0.24 (12.0)\nq6/6/8 d0.5 o1 it10        +0.25 ( 7.9)     +0.37 ( 8.8)     +0.30 ( 8.4)     +0.13 ( 7.9)",
+ "seconds": 3406
+}
