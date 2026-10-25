@@ -70,3 +70,25 @@ point shows zero errors at the cap.
 Experiments from e002 on take `--profile quick|reference` (`make e002
 PROFILE=quick`). Quick runs write `results/<name>.quick.json`, which is not
 committed; rank hypotheses with them, then commit the reference run.
+
+## The Zig modem (L2)
+
+`modem/` builds `libnestuaphy.so` (`make modem`, ReleaseFast, native CPU).
+M3 is the whole chain in f32: `src/ldpc.zig` (5G LDPC built as Sionna
+builds it, flooding sum-product decoder on the QC structure, 8-lane SIMD
+check nodes), `src/qam.zig` (Gray QAM, exact LLRs), `src/ofdm.zig` (radix-2
+FFT), `src/modem.zig` (frame TX and RX: grid, pilots, interleaver, linear
+phase tracker, LS plus a 2D filter, one-tap LMMSE, threads over the batch)
+and `src/root.zig` (the C ABI). The base graph tables in `src/ldpc/` are
+Sionna's.
+
+`harness/modem.py` is the Python side. `ZigModem` wraps one configured
+modem; `zig_modem_for(link)` builds it from an `OfdmLink` (numerology,
+codeword plan, pilots, interleaver). The receiver's estimator filter comes
+from `GenieLmmseEstimator.filters(no)` and is set per noise level.
+`ZigOfdmLink` runs Zig TX, Sionna's channel and impairments, Zig RX, and
+with `compare=True` Sionna's receiver on the same samples. The single
+blocks (`ldpc_encode`, `ldpc_decode`, `qam_map`, `qam_demap`) are exported
+for tests. On the 5900X the receiver decodes about 1,600 frames/s
+(16qam-1/2, 24 threads, 20 iterations at the waterfall; early stop makes it
+faster above).

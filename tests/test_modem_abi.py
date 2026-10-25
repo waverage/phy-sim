@@ -24,7 +24,7 @@ def lib():
 
 
 def test_version(lib):
-    assert lib.nestuaphy_version() == (0 << 16) | 1
+    assert lib.nestuaphy_version() == (0 << 16) | 3
 
 
 def test_sat_add(lib):

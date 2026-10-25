@@ -357,18 +357,30 @@ class OfdmLink:
 
     def run(self, batch: int, esno_db: float) -> dict:
         """One batch of `batch` frames at Es/N0 = esno_db (per resource element)."""
+        no = torch.tensor(10 ** (-esno_db / 10), device=self.device)
+        b = self.source([batch, self.plan.num_codewords, self.plan.k])
+        y, h_t = self.propagate(self.transmit(b), no)
+        return count_errors(b, self.receive(y, h_t, no))
+
+    def transmit(self, b: torch.Tensor) -> torch.Tensor:
+        """Information bits [batch, num_codewords, k] -> time-domain frame
+        [batch, 1, 1, num_time_samples], before any impairment."""
         p, d = self.plan, self.device
-        no = torch.tensor(10 ** (-esno_db / 10), device=d)
-        b = self.source([batch, p.num_codewords, p.k])
+        batch = b.shape[0]
         c = self.encoder(b).reshape(batch, -1)
         if p.padding_bits:
             c = torch.cat([c, torch.zeros(batch, p.padding_bits, dtype=c.dtype, device=d)], dim=-1)
         x = self.mapper(c[:, self.perm]).reshape(batch, 1, 1, -1)
-        x_t = self.modulator(self.rg_mapper(x))             # [b, 1, 1, num_time_samples]
+        return self.modulator(self.rg_mapper(x))            # [b, 1, 1, num_time_samples]
+
+    def propagate(self, x_t: torch.Tensor, no: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """TX impairments, channel, channel impairments, AWGN, RX impairments.
+        Returns the received samples and the channel taps (None on AWGN)."""
+        h_t = None
         if self.tx_imp:
             x_t = self.tx_imp(x_t, self.fs)
         if self.channel == "tdl":
-            h_t = self.time_channel(batch)
+            h_t = self.time_channel(x_t.shape[0])
             y = self.apply_channel(x_t, h_t)                # [b, 1, 1, num_time_samples + l_tot - 1]
         else:
             y = x_t
@@ -377,6 +389,14 @@ class OfdmLink:
         y = self.awgn(y, no)
         if self.rx_imp:
             y = self.rx_imp(y, self.fs)
+        return y, h_t
+
+    def receive(self, y: torch.Tensor, h_t: torch.Tensor | None, no: torch.Tensor,
+                return_llr: bool = False):
+        """Received samples -> decoded bits [batch, num_codewords, k]
+        (and the deinterleaved LLRs [batch, num_codewords, n])."""
+        p, d = self.plan, self.device
+        batch = y.shape[0]
         y_f = self.demodulator(y)                           # [b, 1, 1, symbols, fft_size]
 
         if self.estimator_kind == "perfect":
@@ -394,13 +414,18 @@ class OfdmLink:
         llr = self.demapper(x_hat, no_eff).reshape(batch, -1)[:, self.inv_perm]
         llr = llr[:, : p.num_codewords * p.n].reshape(batch, p.num_codewords, p.n)
         b_hat = self.decoder(llr)
-        err = (b_hat != b)
-        cw_err = err.any(dim=-1)
-        return {
-            "frames": batch,
-            "frame_errors": int(cw_err.any(dim=-1).sum()),
-            "codewords": batch * p.num_codewords,
-            "codeword_errors": int(cw_err.sum()),
-            "bits": int(err.numel()),
-            "bit_errors": int(err.sum()),
-        }
+        return (b_hat, llr) if return_llr else b_hat
+
+
+def count_errors(b: torch.Tensor, b_hat: torch.Tensor) -> dict:
+    """Error counts of one batch, bits [batch, num_codewords, k]."""
+    err = (b_hat != b)
+    cw_err = err.any(dim=-1)
+    return {
+        "frames": b.shape[0],
+        "frame_errors": int(cw_err.any(dim=-1).sum()),
+        "codewords": cw_err.numel(),
+        "codeword_errors": int(cw_err.sum()),
+        "bits": int(err.numel()),
+        "bit_errors": int(err.sum()),
+    }

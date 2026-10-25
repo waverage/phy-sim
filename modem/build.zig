@@ -8,6 +8,9 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
+        // The library lives inside a glibc process (Python); with libc,
+        // std.Thread is pthreads. Zig's own clone()-based threads crash there.
+        .link_libc = true,
     });
 
     // Shared library with a C ABI, loaded from Python through ctypes.

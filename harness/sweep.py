@@ -27,8 +27,8 @@ def run_point(link, esno_db: float, *, batch: int, min_frame_errors: int, max_fr
     t0 = time.time()
     while tot["frames"] < max_frames and tot["frame_errors"] < min_frame_errors:
         r = link.run(min(batch, max_frames - tot["frames"]), esno_db)
-        for k in tot:
-            tot[k] += r[k]
+        for k, v in r.items():          # links may report extra counts
+            tot[k] = tot.get(k, 0) + v
     tot.update(
         esno_db=esno_db,
         fer=tot["frame_errors"] / tot["frames"],

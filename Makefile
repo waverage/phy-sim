@@ -2,11 +2,12 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem e001 e002 e003 e004 e005 e006 e007 e008 e009 e010
+.PHONY: check test-harness test-modem test-rtl modem e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011
 
 check: test-harness test-modem test-rtl
 
-test-harness:
+# the harness tests load the release build of the modem through ctypes
+test-harness: modem
 	$(PYTEST) -q tests
 
 modem:
@@ -47,3 +48,6 @@ e009:
 
 e010:
 	$(PY) -I experiments/e010_phase_tracking.py --profile $(PROFILE)
+
+e011: modem
+	$(PY) -I experiments/e011_zig_overlay.py --profile $(PROFILE)

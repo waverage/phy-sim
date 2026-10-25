@@ -13,14 +13,15 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M2 done, M3 next
+## State: M0 to M3 done, M4 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
 | M0 environment and skeleton | done, c31f79d | `make check`: pytest env + ctypes tests, `zig build test`, cocotb block under Verilator and Icarus |
 | M1 AWGN baseline curves | done, bdc1d88 | `results/e001_awgn_baseline.json`, `tests/test_e001_reference.py` |
 | M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision in the hardware plan ("M2 result", then the e006-e010 follow-ups) | `results/e002..e010*.json`, `tests/test_m2_ofdm.py`, `tests/test_e002_reference.py`, `tests/test_m2_impairments_reference.py`, `tests/test_e010_reference.py` |
-| M3 Zig modem, floating point first | not started | |
+| M3 Zig modem, floating point first | done 2026-10-25 | `modem/src/*.zig`, `harness/modem.py`, `results/e011_zig_overlay.json`, `tests/test_m3_modem.py`, `tests/test_e011_reference.py` |
+| M4 fixed point and NumPy twins | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -56,15 +57,58 @@ Es/N0 per resource element where FER crosses 1 %):
   Wi-Fi burst at 10 dB SIR floors 64-QAM (handled by MCS fallback and
   retransmission, not by the PHY).
 
-## Next: M3
+## What M3 built (README "The Zig modem")
 
-Zig modem in floating point first, matching the Sionna chain bit for bit
-where it can (mapper, interleaver, OFDM) and statistically where it cannot
-(LDPC decoder, estimator). The receiver pieces M2 says it needs:
-2D channel estimator from the block pilots, the linear CFO tracker
-(`OfdmLink.derotate`, `phase_track="linear"`), LMMSE equalisation, max-log
-or exact LLRs. Synchronisation (preamble, coarse CFO, timing) is still
-genie in the simulator: worth an experiment before M3 freezes the frame.
+The whole TX and RX chain in Zig, f32, behind a C ABI:
+- **Bit-exact against Sionna:** 5G LDPC code construction and encoding
+  (every MCS, plus BG2 codes of every k_b class) and the QAM mapper.
+  The 64-QAM points needed `x * (1/norm)`, because numpy's complex/real
+  division rounds that way.
+- **Within f32 rounding:** the TX samples (7e-7 max) and the receiver's
+  LLRs on the same received samples. That covers AWGN, TDL-D at 600 Hz,
+  200 Hz CFO with the linear tracker, and p3 at 2000 Hz.
+- **Statistically:** the LDPC decoder, the same flooding boxplus-phi
+  algorithm with clipping at 20. e011 decodes every frame with both
+  receivers. The FER curves agree within 0.02 dB at 1 % on all 15 curves, and
+  the receivers disagree on 7 codewords in 697,000. That is the M3 gate,
+  `tests/test_e011_reference.py`.
+- **Throughput:** 1,600 to 12,000 frames/s on the 5900X with 24
+  threads, depending on MCS. The decoder stops early on a zero syndrome
+  (5 to 14 iterations on average around 1 % FER), so it keeps up with the
+  GPU chain: 1.2 to 3x faster than Sionna's receiver in e011.
+- **Still from Python:** the numerology and codeword plan, the pilot
+  values, the interleaver permutation, and the estimator filter. The
+  filter is GenieLmmseEstimator's W per noise level, applied as one
+  complex matmul per frame at the data REs. A product receiver needs a
+  fixed filter designed for worst-case statistics (and separable, for
+  the FPGA); that is M4 work.
+
+## Next: M4, and the synchroniser
+
+M4 (plan): every block in integer arithmetic with chosen widths, a NumPy
+twin per block, golden vectors in `vectors/`, bit-exact tests, and
+fixed-point loss under 0.3 dB against the e011 curves. Decide first:
+- the estimator filter structure (separable time and frequency, fixed
+  taps per SNR range);
+- the pilot sequence and interleaver as generated tables, not Python RNG
+  output;
+- the LLR width and the decoder's message width (offset min-sum is the
+  usual hardware choice; measure its loss against boxplus-phi with
+  `ldpc_decode` first).
+
+Synchronisation (preamble, coarse CFO, timing) is still genie: the Zig
+receiver takes `l_min` and assumes CFO under ~300 Hz. Worth an experiment
+before M4 freezes the frame.
+
+## Gotchas found in M3
+
+- **Link libc into the Zig library** (`build.zig`). Without libc,
+  std.Thread uses its own clone() threads, which hit `unreachable`
+  inside a glibc process. In ReleaseFast that is silent UB: `@min(8, 64)`
+  came out as 1 and the batch ran on one thread.
+- **Zig 0.17 removed `**` array repetition.** Use `@splat`.
+- **Python block-buffers through a pipe.** Use `python -u` when tailing
+  an experiment log.
 
 ## Setup (done on the Windows PC)
 
