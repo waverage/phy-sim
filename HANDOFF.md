@@ -19,7 +19,8 @@ and `make check` gates everything.
 |---|---|---|
 | M0 environment and skeleton | done, commit c31f79d | `make check` green: pytest env + ctypes tests, `zig build test`, cocotb block under Verilator and Icarus |
 | M1 AWGN baseline curves | done, commit bdc1d88 | `results/e001_awgn_baseline.json`, 11 pytest gates pass |
-| M2 OFDM chain, fading, impairments, numerology decision | harness, impairments, e002-e005 done and run at reference on the Windows PC (RTX 3060 Ti, 46 min for all four); numerology write-up into the hardware repo pending | `results/e002..e005*.json`, `tests/test_m2_ofdm.py` (13 gates), `tests/test_e002_reference.py` (5 gates) |
+| M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision written into the hardware repo's `pcb/radio/phy-simulator-plan-2026-10-24.html` ("M2 result"), commit c04627b on `radio-investigate-vova` | `results/e002..e005*.json`, `tests/test_m2_ofdm.py` (13 gates), `tests/test_e002_reference.py` (5 gates) |
+| M3 Zig modem, floating point first | not started. Open from M2: experiments for CFO, SCO, phase noise, IQ, ADC and the Wi-Fi burst (models exist), TDL-C and two-ray channels, 5.8 GHz | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
