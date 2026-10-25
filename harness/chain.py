@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 import torch
-from sionna.phy.channel import AWGN, ApplyTimeChannel, time_lag_discrete_time_channel, time_to_ofdm_channel
+from sionna.phy.channel import AWGN, ApplyTimeChannel, time_lag_discrete_time_channel
 from sionna.phy.channel.tr38901 import TDL
 from sionna.phy.fec.ldpc import LDPC5GDecoder, LDPC5GEncoder
 from sionna.phy.mapping import BinarySource, Demapper, Mapper
@@ -106,6 +106,24 @@ def resource_grid(num: Numerology, device: str = "cpu") -> ResourceGrid:
                         pilot_ofdm_symbol_indices=list(num.pilot_ofdm_symbols), device=device)
 
 
+def symbol_average_ofdm_channel(h_t: torch.Tensor, rg: ResourceGrid, l_min: int) -> torch.Tensor:
+    """Frequency response of each OFDM symbol from the discrete-time taps
+    h_t [..., num_time_samples + l_tot - 1, l_tot], averaged over the useful
+    part of the symbol. Sionna's time_to_ofdm_channel takes the taps at the
+    first sample after the CP instead; with Doppler the channel moves within
+    the symbol and that snapshot is a worse match to what the data sees than
+    a genie LMMSE estimate (at 600 Hz, 0.9 dB on 64qam-5/6). The average is
+    the ICI-free part of the channel, the right "perfect CSI".
+    Output [..., num_ofdm_symbols, fft_size], same conventions as Sionna."""
+    n, cp = rg.fft_size, rg.cyclic_prefix_length
+    s = rg.num_ofdm_symbols
+    h = h_t[..., : s * (n + cp), :].reshape(*h_t.shape[:-2], s, n + cp, h_t.shape[-1])
+    h = h[..., cp:, :].mean(dim=-2)                                    # [..., S, l_tot]
+    h = torch.nn.functional.pad(h, (0, n - h.shape[-1]))
+    h = torch.roll(h, shifts=l_min, dims=-1)                           # lag 0 first, negative lags at the end
+    return torch.fft.fftshift(torch.fft.fft(h), dim=-1)
+
+
 class GenieLmmseEstimator:
     """Joint 2D LMMSE channel estimate from block pilots with known channel
     statistics, R = R_time (x) R_freq. The pilot pattern and the noise
@@ -164,7 +182,8 @@ class OfdmLink:
                  behind perfect CSI at low SNR.
       "lmmse"    2D LMMSE filtering with the TDL's true frequency and time
                  covariance (genie statistics): the practical ceiling.
-      "perfect"  the true frequency response of each OFDM symbol.
+      "perfect"  the true frequency response of each OFDM symbol, averaged
+                 over the symbol (see symbol_average_ofdm_channel).
 
     Es/N0 is per resource element, as in AwgnLink: the modulator's IFFT is
     unitary and every RE has unit energy, so time-domain noise of variance
@@ -293,7 +312,7 @@ class OfdmLink:
 
         if self.estimator_kind == "perfect":
             if self.channel == "tdl":
-                h = self.remove_nulled(time_to_ofdm_channel(h_t, self.rg, self.l_min))
+                h = self.remove_nulled(symbol_average_ofdm_channel(h_t, self.rg, self.l_min))
             else:
                 h = torch.ones([batch, 1, 1, 1, 1, self.num.num_ofdm_symbols,
                                 self.num.num_effective_subcarriers], dtype=y_f.dtype, device=d)
