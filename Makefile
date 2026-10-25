@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem e001 e002 e003 e004 e005
+.PHONY: check test-harness test-modem test-rtl modem e001 e002 e003 e004 e005 e006 e007 e008 e009
 
 check: test-harness test-modem test-rtl
 
@@ -36,3 +36,11 @@ e004:
 	$(PY) -I experiments/e004_cp_delay_spread.py --profile $(PROFILE)
 e005:
 	$(PY) -I experiments/e005_pa_backoff.py --profile $(PROFILE)
+e006:
+	$(PY) -I experiments/e006_channel_set.py --profile $(PROFILE)
+e007:
+	$(PY) -I experiments/e007_phase_noise.py --profile $(PROFILE)
+e008:
+	$(PY) -I experiments/e008_iq_adc.py --profile $(PROFILE)
+e009:
+	$(PY) -I experiments/e009_wifi_burst.py --profile $(PROFILE)
