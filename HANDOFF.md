@@ -1,7 +1,7 @@
-# Handoff, 2026-10-24
+# Handoff, 2026-10-25
 
-For continuing on the Windows PC (or any machine). Read this, then
-`README.md`. The plan with the full rationale is in the hardware repo:
+Read this, then `README.md`. The plan with the full rationale, and the
+numerology decision, are in the hardware repo:
 `hardware/pcb/radio/phy-simulator-plan-2026-10-24.html` (branch
 `radio-investigate-vova`).
 
@@ -13,14 +13,14 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 and M1 done, M2 not started
+## State: M0 to M2 done, M3 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
-| M0 environment and skeleton | done, commit c31f79d | `make check` green: pytest env + ctypes tests, `zig build test`, cocotb block under Verilator and Icarus |
-| M1 AWGN baseline curves | done, commit bdc1d88 | `results/e001_awgn_baseline.json`, 11 pytest gates pass |
-| M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision written into the hardware repo's `pcb/radio/phy-simulator-plan-2026-10-24.html` ("M2 result"), commit c04627b on `radio-investigate-vova` | `results/e002..e005*.json`, `tests/test_m2_ofdm.py` (13 gates), `tests/test_e002_reference.py` (5 gates) |
-| M3 Zig modem, floating point first | not started. Open from M2: experiments for CFO, SCO, phase noise, IQ, ADC and the Wi-Fi burst (models exist), TDL-C and two-ray channels, 5.8 GHz | |
+| M0 environment and skeleton | done, c31f79d | `make check`: pytest env + ctypes tests, `zig build test`, cocotb block under Verilator and Icarus |
+| M1 AWGN baseline curves | done, bdc1d88 | `results/e001_awgn_baseline.json`, `tests/test_e001_reference.py` |
+| M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision in the hardware plan ("M2 result", then the e006-e010 follow-ups) | `results/e002..e010*.json`, `tests/test_m2_ofdm.py`, `tests/test_e002_reference.py`, `tests/test_m2_impairments_reference.py`, `tests/test_e010_reference.py` |
+| M3 Zig modem, floating point first | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -35,113 +35,79 @@ Es/N0 per resource element where FER crosses 1 %):
 | 64qam-3/4 | 26.65 | 15.73 dB | 2.3 dB |
 | 64qam-5/6 | 29.61 | 17.29 dB | 2.4 dB |
 
-These are the numbers the gate in `tests/test_e001_reference.py` protects
-(0.8 to 3.0 dB from capacity, monotonic, re-run drift under 0.2 dB).
+## What M2 decided (details and numbers in the hardware plan)
 
-## Where the repo is and how to move it
+- 256-point FFT at 10 MHz, CP 32, 14 symbols, block pilots on symbols 2
+  and 11, frame bit interleaver. Fading (TDL-D) costs 4 to 5 dB over AWGN;
+  LS estimation is about 3 dB behind LMMSE, so M3 wants a 2D (time and
+  frequency) filtered estimator, not per-RE LS.
+- No continual pilot subcarriers below about 1500 Hz Doppler (e010). The
+  AD9363's PLL (0.37 deg rms at 2.4 GHz, about 0.63 at 5.8 GHz,
+  `ad9361.pdf`) costs at most 0.2 dB untracked; e007's 5 dB was the
+  unbounded Wiener model. Residual CFO after sync must be tracked, and a
+  per-frame phase ramp fitted to the two block pilot symbols does it at no
+  overhead up to about 300 Hz (1000 Hz costs 0.6 dB, from ICI).
+- At 2000 Hz Doppler two pilot symbols floor 64-QAM. A third pilot
+  symbol (1, 6, 11) fixes it as well as 16 continual pilot subcarriers do,
+  at the same 8 % of REs and with nothing new in the receiver, so a
+  high-Doppler frame format is three pilot symbols, chosen per link.
+- PA input back-off about 6 dB for 64-QAM, IQ imbalance 0.5 dB / 2 deg
+  costs 0.4 dB, the ADC is free down to 6 bits, the AGC must aim low, and a
+  Wi-Fi burst at 10 dB SIR floors 64-QAM (handled by MCS fallback and
+  retransmission, not by the PHY).
 
-The repo lives at `~/phy-sim` on the Mac, not in `~/Documents/prg`, because
-macOS revoked iTerm2's access to Documents mid-session. It has no remote yet.
-To get it to the Windows PC:
+## Next: M3
+
+Zig modem in floating point first, matching the Sionna chain bit for bit
+where it can (mapper, interleaver, OFDM) and statistically where it cannot
+(LDPC decoder, estimator). The receiver pieces M2 says it needs:
+2D channel estimator from the block pilots, the linear CFO tracker
+(`OfdmLink.derotate`, `phase_track="linear"`), LMMSE equalisation, max-log
+or exact LLRs. Synchronisation (preamble, coarse CFO, timing) is still
+genie in the simulator: worth an experiment before M3 freezes the frame.
+
+## Setup (done on the Windows PC)
+
+WSL2 Ubuntu 24.04, repo at `~/phy-sim` on the Linux filesystem (not
+`/mnt/...`, which is ten times slower). Install the Windows NVIDIA driver
+only; CUDA works inside WSL2.
 
 ```
-# on the Mac, after creating an empty GitHub repo
-cd ~/phy-sim && git remote add origin https://github.com/waverage/phy-sim.git && git push -u origin main
-# later, to put it where the other projects are
-rm -rf ~/Documents/prg/phy-sim && mv ~/phy-sim ~/Documents/prg/phy-sim
-```
-
-The half-written folder `~/Documents/prg/phy-sim` from before the lockout
-contains nothing the real repo lacks.
-
-## Setup on the Windows PC
-
-Use WSL2 with Ubuntu 24.04. Sionna recommends Ubuntu, the cocotb and
-Verilator flow is Linux-native, and CUDA works inside WSL2 if the PC has an
-NVIDIA GPU (install the Windows NVIDIA driver only; do not install a Linux
-driver inside WSL). Native Windows is possible for the Python part but not
-for Verilator or cocotb.
-
-```
-sudo apt install build-essential git python3.12-venv verilator iverilog
-# Zig 0.17.0 official tarball (not a distro package), e.g.
-curl -LO https://ziglang.org/download/0.17.0/zig-x86_64-linux-0.17.0.tar.xz
-tar xf zig-x86_64-linux-0.17.0.tar.xz && mkdir -p ~/.local/zig ~/.local/bin
-mv zig-x86_64-linux-0.17.0 ~/.local/zig/0.17.0 && ln -sf ~/.local/zig/0.17.0/zig ~/.local/bin/zig
-# project
-git clone https://github.com/waverage/phy-sim.git && cd phy-sim
-python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-# with an NVIDIA GPU, install the CUDA build of torch first, then sionna:
-#   .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cu126
+sudo apt install build-essential git python3.12-venv iverilog poppler-utils
+# Verilator >= 5.036 for cocotb 2: Ubuntu's 5.020 is too old, build from source
+# Zig 0.17.0 official tarball into ~/.local/zig/0.17.0, symlinked into ~/.local/bin
+python3.12 -m venv .venv
+.venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cu126
+.venv/bin/pip install -r requirements.txt
 make check
 ```
 
-`make check` must be green before anything else. The e001 drift test runs a
-short QPSK sweep, about 20 s on a CPU.
-
-Then pass `device="cuda:0"` to `AwgnLink` (and to future chains) to use the
-GPU. The reference profile that took 6 minutes on the M1 Pro CPU should take
-seconds.
-
 ## Known gotchas
 
-- **macOS GNU make 3.81** ignores PATH set inside a makefile, so cocotb tests
-  run through `rtl/run.sh <block> [SIM=icarus]`. Linux make 4.x does not have
-  this problem but the wrapper works there too.
-- **Homebrew Zig 0.17.0 is broken on macOS 26** ("error: Unexpected" on every
-  command). Use the official tarball. Not relevant on Linux.
-- **Sionna only accepts `cpu` and `cuda:N`** (`sionna/phy/config.py`,
-  `available_devices`). Passing `device=` at construction is required; `.to()`
-  afterwards does not move the LDPC index tables.
+- **Sionna only accepts `cpu` and `cuda:N`.** Pass `device=` at
+  construction; `.to()` afterwards does not move the LDPC index tables.
 - **WSL2 CUDA silently spills to system RAM.** A batch that needs more
-  than the 8 GB of the RTX 3060 Ti does not fail, it runs 10x slower
-  (`torch.cuda.max_memory_allocated()` reports more than the card has).
+  than the 8 GB of the RTX 3060 Ti does not fail, it runs 10x slower.
   Keep the peak under about 6 GB; batch 250 is safe for every chain.
 - **The chains `torch.compile` the decoder, demapper and equalizer** by
-  default (5 to 8x on the decoder, bit-identical output). The first call
-  per block and input shape costs about 20 s; pass `compile=False` for
-  one-off runs where that is longer than the run.
-- **Sionna's LDPC decoder is the whole cost on CPU**: 95 % of each point,
-  about 34 codewords/s at n = 9552 with 20 iterations. Fewer iterations or
-  min-sum shift the curve at the knee, so they are not a shortcut for the
-  reference profile. Use the `quick` profile in `harness/sweep.py` to rank
-  hypotheses (about 8 s per MCS) and the GPU for reference runs.
-
-## Apple Silicon GPU (Metal) investigation, unfinished
-
-Question was whether Sionna can use the M1 GPU. Findings so far:
-
-- NVIDIA does not support it: the device list is hard-coded, the docs name
-  Ubuntu only, and the Sionna GitHub has no issues mentioning Apple, Metal
-  or MPS as of today. Only Sionna RT (ray tracing) got Metal support in v2.1.
-- With a two-line patch (`type(sionna.phy.config).available_devices`
-  returning `["cpu", "mps"]` and a `torch.Generator(device="mps")` inserted
-  into `config._torch_rngs["mps"]`), the LDPC encoder and the QAM mapper ran
-  on Metal. The AWGN block then needed the generator. The decoder, the
-  slow part, was not reached before the work was stopped.
-- Unknown: whether the decoder's gather/scatter kernels run on MPS and how
-  fast. Known PyTorch MPS limits: no float64 (Sionna's "single" precision
-  is fine), some ops fall back to CPU with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
-- Verdict: an afternoon experiment, not a dependency. The CUDA PC is the
-  supported fast path and the Zig fixed-point decoder (M4) makes the CPU
-  fast anyway.
-
-## Next steps, M2
-
-1. `harness/chain.py`: add `OfdmLink` using Sionna `ResourceGrid`,
-   `ResourceGridMapper`, `OFDMModulator/Demodulator`, `OFDMChannel` with
-   `TDL`, `LSChannelEstimator`, `LMMSEEqualizer`. Keep `AwgnLink` as is.
-2. Impairments as plain torch functions in `harness/impairments.py`: CFO
-   (±20 ppm), sampling clock offset, phase noise (Wiener process with the
-   AD9363 mask), Rapp PA (p = 2, 6 to 10 dB back-off), IQ imbalance
-   (0.5 dB, 2°), 12-bit ADC with AGC error, a 20 MHz Wi-Fi burst as
-   interference.
-3. Experiments e002 (TDL-D with 600 Hz Doppler vs AWGN), e003 (pilot
-   density), e004 (CP length vs delay spread), e005 (PA back-off vs EVM
-   and spectral mask). Quick profile first, reference on the GPU.
-4. Write the numerology decision into the hardware repo's radio plan.
+  default (5 to 8x on the decoder, identical output). The first call per
+  block and input shape costs about 20 s, more after WSL restarts with a
+  cold cache; pass `compile=False` for tests and one-off runs.
+- **Background jobs die with the WSL session** that started them (`nohup`
+  is not enough when WSL shuts the VM down); run long experiments from a
+  session that stays open.
+- **Perfect CSI is the symbol-averaged channel** (`symbol_average_ofdm_channel`):
+  Sionna's `time_to_ofdm_channel` samples one instant per symbol and loses
+  to a genie LMMSE estimate under Doppler.
+- **A common phase error does not average out.** It hits every codeword
+  of a frame together, so the 1 % FER point sees its tails: a tracker
+  whose rms error looks harmless can cost 1 dB (e010, per-symbol tracking
+  on 8 pilots).
+- **macOS:** GNU make 3.81 ignores PATH set in a makefile (cocotb runs
+  through `rtl/run.sh`), Homebrew Zig 0.17.0 is broken on macOS 26 (use
+  the tarball), and Sionna has no Metal support.
 
 ## Repo conventions
 
-Commits end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
-Results JSON is committed, PNGs are not. One experiment per script, numbered.
+Results JSON is committed, PNGs and `*.quick.json` are not. One experiment
+per script, numbered; `make eNNN PROFILE=quick|reference`.

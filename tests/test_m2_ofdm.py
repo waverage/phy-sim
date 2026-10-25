@@ -68,6 +68,19 @@ def test_phase_noise_variance_growth():
     assert abs(got / want - 1) < 0.1, f"phase variance {got:.3e}, want {want:.3e}"
 
 
+def test_pll_phase_noise_matches_mask_and_datasheet():
+    """The generated phase has the mask's variance (over the offsets a frame
+    resolves), and -100 dBc/Hz in a 100 kHz loop is the AD9361's 0.37 deg rms
+    at 2.4 GHz."""
+    assert abs(math.degrees(math.sqrt(imp.integrated_phase_noise_rad2(-100.0))) - 0.37) < 0.02
+    torch.manual_seed(0)
+    n = 4032
+    y = imp.pll_phase_noise(torch.ones(500, n, dtype=torch.complex128), FS, inband_dbc_hz=-90.0)
+    got = float(torch.angle(y).var())
+    want = imp.integrated_phase_noise_rad2(-90.0, f_lo=FS / (8 * n), f_hi=FS / 2)
+    assert abs(got / want - 1) < 0.1, f"phase variance {got:.3e}, want {want:.3e}"
+
+
 def test_rapp_linear_far_from_saturation_and_bounded():
     x = gaussian((4, 8192))
     assert torch.allclose(imp.rapp_pa(x, FS, backoff_db=40.0), x, rtol=1e-3, atol=1e-4)
@@ -166,6 +179,36 @@ def test_genie_lmmse_tracks_channel():
     mse = float((h_hat - h_true).abs().square().mean())
     assert mse < 10 ** (-20 / 10), f"estimate error {10 * math.log10(mse):.1f} dB"
     assert abs(10 * math.log10(mse / float(err_var.mean()))) < 5
+
+
+def test_continual_pilot_grid():
+    from harness.waveform import with_continual_pilots
+    num = with_continual_pilots(NUM_10MHZ, 8)
+    link = OfdmLink(num, MCS_TABLE[0], estimator="lmmse", phase_track="symbol", device=default_device(),
+                    compile=False)
+    mask = link.rg.pilot_pattern.mask[0, 0].bool().cpu()
+    assert mask[:, list(num.continual_pilot_subcarriers)].all()
+    assert mask[list(num.pilot_ofdm_symbols)].all()
+    assert int((~mask).sum()) == num.num_data_res == link.rg.num_data_symbols
+    with pytest.raises(ValueError):
+        OfdmLink(NUM_10MHZ, MCS_TABLE[0], estimator="lmmse", phase_track="symbol", compile=False)
+
+
+@pytest.mark.parametrize("pilots,mode", [(0, "linear"), (8, "linear"), (8, "symbol")])
+def test_phase_tracker_removes_residual_cfo(pilots, mode):
+    """300 Hz turns the phase by 44 deg over a frame: without tracking
+    64qam-5/6 is lost entirely, every tracker (the linear one even on the
+    block pilots alone) must recover it."""
+    import functools
+    from harness.waveform import with_continual_pilots
+    torch.manual_seed(0)
+    off = functools.partial(imp.cfo, offset_hz=300.0)
+    kw = dict(estimator="lmmse", channel_impairments=off, device=default_device(), compile=False)
+    num = with_continual_pilots(NUM_10MHZ, pilots) if pilots else NUM_10MHZ
+    plain = OfdmLink(num, MCS_TABLE[6], **kw).run(50, 22.0)
+    tracked = OfdmLink(num, MCS_TABLE[6], phase_track=mode, **kw).run(50, 22.0)
+    assert plain["frame_errors"] > 40, plain
+    assert tracked["frame_errors"] == 0, tracked
 
 
 def test_ofdm_awgn_matches_e001():

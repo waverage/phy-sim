@@ -68,6 +68,45 @@ def phase_noise(x: torch.Tensor, fs: float, dbc_hz: float = -94.0, offset_hz: fl
     return x * torch.exp(1j * torch.cumsum(inc, dim=-1))
 
 
+def pll_phase_noise_mask(f: torch.Tensor, inband_dbc_hz: float = -100.0, loop_bw_hz: float = 100e3,
+                         floor_dbc_hz: float = -150.0) -> torch.Tensor:
+    """SSB phase noise L(f) of a PLL synthesiser, linear units: flat at
+    inband_dbc_hz inside the loop bandwidth, the VCO's -20 dB/decade outside,
+    down to a floor. Below 1 kHz the reference's rise is left out; within one
+    frame it is a constant phase the channel estimate absorbs."""
+    fa = f.abs().clamp_min(1.0)
+    l_db = inband_dbc_hz - 20 * torch.log10((fa / loop_bw_hz).clamp_min(1.0))
+    return 10 ** (l_db.clamp_min(floor_dbc_hz) / 10)
+
+
+def pll_phase_noise(x: torch.Tensor, fs: float, inband_dbc_hz: float = -100.0, loop_bw_hz: float = 100e3,
+                    floor_dbc_hz: float = -150.0, oversize: int = 8) -> torch.Tensor:
+    """Phase noise of a locked PLL (see pll_phase_noise_mask): Gaussian phase
+    with the two-sided spectrum L(|f|), made by shaping white noise in the
+    frequency domain. The phase is generated over `oversize` times the frame
+    and cropped, so offsets down to fs / (oversize n) are present. Unlike the
+    Wiener model its variance is bounded: the integral of the mask.
+
+    AD9363/AD9361 (same synthesiser): integrated phase noise 0.37 deg rms at
+    2.4 GHz and 0.59 deg rms at 5.5 GHz over 100 Hz to 100 MHz (AD9361 data
+    sheet, 40 MHz reference). With a 100 kHz loop that is about -100 and
+    -96 dBc/Hz in band; TX and RX together add 3 dB."""
+    n = x.shape[-1]
+    m = n * oversize
+    f = torch.fft.fftfreq(m, d=1 / fs).to(x.device)
+    shape = torch.sqrt(pll_phase_noise_mask(f, inband_dbc_hz, loop_bw_hz, floor_dbc_hz) * fs).to(x.real.dtype)
+    w = torch.randn(x.shape[:-1] + (m,), device=x.device, dtype=x.real.dtype)
+    phi = torch.fft.ifft(torch.fft.fft(w) * shape).real[..., :n]
+    return x * torch.exp(1j * phi)
+
+
+def integrated_phase_noise_rad2(inband_dbc_hz: float = -100.0, loop_bw_hz: float = 100e3,
+                                floor_dbc_hz: float = -150.0, f_lo: float = 100.0, f_hi: float = 100e6) -> float:
+    """Phase variance of the mask, 2 * integral of L(f) from f_lo to f_hi."""
+    f = torch.logspace(math.log10(f_lo), math.log10(f_hi), 20001, dtype=torch.float64)
+    return float(2 * torch.trapezoid(pll_phase_noise_mask(f, inband_dbc_hz, loop_bw_hz, floor_dbc_hz), f))
+
+
 def rapp_pa(x: torch.Tensor, fs: float, backoff_db: float = 8.0, p: float = 2.0) -> torch.Tensor:
     """Rapp solid-state PA (AM/AM only), small-signal gain 1. backoff_db is
     the input back-off: saturation power over the mean input power."""

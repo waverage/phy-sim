@@ -6,7 +6,7 @@ these two tables so a hypothesis about the waveform is a change here.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,9 @@ class Numerology:
     dc_null: bool
     num_ofdm_symbols: int         # OFDM symbols per frame
     pilot_ofdm_symbols: tuple[int, ...]   # Kronecker (block) pilot symbols
+    # Continual pilots: effective-subcarrier indices that carry a pilot in
+    # every OFDM symbol, for per-symbol phase tracking (802.11's 4 of 52)
+    continual_pilot_subcarriers: tuple[int, ...] = ()
 
     @property
     def subcarrier_spacing_hz(self) -> float:
@@ -38,8 +41,10 @@ class Numerology:
 
     @property
     def num_data_res(self) -> int:
-        """Data resource elements per frame (pilot symbols carry no data)."""
-        return self.num_effective_subcarriers * (self.num_ofdm_symbols - len(self.pilot_ofdm_symbols))
+        """Data resource elements per frame (pilot symbols and continual pilot
+        subcarriers carry no data)."""
+        data_symbols = self.num_ofdm_symbols - len(self.pilot_ofdm_symbols)
+        return (self.num_effective_subcarriers - len(self.continual_pilot_subcarriers)) * data_symbols
 
     @property
     def occupied_bandwidth_hz(self) -> float:
@@ -93,6 +98,14 @@ NUM_10MHZ = Numerology(
     num_ofdm_symbols=14,
     pilot_ofdm_symbols=(2, 11),
 )
+
+def with_continual_pilots(num: Numerology, count: int) -> Numerology:
+    """num with `count` continual pilot subcarriers spread evenly over the
+    effective subcarriers (each in the middle of its 1/count of the band)."""
+    f = num.num_effective_subcarriers
+    sc = tuple(int((i + 0.5) * f / count) for i in range(count))
+    return replace(num, name=f"{num.name}-cp{count}", continual_pilot_subcarriers=sc)
+
 
 # Single-stream MCS table, 802.11n MCS 1-7 shaped. BPSK omitted for now.
 MCS_TABLE: tuple[MCS, ...] = (

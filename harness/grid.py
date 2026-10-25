@@ -13,17 +13,20 @@ from .waveform import MCS_TABLE, Numerology, phy_rate_bps
 
 def run_grid(num: Numerology, configs: dict[str, dict], mcs_names, profile: str, device: str,
              span_db: float = 14.0, start_offset_db: float = -1.5, log=print) -> dict:
-    """configs maps a name to OfdmLink keyword arguments. Each sweep starts
+    """configs maps a name to OfdmLink keyword arguments, plus an optional
+    "num" that overrides the numerology for that config. Each sweep starts
     start_offset_db below the e001 AWGN 10 % point of its MCS."""
     mcs_list = [m for m in MCS_TABLE if m.name in mcs_names]
     results = {}
     for cfg, kw in configs.items():
+        kw = dict(kw)
+        cfg_num = kw.pop("num", num)
         results[cfg] = {}
         for mcs in mcs_list:
             log(f"{cfg} {mcs.name}")
-            link = OfdmLink(num, mcs, device=device, **kw)
+            link = OfdmLink(cfg_num, mcs, device=device, **kw)
             c = run_curve(link, reference_esno(mcs.name) + start_offset_db, span_db, profile, log=log)
-            c["phy_rate_bps"] = phy_rate_bps(num, mcs)
+            c["phy_rate_bps"] = phy_rate_bps(cfg_num, mcs)
             results[cfg][mcs.name] = c
     return results
 

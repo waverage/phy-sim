@@ -18,7 +18,7 @@ from sionna.phy.fec.ldpc import LDPC5GDecoder, LDPC5GEncoder
 from sionna.phy.mapping import BinarySource, Demapper, Mapper
 from sionna.phy.mimo import StreamManagement
 from sionna.phy.ofdm import (LMMSEEqualizer, LSChannelEstimator, OFDMDemodulator, OFDMModulator,
-                             RemoveNulledSubcarriers, ResourceGrid, ResourceGridMapper,
+                             PilotPattern, RemoveNulledSubcarriers, ResourceGrid, ResourceGridMapper,
                              tdl_freq_cov_mat, tdl_time_cov_mat)
 
 from .impairments import Impairment
@@ -99,11 +99,25 @@ class AwgnLink:
 
 def resource_grid(num: Numerology, device: str = "cpu") -> ResourceGrid:
     """Sionna resource grid for a numerology: one stream, Kronecker (block)
-    pilots on num.pilot_ofdm_symbols, which fill those symbols' subcarriers."""
+    pilots on num.pilot_ofdm_symbols, which fill those symbols' subcarriers,
+    plus num.continual_pilot_subcarriers in every symbol. Pilots are QPSK
+    from a fixed seed, mapped in Sionna's order (symbol-major)."""
+    if not num.continual_pilot_subcarriers:
+        return ResourceGrid(num.num_ofdm_symbols, num.fft_size, num.subcarrier_spacing_hz,
+                            cyclic_prefix_length=num.cp_len, num_guard_carriers=num.num_guard,
+                            dc_null=num.dc_null, pilot_pattern="kronecker",
+                            pilot_ofdm_symbol_indices=list(num.pilot_ofdm_symbols), device=device)
+    mask = np.zeros([1, 1, num.num_ofdm_symbols, num.num_effective_subcarriers], np.float32)
+    mask[0, 0, list(num.pilot_ofdm_symbols), :] = 1
+    mask[0, 0, :, list(num.continual_pilot_subcarriers)] = 1
+    rng = np.random.default_rng(0)
+    bits = rng.integers(0, 2, (2, int(mask.sum())))
+    pilots = ((1 - 2 * bits[0]) + 1j * (1 - 2 * bits[1])) / np.sqrt(2)
+    pattern = PilotPattern(torch.as_tensor(mask, device=device),
+                           torch.as_tensor(pilots[None, None].astype(np.complex64), device=device), device=device)
     return ResourceGrid(num.num_ofdm_symbols, num.fft_size, num.subcarrier_spacing_hz,
                         cyclic_prefix_length=num.cp_len, num_guard_carriers=num.num_guard,
-                        dc_null=num.dc_null, pilot_pattern="kronecker",
-                        pilot_ofdm_symbol_indices=list(num.pilot_ofdm_symbols), device=device)
+                        dc_null=num.dc_null, pilot_pattern=pattern, device=device)
 
 
 def symbol_average_ofdm_channel(h_t: torch.Tensor, rg: ResourceGrid, l_min: int) -> torch.Tensor:
@@ -132,22 +146,26 @@ class GenieLmmseEstimator:
     N0 and applied as one matmul per frame. Sionna's LMMSEChannelEstimator
     gives a comparable estimate (separable, frequency then time) but rebuilds
     its filters per frame at about 65 frames/s on an RTX 3060 Ti.
-    Inputs and outputs follow LSChannelEstimator: y [b,1,1,S,fft] -> h_hat,
-    err_var [b,1,1,1,1,S,F]."""
+    Any pilot pattern works; `use_symbols` restricts the estimate to the
+    pilots on those OFDM symbols (the block pilots, for the phase tracker's
+    first pass). Inputs and outputs follow LSChannelEstimator:
+    y [b,1,1,S,fft] -> h_hat, err_var [b,1,1,1,1,S,F]."""
 
-    def __init__(self, rg: ResourceGrid, pilot_symbols: tuple[int, ...], cov_t: torch.Tensor,
-                 cov_f: torch.Tensor, device: str):
+    def __init__(self, rg: ResourceGrid, cov_t: torch.Tensor, cov_f: torch.Tensor, device: str,
+                 use_symbols: tuple[int, ...] | None = None):
         self.device = device
         self.remove_nulled = RemoveNulledSubcarriers(rg, device=device)
         S, F = rg.num_ofdm_symbols, rg.num_effective_subcarriers
-        self.pilot_symbols = torch.as_tensor(pilot_symbols, device=device)
-        mask = rg.pilot_pattern.mask[0, 0]                        # [S, F]
-        assert bool(mask[self.pilot_symbols].all()) and int(mask.sum()) == len(self.pilot_symbols) * F, \
-            "GenieLmmseEstimator expects block pilots on whole OFDM symbols"
-        pilots = rg.pilot_pattern.pilots[0, 0].to(torch.complex128)  # Kronecker order: symbol-major
-        self.inv_pilots = (1 / pilots).to(torch.complex64).reshape(1, 1, 1, -1)
+        mask = rg.pilot_pattern.mask[0, 0].reshape(-1).bool()    # [S F], symbol-major like the pilots
+        all_idx = torch.nonzero(mask).reshape(-1).to(device)
+        pilots = rg.pilot_pattern.pilots[0, 0].to(torch.complex128).to(device)
+        keep = torch.ones_like(all_idx, dtype=torch.bool)
+        if use_symbols is not None:
+            keep = torch.isin(all_idx // F, torch.as_tensor(use_symbols, device=device))
+        pidx = all_idx[keep]
+        self.pidx = pidx
+        self.inv_pilots = (1 / pilots[keep]).to(torch.complex64).reshape(1, 1, 1, -1)
         r = torch.kron(cov_t.to(torch.complex128), cov_f.to(torch.complex128))   # [SF, SF], (s, f) order
-        pidx = (self.pilot_symbols[:, None] * F + torch.arange(F, device=device)[None, :]).reshape(-1)
         self.r_hp = r[:, pidx]                                    # [SF, Np]
         self.r_pp = r[pidx][:, pidx]                              # [Np, Np]
         self.r_diag = r.diagonal().real                           # [SF]
@@ -165,7 +183,7 @@ class GenieLmmseEstimator:
     def __call__(self, y: torch.Tensor, no: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         w, err_var = self.filters(float(no))
         y_eff = self.remove_nulled(y)                             # [b,1,1,S,F]
-        h_ls = y_eff[..., self.pilot_symbols, :].reshape(*y.shape[:3], -1) * self.inv_pilots   # [b,1,1,Np]
+        h_ls = y_eff.reshape(*y.shape[:3], -1)[..., self.pidx] * self.inv_pilots   # [b,1,1,Np]
         h_hat = (h_ls @ w.T).reshape(*y.shape[:3], 1, 1, self.S, self.F)
         return h_hat, err_var.expand(h_hat.shape)
 
@@ -198,6 +216,13 @@ class OfdmLink:
     Impairment hooks take fn(x, fs) (see harness/impairments.py): tx before
     the channel, channel after it and before the noise (oscillator effects,
     interference), rx after the noise (IQ imbalance, ADC).
+
+    phase_track: common phase error correction (see derotate), lmmse only.
+    "symbol" measures each symbol's phase on its own pilots (802.11 style;
+    needs continual pilot subcarriers, noisy with few of them at low SNR).
+    "linear" fits one phase ramp per frame (residual CFO) to all pilots; with
+    block pilots alone it needs no extra overhead and is unambiguous up to
+    1 / (2 x pilot symbol spacing), 1.9 kHz for symbols 2 and 11.
     """
 
     def __init__(self, num: Numerology, mcs: MCS, *, channel: str = "awgn", tdl_model: str = "D",
@@ -205,11 +230,18 @@ class OfdmLink:
                  estimator: str = "ls", interpolation: str = "lin", interleave: bool = True,
                  tx_impairments: Impairment | None = None, channel_impairments: Impairment | None = None,
                  rx_impairments: Impairment | None = None, device: str = "cpu", num_iter: int = 20,
-                 compile: bool = True):
+                 compile: bool = True, phase_track: str | None = None):
         if channel not in ("awgn", "tdl"):
             raise ValueError(f"channel must be 'awgn' or 'tdl', not {channel!r}")
         if estimator not in ("ls", "lmmse", "perfect"):
             raise ValueError(f"estimator must be 'ls', 'lmmse' or 'perfect', not {estimator!r}")
+        if phase_track not in (None, "symbol", "linear"):
+            raise ValueError(f"phase_track must be None, 'symbol' or 'linear', not {phase_track!r}")
+        if phase_track and estimator != "lmmse":
+            raise ValueError("phase_track needs estimator='lmmse'")
+        if phase_track == "symbol" and not num.continual_pilot_subcarriers:
+            raise ValueError("phase_track='symbol' needs continual pilot subcarriers")
+        self.phase_track = phase_track
         self.num, self.mcs, self.device, self.channel = num, mcs, device, channel
         self.estimator_kind = estimator
         self.tx_imp, self.ch_imp, self.rx_imp = tx_impairments, channel_impairments, rx_impairments
@@ -255,7 +287,17 @@ class OfdmLink:
             cov_f = tdl_freq_cov_mat(tdl_model, num.subcarrier_spacing_hz, num.fft_size,
                                      delay_spread_s, device=device)
             eff = torch.as_tensor(self.rg.effective_subcarrier_ind, device=cov_f.device)
-            self.estimator = GenieLmmseEstimator(self.rg, num.pilot_ofdm_symbols, cov_t, cov_f[eff][:, eff], device)
+            cov_f = cov_f[eff][:, eff]
+            self.estimator = GenieLmmseEstimator(self.rg, cov_t, cov_f, device)
+            if phase_track:
+                self.block_estimator = GenieLmmseEstimator(self.rg, cov_t, cov_f, device,
+                                                           use_symbols=num.pilot_ofdm_symbols)
+                # every pilot, block and continual, at its place in the grid
+                mask = self.rg.pilot_pattern.mask[0, 0].reshape(-1).bool()
+                x_p = torch.zeros(mask.numel(), dtype=torch.complex64, device=device)
+                x_p[torch.nonzero(mask).reshape(-1).to(device)] = self.rg.pilot_pattern.pilots[0, 0].to(device)
+                self.track_pilots = x_p.reshape(num.num_ofdm_symbols, num.num_effective_subcarriers)
+                self.track_anchor = float(np.mean(num.pilot_ofdm_symbols))
         else:
             self.estimator = LSChannelEstimator(self.rg, interpolation_type=interpolation, device=device)
         self.equalizer = _compiled(
@@ -285,6 +327,33 @@ class OfdmLink:
         s = torch.sinc(lags - tau[..., None] * self.fs)     # [b,rx,tx,p,l]
         s = s[:, :, None, :, None].to(a.dtype)              # [b,rx,1,tx,1,p,l]
         return torch.einsum("...pt,...pl->...tl", a, s)
+
+    def derotate(self, y_f: torch.Tensor, no: torch.Tensor) -> torch.Tensor:
+        """Common phase error correction, as an 802.11 receiver does: estimate
+        the channel from the block pilots alone, measure each symbol's phase
+        on its pilots against it (z), turn that into a phase per symbol
+        (phase_track) and rotate the symbol back. The full estimate (all
+        pilots) then runs on the derotated grid."""
+        h0, _ = self.block_estimator(y_f, no)                      # [b,1,1,1,1,S,F]
+        y_eff = self.remove_nulled(y_f)                            # [b,1,1,S,F]
+        z = (y_eff * (h0[:, :, :, 0, 0] * self.track_pilots).conj()).sum(-1)   # [b,1,1,S]
+        if self.phase_track == "symbol":
+            theta = torch.angle(z)
+        else:
+            # One phase ramp b (s - c) per frame. The block-pilot estimate h0
+            # already carries the phase at c, the mean of the pilot symbols,
+            # so only the slope is estimated: coarsely from neighbouring
+            # symbols (to unwrap), then by least squares on the residual
+            # phases. The phase error is common to the whole frame, so it
+            # does not average out over codewords; fitting one parameter
+            # from every continual pilot keeps it small.
+            s = torch.arange(z.shape[-1], device=z.device, dtype=torch.float32) - self.track_anchor
+            b0 = torch.angle((z[..., 1:] * z[..., :-1].conj()).sum(-1, keepdim=True))
+            resid = torch.angle(z * torch.exp(-1j * b0 * s))
+            w = z.abs()
+            slope = b0 + (w * s * resid).sum(-1, keepdim=True) / (w * s * s).sum(-1, keepdim=True)
+            theta = slope * s
+        return y_f * torch.exp(-1j * theta)[..., None]
 
     def run(self, batch: int, esno_db: float) -> dict:
         """One batch of `batch` frames at Es/N0 = esno_db (per resource element)."""
@@ -318,6 +387,8 @@ class OfdmLink:
                                 self.num.num_effective_subcarriers], dtype=y_f.dtype, device=d)
             err_var = torch.zeros(h.shape, dtype=no.dtype, device=d)
         else:
+            if self.phase_track:
+                y_f = self.derotate(y_f, no)
             h, err_var = self.estimator(y_f, no)
         x_hat, no_eff = self.equalizer(y_f, h, err_var, no)
         llr = self.demapper(x_hat, no_eff).reshape(batch, -1)[:, self.inv_perm]
