@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M4 done, M5 next
+## State: M0 to M5 done, M6 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -22,7 +22,8 @@ and `make check` gates everything.
 | M2 OFDM chain, fading, impairments, numerology decision | done 2026-10-25. Decision in the hardware plan ("M2 result", then the e006-e010 follow-ups) | `results/e002..e010*.json`, `tests/test_m2_ofdm.py`, `tests/test_e002_reference.py`, `tests/test_m2_impairments_reference.py`, `tests/test_e010_reference.py` |
 | M3 Zig modem, floating point first | done 2026-10-25 | `modem/src/*.zig`, `harness/modem.py`, `results/e011_zig_overlay.json`, `tests/test_m3_modem.py`, `tests/test_e011_reference.py` |
 | M4 fixed point and NumPy twins | done 2026-10-25 | `modem/src/fx*.zig`, `harness/twin.py`, `vectors/`, `results/e012_decoder_fixed.json`, `results/e013_fixed_point.json`, `tests/test_m4_twins.py`, `tests/test_m4_vectors.py`, `tests/test_e012_reference.py`, `tests/test_e013_reference.py` |
-| M5 synchronisation under stress | not started | |
+| M5 synchronisation under stress | done 2026-10-25 | `modem/src/fxsync.zig`, `harness/sync.py`, `harness/synclink.py`, `vectors/sync_*.npz`, `results/e014_sync_design.json`, `results/e015_sync_gate.json`, `tests/test_m5_sync.py`, `tests/test_e014_reference.py`, `tests/test_e015_reference.py` |
+| M6 link layer and video model | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -133,16 +134,85 @@ What the product algorithm costs against the genie (float - genie, e013):
 
 Throughput of the fixed receiver: 9,000 to 24,000 frames/s on the 5900X.
 
-## Next: M5, synchronisation under stress
+## What M5 decided and built (README "The synchroniser")
 
-Synchronisation is still genie: the receiver takes `l_min` and starts with
-the residual CFO small. M5 is the preamble, coarse CFO and timing,
-tested at full CFO, Doppler and the lowest-MCS SNR (sync success above
-99 %). Carry over:
-- **The AFC will also lock to the line-of-sight Doppler,** just as the
-  tracker does. Check the tracker gain with the real sync in the loop.
-- **The adaptive estimator design** (Doppler class per frame) is the
-  cheapest remaining dB on 64-QAM.
+The frame now starts with a one-slot preamble, and the fixed-point
+synchroniser (`modem/src/fxsync.zig`) finds it in a buffer of ADC samples
+and hands the aligned, derotated frame to the M4 receiver. The NumPy twin
+(`harness/twin.py`, `TwinSync`) is bit exact against it. The float
+reference is `harness/sync.py`. `harness/synclink.py` places each frame at
+a random time in the buffer, with the oscillators' full offset: CFO uniform
+in +-116 kHz (20 ppm at 5.8 GHz), 20 ppm SCO and PLL noise. e014 chose the
+design in floating point; e015 is the gate in fixed point.
+
+- **Preamble:** 9 x 32 samples (one slot, 6.7 % of the frame), every 8th
+  subcarrier, QPSK from the Gold sequence at seed 0x4E533C (lowest PAPR,
+  4.3 dB), at the data symbols' power.
+- **Detection and coarse stage:**
+  - Lag-32 autocorrelation over 256 samples against the energy, threshold
+    26/256, no division.
+  - Coarse timing at the largest |P| after the crossing.
+  - Coarse CFO from its CORDIC angle, range +-156 kHz.
+- **Fine timing:** impulse response of the first pilot symbol, using the
+  FFT, the conjugate pilot and the IFFT. The first path is the earliest tap
+  within a CP before the peak that is above peak/8 and 10x the noise floor.
+  A CIR with no peak (below 8x its mean) rejects the detection. Timing
+  lands within +-2 samples, and the FFT window starts 4 samples early.
+- **Medium CFO:** cyclic prefixes against their copies, range +-19.5 kHz.
+  It leaves 200 to 450 Hz rms, inside the tracker's +-1.9 kHz.
+- **Gate met (e015):** sync success at the qpsk-1/2 1 % point:
+
+  | Channel | Success |
+  |---|---|
+  | AWGN | 99.56 % |
+  | TDL-D 600 | 100 % |
+  | TDL-C 300 | 99.92 % |
+  | p3 at 2000 Hz | 99.85 % |
+
+  No false alarm in 33 M noise samples. Cold sync costs qpsk-1/2 0.0 to
+  0.14 dB (p3: 0.6 dB at 1 %, 0.1 at 10 %). The fixed chain is within
+  0.05 dB of float, and the synchroniser runs at 55,000 to 84,000 frames/s
+  on one thread per frame.
+- **Frequency control is a loop over frames, not per frame.**
+  - A per-frame estimate carries the channel's own Doppler. Removing it
+    costs 64-QAM about 2 dB on TDL-D, and more on TDL-C (e014: FER 8 %
+    against 1.7 %).
+  - A loop that averages many frames ("warm") is free without line of
+    sight (0.0 to 0.1 dB).
+  - **Behind a warm loop the M4 tracker is off** (gain 0 is equal or
+    better). Gain 0.5 stays for cold frames.
+- **Line-of-sight Doppler:** no receiver can tell it from CFO. Removing it
+  with the CFO (warm) costs 64-QAM on TDL-D 0.6 dB at 600 Hz and floors
+  p3 at 2000 Hz. Sionna keeps the diffuse paths centred on the carrier, so
+  shifting them by -0.6 fd leaves the time filter's band.
+  - Subtracting the LoS Doppler predicted from telemetry (positions and
+    velocities, "aided") recovers the genie everywhere.
+  - For a drone at altitude all paths share roughly the LoS Doppler, and
+    then warm alone is right. Sionna's model is the pessimistic case.
+
+## Next: M6, link layer and video model
+
+Packetiser, FEC and retransmission rules from nestua-zig, a synthetic H.265
+stream, freeze seconds per minute per SNR, and the MCS switching policy.
+Carry over:
+- **The AFC loop and its Doppler aid** belong in the control processor:
+  - bandwidth, lock detection, the cold-to-warm switch of the tracker gain;
+  - the telemetry path for the LoS Doppler.
+- **The adaptive estimator design** (Doppler class per frame) is still
+  the cheapest remaining dB on 64-QAM.
+- **Noise estimation:** the LLR scale still takes the true N0.
+
+## Gotchas found in M5
+
+- **Steep AWGN waterfalls defeat a 0.5 dB grid:** the 1 % point snaps to a
+  grid point, so sync modes look identical or 0.17 dB apart at random.
+  Compare AWGN at 10 %, or on a finer grid.
+- **64-QAM 3/4 on TDL-C is nearly floored even for the genie:** 1 % FER at
+  29 to 31 dB and 0.4 % at 39 dB. Its 1 % point is noise, so e015 uses
+  16-QAM 3/4 there.
+- **Sionna's AWGN draw is not pinned by torch.manual_seed either:**
+  regenerating `vectors/sync_*.npz` changes them. They are self-consistent;
+  regenerate only for an intended change.
 
 ## Gotchas found in M4
 

@@ -128,3 +128,34 @@ result. `tests/test_m4_vectors.py` replays them through the Zig modem and
 the twin, so any change to a fixed-point block shows up as a vector diff.
 Regenerate the vectors only for an intended change. The fixed receiver
 decodes 9,000 to 24,000 frames/s on the 5900X.
+
+## The synchroniser (L2, M5)
+
+`src/fxsync.zig` finds a frame in a buffer of 12-bit ADC samples and hands
+the aligned, derotated frame to the M4 receiver (`FxModem.rx` with
+`l_min = 0`). The frame now starts with a one-slot preamble: nine
+repetitions of a 32-sample sequence, the subcarriers that are multiples
+of 8, with QPSK from the Gold sequence (seed picked for a 4.3 dB PAPR), at
+the data symbols' power. The synchroniser:
+- **detects and coarsely times** on the lag-32 autocorrelation against the
+  energy (running sums, no division), and takes the coarse CFO from its
+  CORDIC angle (range +-156 kHz);
+- **times finely** on the channel impulse response of the first pilot
+  symbol (FFT, conjugate pilot, IFFT, reusing the FFT), picking the first
+  path above a fraction of the peak and the noise floor, and rejects a
+  detection whose CIR has no clear peak;
+- **refines the CFO** from the cyclic prefixes (lag 256, range +-19.5 kHz);
+- **aligns** the frame with a 32-bit NCO and the CORDIC, 4 samples before
+  the first path.
+
+`harness/sync.py` holds the same algorithm in floating point
+(`FloatSync`), the preamble, and the ctypes wrapper (`FxSync`);
+`harness/twin.py` (`TwinSync`) is its bit-exact NumPy twin.
+`harness/synclink.py` puts each frame behind its preamble at a random
+time in a buffer. It applies the oscillators' full offset (CFO in +-116
+kHz, 20 ppm SCO, PLL noise), Sionna's channel, the AGC and the ADC, then
+runs the synchroniser and the receivers. It compares cold (per frame),
+warm (a frequency loop over many frames), aided (warm less the predicted
+line-of-sight Doppler) and genie synchronisation. `make vectors` also
+writes `vectors/sync_*.npz`; `tests/test_m5_sync.py` replays them. The
+fixed synchroniser takes about 0.08 ms per frame on one core.

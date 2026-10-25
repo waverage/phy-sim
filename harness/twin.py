@@ -463,3 +463,154 @@ class TwinModem:
                 dd = met[:, bit == 0].min(-1) - met[:, bit == 1].min(-1)
                 out[:, 2 * j + dim] = sat_sym(rshr(dd * mult, shift), self.dec["llr_bits"])
         return out.reshape(-1)
+
+
+# ---- synchroniser (fxsync.Sync, M5) ------------------------------------------------------------
+
+def cossin_vec(ang) -> tuple[np.ndarray, np.ndarray]:
+    """cossin on an array of binary angles."""
+    a = np.mod(np.asarray(ang, dtype=np.int64), TURN)
+    a = np.where(a > TURN // 2, a - TURN, a)
+    neg = (a > TURN // 4) | (a < -TURN // 4)
+    a = np.where(a > TURN // 4, a - TURN // 2, np.where(a < -TURN // 4, a + TURN // 2, a))
+    x = np.full(a.shape, CORDIC_X0, np.int64)
+    y = np.zeros(a.shape, np.int64)
+    for i, at in enumerate(CORDIC_ATAN):
+        dx, dy = y >> i, x >> i
+        pos = a >= 0
+        x, y, a = np.where(pos, x - dx, x + dx), np.where(pos, y + dy, y - dy), np.where(pos, a - at, a + at)
+    return np.where(neg, -x, x), np.where(neg, -y, y)
+
+
+def angle30(re: int, im: int) -> int:
+    """CORDIC angle of a wide complex sum, normalised to 30 bits first."""
+    re, im = int(re), int(im)
+    sh = max(max(abs(re), abs(im)).bit_length() - 30, 0)
+    return cordic_vector(re >> sh, im >> sh)[1]
+
+
+def nco(n: np.ndarray, inc: int) -> tuple[np.ndarray, np.ndarray]:
+    """2^15 (cos, sin) of -n inc, from the top 16 bits of the 32-bit phase."""
+    return cossin_vec(np.mod(-np.asarray(n, np.int64) * int(inc), 1 << 32) >> 16)
+
+
+def wrap16(a: int) -> int:
+    v = a % TURN
+    return v - TURN if v > TURN // 2 else v
+
+
+class TwinSync:
+    """fxsync.Sync: cfg is a sync.SyncConfig (any object with its fields)."""
+
+    def __init__(self, cfg):
+        self.c = c = cfg
+        N = c.fft_size
+        idx = [i for i in range(c.guard_lo, N - c.guard_hi) if not (c.dc_null and i == N // 2)]
+        self.offsets = np.array(idx) - N // 2
+        self.bins = self.offsets % N
+        self.F = len(idx)
+        self.psign = tables.pilot_signs(self.F, c.pilot_seed).astype(np.int64)
+        self.slot = N + c.cp_len
+        self.pre = c.period * c.reps
+
+    def preamble(self) -> np.ndarray:
+        c, N = self.c, self.c.fft_size
+        k = self.offsets[(self.offsets % (N // c.period) == 0) & (self.offsets != 0)]
+        signs = tables.pilot_signs(len(k), c.stf_seed).astype(np.int64)
+        amp = math.floor(c.tx_scale * math.sqrt(self.F / len(k)) / math.sqrt(2.0) + 0.5)
+        x = np.zeros((N, 2), np.int64)
+        x[k % N] = signs * amp
+        x = fft(x, inverse=True)
+        return sat(x[np.arange(self.pre) % c.period], c.dac_bits).astype(np.int16)
+
+    @staticmethod
+    def _mul_conj(a, b):
+        return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1], a[..., 1] * b[..., 0] - a[..., 0] * b[..., 1]
+
+    def run_one(self, r: np.ndarray, probe: dict | None = None) -> dict:
+        """SyncOut's fields; probe, if given, receives the intermediate
+        results: the shifted correlator outputs for every d ("p" [d, 2],
+        "e" [d]), the pilot window after the coarse NCO and the FFT
+        ("pilot_fft" [N, 2]) and the impulse response ("cir" [N, 2])."""
+        c = self.c
+        r = np.asarray(r, np.int64)
+        L, P, W, N, cp = r.shape[0], c.period, c.window, c.fft_size, c.cp_len
+        out = dict.fromkeys(("detected", "start", "peak", "tau", "ang_coarse", "ang_cp", "inc", "inc_coarse",
+                             "p_re", "p_im", "e", "cir_peak", "cir_sum"), 0)
+        if L < P + W + 1:
+            return out
+        cr, ci = self._mul_conj(r[P:], r[:-P])
+        en = (r[:, 0] ** 2 + r[:, 1] ** 2)
+        e = en[P:] + en[:-P]
+
+        def rsum(v):
+            s = np.concatenate([[0], np.cumsum(v)])
+            return s[W:] - s[:-W]
+        pr, pi, es = rsum(cr), rsum(ci), rsum(e)                    # d = 0 .. L - P - W
+        ms = c.metric_shift
+        psr, psi, ess = pr >> ms, pi >> ms, es >> ms
+        if probe is not None:
+            probe.update(p=np.stack([psr, psi], -1), e=ess)
+        mag = psr * psr + psi * psi
+        over = mag * 1024 > c.threshold_q8 * ess * ess
+        if not over.any():
+            return out
+        d0 = int(over.argmax())
+        dmax = L - P - W
+        d = d0 + int(mag[d0:min(d0 + self.pre, dmax) + 1].argmax())
+        out.update(detected=1, peak=d, p_re=int(psr[d]), p_im=int(psi[d]), e=int(ess[d]))
+        a1 = angle30(pr[d], pi[d])
+        inc1 = a1 * (1 << 32) // (TURN * P)
+        out.update(ang_coarse=a1, inc_coarse=inc1)
+
+        coarse = d + self.pre
+        n = np.clip(coarse + c.pilot_symbol * self.slot + cp + np.arange(N), 0, L - 1)
+        x = rot16(r[n], nco(n, inc1))
+        y = fft(x)
+        sa, sb = self.psign[:, 0], self.psign[:, 1]
+        yb = y[self.bins]
+        z = np.zeros((N, 2), np.int64)
+        z[self.bins, 0] = sat(rshr(sa * yb[:, 0] + sb * yb[:, 1], 1), 16)
+        z[self.bins, 1] = sat(rshr(sa * yb[:, 1] - sb * yb[:, 0], 1), 16)
+        h = fft(z, inverse=True)
+        if probe is not None:
+            probe.update(pilot_fft=y, cir=h)
+        pw = h[:, 0] ** 2 + h[:, 1] ** 2
+        total = int(pw.sum())
+        pk = int(pw.argmax())
+        near = int(pw[(pk - cp + np.arange(2 * cp + 1)) % N].sum())
+        floor_sum, floor_n = total - near, N - (2 * cp + 1)
+        pmax = int(pw[pk])
+        cand = (pk - (cp - 1) + np.arange(cp)) % N
+        pc = pw[cand]
+        ok = ((pc << c.first_path_shift) >= pmax) & (pc * floor_n >= c.noise_floor * floor_sum)
+        ok[-1] = True
+        first = int(cand[ok.argmax()])
+        tau = first - N if first >= N // 2 else first
+        det = 1 | (2 if pmax * N >= c.cir_min_ratio * total else 0)
+        start = coarse + tau
+        out.update(detected=det, tau=tau, start=start, cir_peak=pmax, cir_sum=total)
+
+        inc = inc1
+        if c.cp_cfo:
+            n0 = (start + np.arange(c.num_symbols)[:, None] * self.slot + np.arange(cp)[None, :]).reshape(-1)
+            n0 = np.clip(n0, 0, L - N - 1)
+            qr, qi = self._mul_conj(r[n0 + N], r[n0])
+            delta = wrap16(angle30(qr.sum(), qi.sum()) - a1 * (N // P))
+            inc = inc1 + delta * ((1 << 32) // (TURN * N))
+            out["ang_cp"] = delta
+        out["inc"] = inc
+        return out
+
+    def run(self, buf: np.ndarray) -> np.ndarray:
+        from .sync import SYNC_OUT_FIELDS
+        recs = [self.run_one(b) for b in np.asarray(buf)]
+        return np.array([tuple(o[f] for f in SYNC_OUT_FIELDS) for o in recs],
+                        dtype=[(f, np.int64) for f in SYNC_OUT_FIELDS])
+
+    def align(self, r: np.ndarray, start: int, inc: int, length: int) -> np.ndarray:
+        r = np.asarray(r, np.int64)
+        n = start - self.c.backoff + np.arange(length)
+        valid = (n >= 0) & (n < r.shape[0])
+        v = rot16(r[np.clip(n, 0, r.shape[0] - 1)], nco(n, inc))
+        return np.where(valid[:, None], v, 0).astype(np.int16)

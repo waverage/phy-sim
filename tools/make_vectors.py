@@ -8,9 +8,11 @@ LLR scale, then the vectors: information and coded bits, the transmitted
 samples, the received ADC samples, and the receiver's intermediate results
 (FFT output after the tracker, tracker phase, channel estimate at the data
 REs, deinterleaved LLRs, decoded bits). blocks.npz holds FFT, CORDIC and
-LDPC decoder vectors on their own.
-tests/test_m4_vectors.py replays all of them through the Zig modem and the
-twin. Run:  .venv/bin/python -I tools/make_vectors.py
+LDPC decoder vectors on their own. sync_*.npz (M5) hold a frame behind its
+preamble in an ADC buffer at a random time and carrier offset, the
+synchroniser's outputs, the aligned frame and the decoded bits.
+tests/test_m4_vectors.py and tests/test_m5_sync.py replay all of them
+through the Zig modem and the twins. Run:  .venv/bin/python -I tools/make_vectors.py
 """
 import dataclasses
 import functools
@@ -118,12 +120,83 @@ def make_blocks() -> dict:
     return v
 
 
+C300 = dict(TDL, tdl_model="C", delay_spread_s=300e-9)
+SYNC_FRAMES = {
+    # file: (numerology, link kwargs, design, MCS, Es/N0); CFO uniform in +-116 kHz, 20 ppm SCO, PLL noise
+    "sync_awgn_qpsk12": (NUM_10MHZ, dict(channel="awgn"), EstimatorDesign(), "qpsk-1/2", 2.0),
+    "sync_tdlc300_16qam12": (NUM_10MHZ, C300, EstimatorDesign(), "16qam-1/2", 16.0),
+    "sync_p3_tdl2000_qpsk12": (P3, dict(TDL, doppler_hz=2000.0), EstimatorDesign(doppler_hz=1500.0, track_gain=0.0),
+                               "qpsk-1/2", 6.0),
+}
+
+
+def make_sync_frame(name: str) -> dict:
+    """A frame behind its preamble at a random time and carrier offset in a
+    buffer (harness/synclink.py): the ADC buffer, the synchroniser's outputs,
+    the aligned frame it hands the receiver and the receiver's decoded bits."""
+    from harness.sync import SYNC_OUT_FIELDS
+    from harness.synclink import SyncLink
+    num, kw, design, mcs_name, esno = SYNC_FRAMES[name]
+    seed = 2 + list(SYNC_FRAMES).index(name)
+    kw = {k: v for k, v in kw.items() if k != "carrier_hz"}
+    link = SyncLink(num, MCS[mcs_name], design=design, device="cpu", receivers={"fixed": {"fixed": True}},
+                    syncs=("sync",), **kw)
+    p, fp, sy = link.plan, link.fp, link.fxsync
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    no = 10 ** (-esno / 10)
+    link.set_noise(no)
+    info = link.ref.source([FRAMES_PER_FILE, p.num_codewords, p.k]).to(torch.uint8).cpu().numpy()
+    r, start, cfo = link.propagate(info, no)
+    _, yq, g = link.agc_adc(r, start)
+    scale = link.llr_scale(no, g)
+    out = sy.raw(yq)
+    frame = sy.align(yq, out["start"], out["inc"], link.frame_len)
+    rx = link.rx["fixed"]
+    bits, llr = rx.rx(frame, scale, 0, return_llr=True)
+    mask = link.ref.rg.pilot_pattern.mask[0, 0].cpu().numpy().astype(np.uint8)
+    fields = {f.name: getattr(num, f.name) for f in dataclasses.fields(num)}
+    cfg = {f: getattr(sy.cfg, f) for f, _ in sy.cfg._fields_}
+    meta = {"numerology": fields, "mcs": mcs_name, "bits_per_symbol": link.mcs.bits_per_symbol, "k": p.k, "n": p.n,
+            "num_codewords": p.num_codewords, "fixed_point": fp.as_dict(), "design": design.as_dict(),
+            "design_snr_db": design.design_snr_db(esno), "esno_db": esno, "l_min": 0, "phase_track": True,
+            "taps": design.taps, "channel": repr(kw), "sync_config": cfg, "true_start": start.tolist(),
+            "true_cfo_hz": (cfo * num.bandwidth_hz).tolist()}
+    v = {"meta": np.array(json.dumps(meta)), "pilot_mask": mask, **{f"filt_{k}": a for k, a in rx.filt.items()},
+         "info": info, "preamble": sy.preamble(), "rx": yq, **{f"sync_{f}": out[f] for f in SYNC_OUT_FIELDS},
+         "frame": frame, "llr_scale": scale, "llr": llr.astype(np.int8), "bits": bits}
+    # the twins must agree before anything is written; the twin also gives
+    # the intermediate results for the RTL's block tests
+    ts = twin.TwinSync(sy.cfg)
+    assert np.array_equal(ts.preamble(), v["preamble"])
+    probes = [{} for _ in range(FRAMES_PER_FILE)]
+    o = [ts.run_one(yq[i], probes[i]) for i in range(FRAMES_PER_FILE)]
+    for f in SYNC_OUT_FIELDS:
+        assert np.array_equal([x[f] for x in o], out[f]), (name, f)
+    v.update(trace_p=np.stack([p["p"] for p in probes]).astype(np.int32),
+             trace_e=np.stack([p["e"] for p in probes]).astype(np.int32),
+             pilot_fft=np.stack([p["pilot_fft"] for p in probes]).astype(np.int16),
+             cir=np.stack([p["cir"] for p in probes]).astype(np.int16))
+    for key in ("trace_p", "trace_e"):
+        assert np.abs(v[key]).max() < 2 ** 31
+    tm = twin_of(meta, mask)
+    tm.set_filter({k: v[f"filt_{k}"] for k in ("bt", "start", "at", "r")})
+    for i in range(FRAMES_PER_FILE):
+        assert np.array_equal(ts.align(yq[i], int(out["start"][i]), int(out["inc"][i]), link.frame_len), frame[i])
+        t = tm.rx(frame[i], float(scale[i]), 0)
+        assert np.array_equal(t["llr"], v["llr"][i]) and np.array_equal(t["bits"], bits[i]), name
+    return v
+
+
 def main():
     VECTORS.mkdir(exist_ok=True)
     np.savez_compressed(VECTORS / "blocks.npz", **make_blocks())
     print("blocks.npz")
     for name in FRAMES:
         np.savez_compressed(VECTORS / f"{name}.npz", **make_frame(name))
+        print(f"{name}.npz")
+    for name in SYNC_FRAMES:
+        np.savez_compressed(VECTORS / f"{name}.npz", **make_sync_frame(name))
         print(f"{name}.npz")
 
 

@@ -3,6 +3,7 @@
 //! blocks for bit-exact and statistical tests against Sionna.
 //! M4: the product modem in fixed point and its float twin (fxmodem.zig),
 //! plus its blocks for the bit-exact tests against harness/twin.py.
+//! M5: the synchroniser and the preamble in fixed point (fxsync.zig).
 //! No allocation after create.
 
 const std = @import("std");
@@ -15,9 +16,10 @@ const par = @import("par.zig");
 const fx = @import("fx.zig");
 const fxmodem = @import("fxmodem.zig");
 const tables = @import("tables.zig");
+const fxsync = @import("fxsync.zig");
 
 pub const version_major: u32 = 0;
-pub const version_minor: u32 = 4;
+pub const version_minor: u32 = 5;
 
 const alloc = std.heap.page_allocator;
 
@@ -284,7 +286,38 @@ export fn nphy_fx_tables(num_pilots: u32, pilot_seed: u32, signs: [*]i8, frame_b
     return 0;
 }
 
+// ---- M5 synchroniser ------------------------------------------------------------
+
+export fn nphy_sync_create(cfg: *const fxsync.SyncConfig) ?*fxsync.Sync {
+    return fxsync.Sync.create(alloc, cfg) catch null;
+}
+
+export fn nphy_sync_destroy(s: *fxsync.Sync) void {
+    s.destroy();
+}
+
+export fn nphy_sync_preamble_len(s: *const fxsync.Sync) u32 {
+    return s.pre;
+}
+
+/// out: [preamble_len] int16 I/Q pairs at the DAC.
+export fn nphy_sync_preamble(s: *const fxsync.Sync, out: [*][2]i16) i32 {
+    s.preamble(out[0..s.pre]) catch return -1;
+    return 0;
+}
+
+/// buf: [batch][len] 12-bit ADC samples as int16 I/Q pairs -> out [batch].
+export fn nphy_sync_run(s: *fxsync.Sync, buf: [*]const [2]i16, len: u32, batch: u32, out: [*]fxsync.SyncOut) void {
+    s.run(buf, len, batch, out);
+}
+
+/// out: [batch][out_len], each frame from start[i] - backoff, derotated by inc[i].
+export fn nphy_sync_align(s: *fxsync.Sync, buf: [*]const [2]i16, len: u32, batch: u32, start: [*]const i32, inc: [*]const i32, out_len: u32, out: [*][2]i16) void {
+    s.alignBatch(buf, len, batch, start, inc, out_len, out);
+}
+
 test {
+    _ = @import("fxsync.zig");
     _ = @import("tables.zig");
     _ = @import("fxmodem.zig");
     _ = @import("fx.zig");

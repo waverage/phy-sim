@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013
+.PHONY: check test-harness test-modem test-rtl modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015
 
 check: test-harness test-modem test-rtl
 
@@ -55,6 +55,10 @@ e012: modem
 	$(PY) -I experiments/e012_decoder_fixed.py --profile $(PROFILE)
 e013: modem
 	$(PY) -I experiments/e013_fixed_point.py --profile $(PROFILE)
+e014: modem
+	$(PY) -I experiments/e014_sync_design.py --profile $(PROFILE)
+e015: modem
+	$(PY) -I experiments/e015_sync_gate.py --profile $(PROFILE)
 
 # Golden vectors for the RTL (committed); regenerate only for an intended
 # change to a fixed-point block.
