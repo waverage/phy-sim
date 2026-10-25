@@ -36,6 +36,15 @@ before `requirements.txt`. Keep the clone on the Linux filesystem
 (`~/phy-sim`), not under `/mnt/<drive>`. Experiments pick `cuda:0`
 automatically when it exists (`harness.sweep.default_device`).
 
+On the RTX 3060 Ti the OFDM chain does about 4,500 frames/s for QPSK and
+2,500 for 64-QAM at batch 250: the decoder, demapper and equalizer are
+`torch.compile`d (the decoder alone is 8x faster that way, bit-identical),
+the TDL path gains are generated at a decimated rate and interpolated,
+and the genie LMMSE estimator precomputes one filter per SNR point. The
+first call of each block per input shape compiles for about 20 s.
+WSL2's CUDA spills to system RAM instead of failing when the 8 GB run out,
+and then everything is 10x slower; keep the peak under about 6 GB.
+
 ## Workflow
 
 1. A hypothesis is a script in `experiments/`. Copy the closest one, change the

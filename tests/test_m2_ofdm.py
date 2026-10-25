@@ -123,18 +123,49 @@ def test_oversampled_identity_roundtrip():
 
 
 # --- link ------------------------------------------------------------------
+# compile=False throughout: these runs are seconds long, compiling costs 20 s per block
 
 def test_tdl_channel_unit_energy():
     torch.manual_seed(0)
-    link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], channel="tdl", doppler_hz=600.0, device=default_device())
+    link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], channel="tdl", doppler_hz=600.0, device=default_device(), compile=False)
     e = float(torch.cat([link.time_channel(100) for _ in range(4)]).abs().square().sum(-1).mean())
     assert abs(e - 1) < 0.03, f"mean channel energy {e:.3f}"
 
 
 def test_ls_estimator_error_free_at_high_snr():
-    link = OfdmLink(NUM_10MHZ, MCS_TABLE[3], estimator="ls", device=default_device())
+    link = OfdmLink(NUM_10MHZ, MCS_TABLE[3], estimator="ls", device=default_device(), compile=False)
     r = link.run(50, 30.0)
     assert r["bit_errors"] == 0
+
+
+def test_ls_estimator_follows_fading_channel():
+    """16qam-1/2 with LS needs about 13 dB for 1 % FER on TDL-D at 600 Hz
+    (e002); at 20 dB it must be essentially error free."""
+    torch.manual_seed(0)
+    link = OfdmLink(NUM_10MHZ, MCS_TABLE[2], channel="tdl", doppler_hz=600.0, estimator="ls",
+                    device=default_device(), compile=False)
+    r = link.run(100, 20.0)
+    assert r["frame_errors"] <= 2, r
+
+
+def test_genie_lmmse_tracks_channel():
+    """The genie LMMSE estimate must be close to the true per-symbol channel
+    and its predicted error variance must be in the right range (the TDL
+    sum-of-sinusoids process does not follow the model covariance exactly)."""
+    from sionna.phy.channel import time_to_ofdm_channel
+    torch.manual_seed(0)
+    link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], channel="tdl", doppler_hz=600.0, estimator="lmmse",
+                    device=default_device(), compile=False)
+    batch, no = 100, torch.tensor(0.1, device=link.device)         # 10 dB
+    x = link.mapper(torch.randint(0, 2, (batch, NUM_10MHZ.num_data_res * 2), device=link.device).float())
+    x_t = link.modulator(link.rg_mapper(x.reshape(batch, 1, 1, -1)))
+    h_t = link.time_channel(batch)
+    y_f = link.demodulator(link.awgn(link.apply_channel(x_t, h_t), no))
+    h_true = link.remove_nulled(time_to_ofdm_channel(h_t, link.rg, link.l_min))
+    h_hat, err_var = link.estimator(y_f, no)
+    mse = float((h_hat - h_true).abs().square().mean())
+    assert mse < 10 ** (-20 / 10), f"estimate error {10 * math.log10(mse):.1f} dB"
+    assert abs(10 * math.log10(mse / float(err_var.mean()))) < 5
 
 
 def test_ofdm_awgn_matches_e001():
@@ -142,7 +173,7 @@ def test_ofdm_awgn_matches_e001():
     FER: proves the time-domain noise scaling and the interleaver."""
     ref = json.loads((ROOT / "results" / "e001_awgn_baseline.json").read_text())
     s10 = ref["curves"]["qpsk-1/2"]["esno_db_at_fer10"]
-    link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], estimator="perfect", device=default_device())
+    link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], estimator="perfect", device=default_device(), compile=False)
     pts = run_sweep(link, np.arange(s10 - 1.0, s10 + 1.01, 0.25), batch=200,
                     min_frame_errors=60, max_frames=1500, seed=7, log=None)
     got = snr_at_fer(pts, 0.10)

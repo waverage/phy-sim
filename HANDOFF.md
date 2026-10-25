@@ -92,6 +92,14 @@ seconds.
 - **Sionna only accepts `cpu` and `cuda:N`** (`sionna/phy/config.py`,
   `available_devices`). Passing `device=` at construction is required; `.to()`
   afterwards does not move the LDPC index tables.
+- **WSL2 CUDA silently spills to system RAM.** A batch that needs more
+  than the 8 GB of the RTX 3060 Ti does not fail, it runs 10x slower
+  (`torch.cuda.max_memory_allocated()` reports more than the card has).
+  Keep the peak under about 6 GB; batch 250 is safe for every chain.
+- **The chains `torch.compile` the decoder, demapper and equalizer** by
+  default (5 to 8x on the decoder, bit-identical output). The first call
+  per block and input shape costs about 20 s; pass `compile=False` for
+  one-off runs where that is longer than the run.
 - **Sionna's LDPC decoder is the whole cost on CPU**: 95 % of each point,
   about 34 codewords/s at n = 9552 with 20 iterations. Fewer iterations or
   min-sum shift the curve at the knee, so they are not a shortcut for the

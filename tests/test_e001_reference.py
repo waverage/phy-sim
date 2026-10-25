@@ -63,7 +63,7 @@ def test_rerun_drift(result):
     from harness.sweep import run_sweep, snr_at_fer
     from harness.waveform import MCS_TABLE, NUM_10MHZ
     ref = result["curves"]["qpsk-1/2"]["esno_db_at_fer10"]
-    link = AwgnLink(NUM_10MHZ, MCS_TABLE[0])
+    link = AwgnLink(NUM_10MHZ, MCS_TABLE[0], compile=False)   # compiling costs more than this run
     pts = run_sweep(link, np.arange(ref - 1.0, ref + 1.01, 0.25), batch=200,
                     min_frame_errors=60, max_frames=1500, seed=7, log=None)
     got = snr_at_fer(pts, 0.10)
