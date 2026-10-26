@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M6 done, M7 next
+## State: M0 to M7 done, M8 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -24,7 +24,8 @@ and `make check` gates everything.
 | M4 fixed point and NumPy twins | done 2026-10-25 | `modem/src/fx*.zig`, `harness/twin.py`, `vectors/`, `results/e012_decoder_fixed.json`, `results/e013_fixed_point.json`, `tests/test_m4_twins.py`, `tests/test_m4_vectors.py`, `tests/test_e012_reference.py`, `tests/test_e013_reference.py` |
 | M5 synchronisation under stress | done 2026-10-25 | `modem/src/fxsync.zig`, `harness/sync.py`, `harness/synclink.py`, `vectors/sync_*.npz`, `results/e014_sync_design.json`, `results/e015_sync_gate.json`, `tests/test_m5_sync.py`, `tests/test_e014_reference.py`, `tests/test_e015_reference.py` |
 | M6 link layer and video model | done 2026-10-26 | `harness/fading.py`, `harness/phytrace.py`, `harness/linklayer.py`, `results/e016_phy_traces.json`, `results/e016_traces/`, `results/e017_video_link.json`, `tests/test_m6_link.py`, `tests/test_e016_reference.py`, `tests/test_e017_reference.py` |
-| M7 first RTL blocks | not started | |
+| M7 first RTL blocks | done 2026-10-26 | `rtl/fft256/`, `rtl/cordic/`, `rtl/stf_corr/`, `rtl/nco_rot/` (cocotb, Verilator and Icarus), `rtl/synth.sh`, `tools/gen_rtl.py`, `tests/test_m7_rtl.py` |
+| M8 full chain in RTL and Arty loopback | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -258,10 +259,47 @@ design in floating point; e015 is the gate in fixed point.
   is a cliff, so each probe one MCS up loses a block. A per-MCS backoff
   longer than the 3 dB penalty would fix it; fading channels do not need it.
 
-## Next: M7, first RTL blocks
+## What M7 built (README "The RTL blocks")
 
-FFT, preamble correlator, CORDIC with cocotb tests against the golden
-vectors under Verilator. Open L2 work, for M7 or alongside it:
+- **Gate met: zero diff on every golden vector the blocks touch,** under
+  Verilator and Icarus, with a clean `verilator -Wall` lint:
+  - `fft256`: blocks.npz (4 FFTs, 4 IFFTs), all 112 OFDM symbols of the
+    four frame vectors (rx to the y probe, after the twin's l_min rotation
+    and the tracker's derotation), the six sync frames' pilot FFT and
+    impulse response, and saturation and exact-half cases;
+  - `cordic`: blocks.npz, all 65,536 rotation angles, 5,000 vectoring and
+    3,500 angle30 inputs against the twin, the sync frames' coarse and
+    cyclic-prefix angles;
+  - `stf_corr` / `stf_detect`: the full correlator trace (about 5,600 d per
+    frame), the detection, the peak, P and E there, the coarse angle and
+    NCO increment of all six sync frames; noise, truncated and full-scale
+    buffers against the twin;
+  - `nco_rot`: the six aligned frames (4,032 samples each), the pilot
+    window and random full-scale cases.
+- **Yosys estimate for the XC7A35T** (`rtl/synth.sh`, synth_xilinx, no
+  timing): fft256 1,182 LUT, 4 DSP48, 1 RAMB18; stf_detect 4,566 LUT,
+  217 SRL, 34 DSP48 (cordic_vec is 2,700 LUT of it); nco_rot 1,674 LUT,
+  4 DSP48. Together about a third of the LUTs and half the DSPs.
+- **The FFT's first version used a register array** with two reads and two
+  writes per clock: 21,000 LUTs, the whole part. One true-dual-port RAM,
+  read in one clock and written in the next, costs 2560 clocks a
+  transform, inside a 2880-clock symbol at 100 MHz.
+- Not in M7: the CIR first-path search, the medium CFO stage's
+  accumulation and the control sequencing of the synchroniser (the
+  control processor computes the NCO's start phase -n0 inc); the
+  estimator, demapper and LDPC decoder are M8.
+
+## Next: M8, full chain in RTL and the Arty loopback
+
+Equaliser, demapper, LDPC decoder, channel emulator, ARM error counter;
+the gate is the FER on the board within 0.3 dB of L2. Before the board:
+- **stf_detect's 34 DSPs** are the detection metric's wide squares
+  (|P|^2, E^2 at 26 to 28 bits); one sample per 10 clocks lets one
+  multiplier be shared.
+- **Timing:** nothing is constrained yet. The FFT butterfly (four
+  multipliers, a 40-bit add and the rounding in one clock) and the
+  correlator's metric are the long paths; Vivado will tell.
+Open L2 work, for M8 or alongside it:
 - **The AFC loop and its Doppler aid** belong in the control processor
   (bandwidth, lock detection, tracker gain switch, telemetry path). The
   traces assume the warm loop is exact.
@@ -274,6 +312,21 @@ vectors under Verilator. Open L2 work, for M7 or alongside it:
   Hantro numbers, no slices or intra refresh. Bitrate 0.75 of goodput gives
   +25 % bitrate for +0.2 s/min of freeze on the flight; worth revisiting
   with a real encoder trace.
+
+## Gotchas found in M7
+
+- **Verilator makes width warnings fatal** under cocotb: size every
+  intermediate explicitly (products at the accumulator's width).
+- **Icarus starts registers at X, Verilator at 0:** a pipeline valid bit
+  without reset passes under Verilator and fails under Icarus. Reset every
+  valid chain and run both simulators.
+- **A register array with random-access reads and writes becomes
+  flip-flops and multiplexers** (21,000 LUTs for 256 x 32 bits). Write
+  RAMs as one always block per port with a registered read, and delay
+  lines as shift registers.
+- **cocotb refuses an out-of-range value** for a narrow port (a 16-bit tag
+  with 65,542 inputs): size test tags for the longest stream.
+- **Yosys `-q` hides `stat`:** tee it to a file (`rtl/synth.sh`).
 
 ## Gotchas found in M6
 
@@ -338,7 +391,7 @@ WSL2 Ubuntu 24.04, repo at `~/phy-sim` on the Linux filesystem (not
 only; CUDA works inside WSL2.
 
 ```
-sudo apt install build-essential git python3.12-venv iverilog poppler-utils
+sudo apt install build-essential git python3.12-venv iverilog poppler-utils yosys
 # Verilator >= 5.036 for cocotb 2: Ubuntu's 5.020 is too old, build from source
 # Zig 0.17.0 official tarball into ~/.local/zig/0.17.0, symlinked into ~/.local/bin
 python3.12 -m venv .venv

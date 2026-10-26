@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017
+.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017
 
 check: test-harness test-modem test-rtl
 
@@ -16,11 +16,26 @@ modem:
 test-modem:
 	cd modem && zig build test --summary all
 
-test-rtl:
-	rtl/run.sh reg_passthrough clean
-	rtl/run.sh reg_passthrough
-	rtl/run.sh reg_passthrough SIM=icarus clean
-	rtl/run.sh reg_passthrough SIM=icarus
+# Every RTL block's cocotb test under Verilator and Icarus (a failing test
+# fails make through cocotb's results.xml), and a -Wall lint.
+RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot
+
+test-rtl: lint-rtl
+	@for b in $(RTL_BLOCKS); do \
+	  for sim in verilator icarus; do \
+	    rtl/run.sh $$b SIM=$$sim clean >/dev/null && rtl/run.sh $$b SIM=$$sim || exit 1; \
+	  done; \
+	done
+
+lint-rtl:
+	cd rtl && verilator --lint-only -Wall --top-module fft256 fft256/fft256.v fft256/fft256_twiddle.v
+	cd rtl && verilator --lint-only -Wall --top-module cordic_tb cordic/cordic.v cordic/cordic_tb.v
+	cd rtl && verilator --lint-only -Wall --top-module stf_detect stf_corr/stf_corr.v cordic/cordic.v
+	cd rtl && verilator --lint-only -Wall --top-module nco_rot nco_rot/nco_rot.v cordic/cordic.v
+
+# The RTL's constant tables (committed), generated from the twin
+rtl-tables:
+	$(PY) -I tools/gen_rtl.py
 
 # Experiments. Each writes results/<name>.json (committed) and a PNG (not).
 # From e002 on, PROFILE=quick writes results/<name>.quick.json (not committed)

@@ -191,3 +191,28 @@ Two steps, so that the slow part runs once:
 
 A minute of link takes about half a second, so e017 sweeps every rung,
 rule and policy. `tests/test_m6_link.py` holds the unit tests.
+
+## The RTL blocks (L3, M7)
+
+Verilog-2005 in `rtl/<block>/`, each with a cocotb test that streams the
+golden vectors through it and requires zero difference, under Verilator
+and Icarus (`rtl/run.sh <block> [SIM=icarus]`, all of them in
+`make test-rtl`, with a `verilator -Wall` lint):
+- `fft256`: the 16-bit radix-2 FFT/IFFT of fx.Fft, round half to even,
+  in one true-dual-port RAM (a butterfly reads its pair in one clock and
+  writes it in the next; 2560 clocks a transform). Twiddles are generated
+  from the twin (`make rtl-tables`, `tools/gen_rtl.py`).
+- `cordic`: `cordic_vec` (vectoring), `cordic_rot` (rotation) and
+  `angle30` (normalise to 30 bits, then vector), 14-stage pipelines.
+- `stf_corr`: the preamble correlator: running sums of the lag-32
+  correlation and the energy over 256 samples on delay lines, the
+  threshold test and the peak search; `stf_detect` adds the coarse angle
+  and NCO increment.
+- `nco_rot`: the 32-bit NCO, `cordic_rot` and rot16, which aligns and
+  derotates a frame.
+
+Vectors covered: blocks.npz (FFT, CORDIC), every OFDM symbol of the frame
+vectors (rx to y), and from the sync vectors the correlator trace, the
+detection, the peak, both angles, the pilot FFT, the impulse response and
+the aligned frame. `rtl/synth.sh` gives a Yosys resource estimate for
+the Arty's XC7A35T.
