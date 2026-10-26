@@ -159,3 +159,35 @@ warm (a frequency loop over many frames), aided (warm less the predicted
 line-of-sight Doppler) and genie synchronisation. `make vectors` also
 writes `vectors/sync_*.npz`; `tests/test_m5_sync.py` replays them. The
 fixed synchroniser takes about 0.08 ms per frame on one core.
+
+## The link layer and video model (M6)
+
+Two steps, so that the slow part runs once:
+
+1. **PHY traces** (`harness/phytrace.py`, e016). The whole product chain
+   of M5 runs on consecutive frames of a fading channel that is continuous
+   in time (`harness/fading.py`: Sionna's TDL sum of sinusoids with its
+   random draws kept per link). For every frame and MCS the trace stores
+   the frame's decoding threshold: the lowest mean Es/N0 at which that
+   frame, with its own channel, noise shape, timing and oscillators,
+   decodes, found by bisection on one noise draw. A frame at mean Es/N0
+   `s` then decodes iff `s >= thr`, for any SNR trajectory. The traces
+   are `results/e016_traces/<channel>.npz` (committed), about a minute of
+   air time per fading channel.
+2. **Link layer and video** (`harness/linklayer.py`, e017), slot by slot
+   over a trace: a TDD superframe of 23 PHY frames (22 downlink, one
+   uplink), one link packet per frame, and nestua-zig's rules on top
+   (Reed-Solomon blocks with its tail rules, NACK-driven retransmission,
+   LTR re-anchor or IDR recovery, the ladder), with every rule a
+   `LinkConfig` field so it can be tuned. The video is a synthetic 1080p60
+   stream at the rung's bitrate (P frames with a log-normal spread,
+   periodic IDRs, LTR anchors, recovery frames sized from nestua-zig's
+   x265 and Hantro measurements). A frame not decoded `latency_ms` after
+   the encoder is lost; the display holds the last frame, and a gap over
+   50 ms is a freeze. Policies choose the MCS and the encoder bitrate:
+   `FixedPolicy`, `SnrPolicy` (the reported SNR with an outer loop on the
+   pre-FEC packet loss) and `LadderPolicy` (nestua-zig's loss-driven
+   ladder). `flight_snr` makes an out-and-back flight.
+
+A minute of link takes about half a second, so e017 sweeps every rung,
+rule and policy. `tests/test_m6_link.py` holds the unit tests.

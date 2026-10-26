@@ -130,8 +130,13 @@ class FixedPoint:
     # LLR scale cap: at most llr_cap / (a P), P the AGC's target power, so a
     # typical LLR (4 a^2 SNR nats) maps to about llr_cap * 4 LSB. Without it
     # every LLR saturates at high SNR and the decoder loses the difference
-    # between strong and faded REs (TDL-C, 64-QAM: an error floor).
-    llr_cap: float = 8.0
+    # between strong and faded REs (TDL-C, 64-QAM: an error floor). Too low a
+    # cap (M4's 8) floors the rate-3/4 codes on TDL-C instead: an RE 20 dB
+    # below the frame's mean gain is still reliable at high SNR, but its LLR
+    # comes out at a few LSB and the min-sum offset erases it (qpsk-3/4 at
+    # 40 dB: 2.4 % FER at 8, none at 16; 64qam-5/6: 18 % to 7 %; TDL-D and
+    # the AWGN waterfalls unchanged). M6 raised it to 16.
+    llr_cap: float = 16.0
 
     @property
     def agc_power(self) -> float:

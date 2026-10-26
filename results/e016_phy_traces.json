@@ -1,0 +1,1247 @@
+{
+ "experiment": "e016_phy_traces",
+ "date": "2026-10-26T11:28:37",
+ "git": "49b688e",
+ "sionna": "2.2.0",
+ "torch": "2.14.1+cu126",
+ "profile": "reference",
+ "device": "cuda:0",
+ "profile_params": {
+  "links": 16,
+  "frames": 8192,
+  "block": 64,
+  "check_frames": 1024
+ },
+ "frames_scale": {
+  "awgn": 0.25
+ },
+ "numerology": {
+  "name": "n10",
+  "bandwidth_hz": 10000000.0,
+  "fft_size": 256,
+  "cp_len": 32,
+  "num_guard": [
+   28,
+   28
+  ],
+  "dc_null": true,
+  "num_ofdm_symbols": 14,
+  "pilot_ofdm_symbols": [
+   2,
+   11
+  ],
+  "continual_pilot_subcarriers": [],
+  "subcarrier_spacing_hz": 39062.5,
+  "symbol_duration_us": 28.799999999999997,
+  "frame_duration_us": 403.2,
+  "num_effective_subcarriers": 199,
+  "num_data_res": 2388
+ },
+ "fixed_point": {
+  "llr_bits": 6,
+  "msg_bits": 6,
+  "app_bits": 8,
+  "llr_step_nat": 0.25,
+  "offset_lsb": 2,
+  "num_iter": 20,
+  "tx_scale": 512,
+  "dac_bits": 12,
+  "adc_bits": 12,
+  "agc_headroom_db": 12.0,
+  "llr_cap": 16.0
+ },
+ "results": {
+  "awgn": {
+   "config": {
+    "model": "awgn",
+    "delay_spread_s": 1e-07,
+    "doppler_hz": 600.0,
+    "carrier_hz": 5800000000.0,
+    "cfo_hz": 116000.0,
+    "pll_dbc_hz": -92.0,
+    "num_links": 16,
+    "gap_samples": 0,
+    "lo_db": -8.0,
+    "hi_db": 45.0,
+    "resolution_db": 0.2,
+    "bracket_db": 6.0,
+    "seed": 10
+   },
+   "frame_s": 0.000432,
+   "frames": 32768,
+   "doppler_centroid_hz": 0.0,
+   "mcs": {
+    "qpsk-1/2": {
+     "esno_db_at_fer10": 1.35,
+     "esno_db_at_fer1": 1.55,
+     "esno_db_at_fer01": 1.7,
+     "never": 0.0,
+     "payload_bytes": 298,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0047607421875,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 1.41,
+       "fer_trace": 0.04693603515625,
+       "fer_fresh": 0.0458984375,
+       "fer_same": 0.04693603515625,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 2.41,
+       "fer_trace": 0.0,
+       "fer_fresh": 6.103515625e-05,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 3.41,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 1.5035684496330468
+    },
+    "qpsk-3/4": {
+     "esno_db_at_fer10": 4.25,
+     "esno_db_at_fer1": 4.45,
+     "esno_db_at_fer01": 4.65,
+     "never": 0.0,
+     "payload_bytes": 447,
+     "bursts_at_fer1": {
+      "loss_rate": 0.006622314453125,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 4.34,
+       "fer_trace": 0.077392578125,
+       "fer_fresh": 0.07501220703125,
+       "fer_same": 0.077392578125,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 5.34,
+       "fer_trace": 0.0001220703125,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0001220703125,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 6.34,
+       "fer_trace": 6.103515625e-05,
+       "fer_fresh": 0.0,
+       "fer_same": 6.103515625e-05,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "16qam-1/2": {
+     "esno_db_at_fer10": 6.65,
+     "esno_db_at_fer1": 6.85,
+     "esno_db_at_fer01": 6.85,
+     "never": 0.0,
+     "payload_bytes": 597,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0001220703125,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 6.53,
+       "fer_trace": 0.2060546875,
+       "fer_fresh": 0.1962890625,
+       "fer_same": 0.2060546875,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 7.53,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.530000000000001,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 6.563904662863626
+    },
+    "16qam-3/4": {
+     "esno_db_at_fer10": 10.45,
+     "esno_db_at_fer1": 10.65,
+     "esno_db_at_fer01": 10.65,
+     "never": 0.0,
+     "payload_bytes": 895,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0003662109375,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 10.32,
+       "fer_trace": 0.22979736328125,
+       "fer_fresh": 0.231201171875,
+       "fer_same": 0.22979736328125,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 11.32,
+       "fer_trace": 6.103515625e-05,
+       "fer_fresh": 0.0,
+       "fer_same": 6.103515625e-05,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 12.32,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 6.103515625e-05,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-2/3": {
+     "esno_db_at_fer10": 14.4,
+     "esno_db_at_fer1": 14.55,
+     "esno_db_at_fer01": 14.55,
+     "never": 0.0,
+     "payload_bytes": 1194,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0008544921875,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 14.26,
+       "fer_trace": 0.22265625,
+       "fer_fresh": 0.22698974609375,
+       "fer_same": 0.22265625,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 15.26,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 16.259999999999998,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-3/4": {
+     "esno_db_at_fer10": 15.85,
+     "esno_db_at_fer1": 16.05,
+     "esno_db_at_fer01": 16.2,
+     "never": 0.0,
+     "payload_bytes": 1343,
+     "bursts_at_fer1": {
+      "loss_rate": 0.002227783203125,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 15.73,
+       "fer_trace": 0.31695556640625,
+       "fer_fresh": 0.32525634765625,
+       "fer_same": 0.31695556640625,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 16.73,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 17.73,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 16.003202258347937
+    },
+    "64qam-5/6": {
+     "esno_db_at_fer10": 17.4,
+     "esno_db_at_fer1": 17.6,
+     "esno_db_at_fer01": 17.8,
+     "never": 0.0,
+     "payload_bytes": 1492,
+     "bursts_at_fer1": {
+      "loss_rate": 0.004425048828125,
+      "p_loss_after_loss": 0.0,
+      "mean_run": 1.0,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 17.29,
+       "fer_trace": 0.477783203125,
+       "fer_fresh": 0.47772216796875,
+       "fer_same": 0.477783203125,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 18.29,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      },
+      {
+       "esno_db": 19.29,
+       "fer_trace": 0.0,
+       "fer_fresh": 0.0,
+       "fer_same": 0.0,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    }
+   },
+   "seconds": 475,
+   "decodes_per_s": 4755
+  },
+  "tdl-d-600": {
+   "config": {
+    "model": "D",
+    "delay_spread_s": 1e-07,
+    "doppler_hz": 600.0,
+    "carrier_hz": 5800000000.0,
+    "cfo_hz": 116000.0,
+    "pll_dbc_hz": -92.0,
+    "num_links": 16,
+    "gap_samples": 0,
+    "lo_db": -8.0,
+    "hi_db": 45.0,
+    "resolution_db": 0.2,
+    "bracket_db": 6.0,
+    "seed": 11
+   },
+   "frame_s": 0.000432,
+   "frames": 131072,
+   "doppler_centroid_hz": 372.8896839885316,
+   "mcs": {
+    "qpsk-1/2": {
+     "esno_db_at_fer10": 3.6,
+     "esno_db_at_fer1": 5.6,
+     "esno_db_at_fer01": 7.3,
+     "never": 0.0,
+     "payload_bytes": 298,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00934600830078125,
+      "p_loss_after_loss": 0.0588,
+      "mean_run": 1.062,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 3.41,
+       "fer_trace": 0.11944580078125,
+       "fer_fresh": 0.12109375,
+       "fer_same": 0.1195068359375,
+       "disagree": 0.00653076171875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 5.41,
+       "fer_trace": 0.01220703125,
+       "fer_fresh": 0.01336669921875,
+       "fer_same": 0.01214599609375,
+       "disagree": 0.00054931640625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.41,
+       "fer_trace": 0.00018310546875,
+       "fer_fresh": 0.00018310546875,
+       "fer_same": 0.000244140625,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 5.766004330187869
+    },
+    "qpsk-3/4": {
+     "esno_db_at_fer10": 6.9,
+     "esno_db_at_fer1": 9.1,
+     "esno_db_at_fer01": 11.1,
+     "never": 0.0,
+     "payload_bytes": 447,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00981903076171875,
+      "p_loss_after_loss": 0.0544,
+      "mean_run": 1.058,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 6.34,
+       "fer_trace": 0.16656494140625,
+       "fer_fresh": 0.16766357421875,
+       "fer_same": 0.165771484375,
+       "disagree": 0.00799560546875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.34,
+       "fer_trace": 0.0238037109375,
+       "fer_fresh": 0.02374267578125,
+       "fer_same": 0.02435302734375,
+       "disagree": 0.00164794921875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 11.34,
+       "fer_trace": 0.00067138671875,
+       "fer_fresh": 0.000732421875,
+       "fer_same": 0.000732421875,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ]
+    },
+    "16qam-1/2": {
+     "esno_db_at_fer10": 8.95,
+     "esno_db_at_fer1": 10.95,
+     "esno_db_at_fer01": 12.65,
+     "never": 0.0,
+     "payload_bytes": 597,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00957489013671875,
+      "p_loss_after_loss": 0.0494,
+      "mean_run": 1.052,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 8.530000000000001,
+       "fer_trace": 0.14508056640625,
+       "fer_fresh": 0.14483642578125,
+       "fer_same": 0.1451416015625,
+       "disagree": 0.00689697265625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 10.530000000000001,
+       "fer_trace": 0.01702880859375,
+       "fer_fresh": 0.01708984375,
+       "fer_same": 0.0167236328125,
+       "disagree": 0.00091552734375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 13.530000000000001,
+       "fer_trace": 0.0003662109375,
+       "fer_fresh": 0.0003662109375,
+       "fer_same": 0.0003662109375,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 11.0
+    },
+    "16qam-3/4": {
+     "esno_db_at_fer10": 13.0,
+     "esno_db_at_fer1": 15.25,
+     "esno_db_at_fer01": 17.4,
+     "never": 0.0,
+     "payload_bytes": 895,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0098876953125,
+      "p_loss_after_loss": 0.0478,
+      "mean_run": 1.05,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 12.32,
+       "fer_trace": 0.18310546875,
+       "fer_fresh": 0.1815185546875,
+       "fer_same": 0.1820068359375,
+       "disagree": 0.0072021484375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 14.32,
+       "fer_trace": 0.02880859375,
+       "fer_fresh": 0.028076171875,
+       "fer_same": 0.029052734375,
+       "disagree": 0.00146484375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 17.32,
+       "fer_trace": 0.0008544921875,
+       "fer_fresh": 0.0009765625,
+       "fer_same": 0.0008544921875,
+       "disagree": 0.0001220703125,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-2/3": {
+     "esno_db_at_fer10": 17.0,
+     "esno_db_at_fer1": 19.4,
+     "esno_db_at_fer01": 22.05,
+     "never": 6.866455078125e-05,
+     "payload_bytes": 1194,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00962066650390625,
+      "p_loss_after_loss": 0.0397,
+      "mean_run": 1.041,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 16.259999999999998,
+       "fer_trace": 0.18145751953125,
+       "fer_fresh": 0.183837890625,
+       "fer_same": 0.182373046875,
+       "disagree": 0.00665283203125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 18.259999999999998,
+       "fer_trace": 0.03070068359375,
+       "fer_fresh": 0.03094482421875,
+       "fer_same": 0.03094482421875,
+       "disagree": 0.0015869140625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.259999999999998,
+       "fer_trace": 0.001953125,
+       "fer_fresh": 0.00189208984375,
+       "fer_same": 0.0018310546875,
+       "disagree": 0.0001220703125,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-3/4": {
+     "esno_db_at_fer10": 18.75,
+     "esno_db_at_fer1": 21.5,
+     "esno_db_at_fer01": 27.05,
+     "never": 0.0001678466796875,
+     "payload_bytes": 1343,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0098419189453125,
+      "p_loss_after_loss": 0.0357,
+      "mean_run": 1.037,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 17.73,
+       "fer_trace": 0.2171630859375,
+       "fer_fresh": 0.21746826171875,
+       "fer_same": 0.216796875,
+       "disagree": 0.0079345703125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 19.73,
+       "fer_trace": 0.0445556640625,
+       "fer_fresh": 0.04345703125,
+       "fer_same": 0.04388427734375,
+       "disagree": 0.00238037109375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 22.73,
+       "fer_trace": 0.0040283203125,
+       "fer_fresh": 0.00433349609375,
+       "fer_same": 0.00384521484375,
+       "disagree": 0.00018310546875,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 21.829416057712702
+    },
+    "64qam-5/6": {
+     "esno_db_at_fer10": 20.75,
+     "esno_db_at_fer1": 24.85,
+     "esno_db_at_fer01": null,
+     "never": 0.0012359619140625,
+     "payload_bytes": 1492,
+     "bursts_at_fer1": {
+      "loss_rate": 0.009796142578125,
+      "p_loss_after_loss": 0.0335,
+      "mean_run": 1.035,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 19.29,
+       "fer_trace": 0.26287841796875,
+       "fer_fresh": 0.2628173828125,
+       "fer_same": 0.26318359375,
+       "disagree": 0.00823974609375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.29,
+       "fer_trace": 0.06787109375,
+       "fer_fresh": 0.069091796875,
+       "fer_same": 0.0677490234375,
+       "disagree": 0.003173828125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 24.29,
+       "fer_trace": 0.01300048828125,
+       "fer_fresh": 0.01287841796875,
+       "fer_same": 0.01287841796875,
+       "disagree": 0.00048828125,
+       "frames": 16384
+      }
+     ]
+    }
+   },
+   "seconds": 1302,
+   "decodes_per_s": 5877
+  },
+  "tdl-d-50": {
+   "config": {
+    "model": "D",
+    "delay_spread_s": 1e-07,
+    "doppler_hz": 50.0,
+    "carrier_hz": 5800000000.0,
+    "cfo_hz": 116000.0,
+    "pll_dbc_hz": -92.0,
+    "num_links": 16,
+    "gap_samples": 0,
+    "lo_db": -8.0,
+    "hi_db": 45.0,
+    "resolution_db": 0.2,
+    "bracket_db": 6.0,
+    "seed": 12
+   },
+   "frame_s": 0.000432,
+   "frames": 131072,
+   "doppler_centroid_hz": 31.07414033237763,
+   "mcs": {
+    "qpsk-1/2": {
+     "esno_db_at_fer10": 3.7,
+     "esno_db_at_fer1": 5.95,
+     "esno_db_at_fer01": 8.0,
+     "never": 0.0,
+     "payload_bytes": 298,
+     "bursts_at_fer1": {
+      "loss_rate": 0.009674072265625,
+      "p_loss_after_loss": 0.806,
+      "mean_run": 5.154,
+      "share_in_runs_ge8": 0.4866
+     },
+     "check": [
+      {
+       "esno_db": 3.41,
+       "fer_trace": 0.11920166015625,
+       "fer_fresh": 0.1182861328125,
+       "fer_same": 0.1190185546875,
+       "disagree": 0.00531005859375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 5.41,
+       "fer_trace": 0.0167236328125,
+       "fer_fresh": 0.01763916015625,
+       "fer_same": 0.01654052734375,
+       "disagree": 0.00103759765625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.41,
+       "fer_trace": 0.00152587890625,
+       "fer_fresh": 0.0013427734375,
+       "fer_same": 0.00152587890625,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "qpsk-3/4": {
+     "esno_db_at_fer10": 6.95,
+     "esno_db_at_fer1": 9.45,
+     "esno_db_at_fer01": 11.85,
+     "never": 0.0,
+     "payload_bytes": 447,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00968170166015625,
+      "p_loss_after_loss": 0.8188,
+      "mean_run": 5.517,
+      "share_in_runs_ge8": 0.4618
+     },
+     "check": [
+      {
+       "esno_db": 6.34,
+       "fer_trace": 0.15496826171875,
+       "fer_fresh": 0.15350341796875,
+       "fer_same": 0.1534423828125,
+       "disagree": 0.00762939453125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.34,
+       "fer_trace": 0.026611328125,
+       "fer_fresh": 0.02728271484375,
+       "fer_same": 0.0269775390625,
+       "disagree": 0.00244140625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 11.34,
+       "fer_trace": 0.002197265625,
+       "fer_fresh": 0.00201416015625,
+       "fer_same": 0.002197265625,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "16qam-1/2": {
+     "esno_db_at_fer10": 9.0,
+     "esno_db_at_fer1": 11.25,
+     "esno_db_at_fer01": 13.25,
+     "never": 0.0,
+     "payload_bytes": 597,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0098876953125,
+      "p_loss_after_loss": 0.8202,
+      "mean_run": 5.562,
+      "share_in_runs_ge8": 0.4815
+     },
+     "check": [
+      {
+       "esno_db": 8.530000000000001,
+       "fer_trace": 0.13787841796875,
+       "fer_fresh": 0.137451171875,
+       "fer_same": 0.13800048828125,
+       "disagree": 0.005859375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 10.530000000000001,
+       "fer_trace": 0.021484375,
+       "fer_fresh": 0.02166748046875,
+       "fer_same": 0.0216064453125,
+       "disagree": 0.001220703125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 13.530000000000001,
+       "fer_trace": 0.00164794921875,
+       "fer_fresh": 0.00164794921875,
+       "fer_same": 0.00164794921875,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "16qam-3/4": {
+     "esno_db_at_fer10": 12.95,
+     "esno_db_at_fer1": 15.4,
+     "esno_db_at_fer01": 17.75,
+     "never": 0.0,
+     "payload_bytes": 895,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00957489013671875,
+      "p_loss_after_loss": 0.8135,
+      "mean_run": 5.363,
+      "share_in_runs_ge8": 0.4574
+     },
+     "check": [
+      {
+       "esno_db": 12.32,
+       "fer_trace": 0.16131591796875,
+       "fer_fresh": 0.16015625,
+       "fer_same": 0.1602783203125,
+       "disagree": 0.00653076171875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 14.32,
+       "fer_trace": 0.02838134765625,
+       "fer_fresh": 0.02703857421875,
+       "fer_same": 0.02813720703125,
+       "disagree": 0.001708984375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 17.32,
+       "fer_trace": 0.0020751953125,
+       "fer_fresh": 0.0020751953125,
+       "fer_same": 0.0020751953125,
+       "disagree": 0.0,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-2/3": {
+     "esno_db_at_fer10": 16.8,
+     "esno_db_at_fer1": 19.15,
+     "esno_db_at_fer01": 21.3,
+     "never": 0.0,
+     "payload_bytes": 1194,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00959014892578125,
+      "p_loss_after_loss": 0.8107,
+      "mean_run": 5.282,
+      "share_in_runs_ge8": 0.4646
+     },
+     "check": [
+      {
+       "esno_db": 16.259999999999998,
+       "fer_trace": 0.14483642578125,
+       "fer_fresh": 0.14483642578125,
+       "fer_same": 0.1451416015625,
+       "disagree": 0.00689697265625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 18.259999999999998,
+       "fer_trace": 0.02301025390625,
+       "fer_fresh": 0.024169921875,
+       "fer_same": 0.02301025390625,
+       "disagree": 0.0013427734375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.259999999999998,
+       "fer_trace": 0.00177001953125,
+       "fer_fresh": 0.0018310546875,
+       "fer_same": 0.0018310546875,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-3/4": {
+     "esno_db_at_fer10": 18.35,
+     "esno_db_at_fer1": 20.75,
+     "esno_db_at_fer01": 23.05,
+     "never": 0.0,
+     "payload_bytes": 1343,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00998687744140625,
+      "p_loss_after_loss": 0.8182,
+      "mean_run": 5.5,
+      "share_in_runs_ge8": 0.4454
+     },
+     "check": [
+      {
+       "esno_db": 17.73,
+       "fer_trace": 0.159912109375,
+       "fer_fresh": 0.15966796875,
+       "fer_same": 0.1595458984375,
+       "disagree": 0.006103515625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 19.73,
+       "fer_trace": 0.027587890625,
+       "fer_fresh": 0.02716064453125,
+       "fer_same": 0.0277099609375,
+       "disagree": 0.0015869140625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 22.73,
+       "fer_trace": 0.00201416015625,
+       "fer_fresh": 0.0020751953125,
+       "fer_same": 0.001953125,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-5/6": {
+     "esno_db_at_fer10": 20.1,
+     "esno_db_at_fer1": 22.6,
+     "esno_db_at_fer01": 25.1,
+     "never": 0.0,
+     "payload_bytes": 1492,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00984954833984375,
+      "p_loss_after_loss": 0.8226,
+      "mean_run": 5.638,
+      "share_in_runs_ge8": 0.4864
+     },
+     "check": [
+      {
+       "esno_db": 19.29,
+       "fer_trace": 0.1768798828125,
+       "fer_fresh": 0.176513671875,
+       "fer_same": 0.17626953125,
+       "disagree": 0.0074462890625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.29,
+       "fer_trace": 0.03338623046875,
+       "fer_fresh": 0.0330810546875,
+       "fer_same": 0.03350830078125,
+       "disagree": 0.001708984375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 24.29,
+       "fer_trace": 0.00250244140625,
+       "fer_fresh": 0.00244140625,
+       "fer_same": 0.0025634765625,
+       "disagree": 6.103515625e-05,
+       "frames": 16384
+      }
+     ]
+    }
+   },
+   "seconds": 1269,
+   "decodes_per_s": 6067
+  },
+  "tdl-c-300-600": {
+   "config": {
+    "model": "C",
+    "delay_spread_s": 3e-07,
+    "doppler_hz": 600.0,
+    "carrier_hz": 5800000000.0,
+    "cfo_hz": 116000.0,
+    "pll_dbc_hz": -92.0,
+    "num_links": 16,
+    "gap_samples": 0,
+    "lo_db": -8.0,
+    "hi_db": 45.0,
+    "resolution_db": 0.2,
+    "bracket_db": 6.0,
+    "seed": 13
+   },
+   "frame_s": 0.000432,
+   "frames": 131072,
+   "doppler_centroid_hz": 0.0,
+   "mcs": {
+    "qpsk-1/2": {
+     "esno_db_at_fer10": 7.1,
+     "esno_db_at_fer1": 9.8,
+     "esno_db_at_fer01": 11.6,
+     "never": 0.0,
+     "payload_bytes": 298,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00971221923828125,
+      "p_loss_after_loss": 0.0573,
+      "mean_run": 1.061,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 3.41,
+       "fer_trace": 0.51904296875,
+       "fer_fresh": 0.5213623046875,
+       "fer_same": 0.5189208984375,
+       "disagree": 0.008056640625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 5.41,
+       "fer_trace": 0.2440185546875,
+       "fer_fresh": 0.2445068359375,
+       "fer_same": 0.2440185546875,
+       "disagree": 0.00634765625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.41,
+       "fer_trace": 0.03558349609375,
+       "fer_fresh": 0.03619384765625,
+       "fer_same": 0.035888671875,
+       "disagree": 0.00164794921875,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 10.040907951754503
+    },
+    "qpsk-3/4": {
+     "esno_db_at_fer10": 12.1,
+     "esno_db_at_fer1": 15.15,
+     "esno_db_at_fer01": 18.3,
+     "never": 0.00042724609375,
+     "payload_bytes": 447,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00969696044921875,
+      "p_loss_after_loss": 0.0456,
+      "mean_run": 1.048,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 6.34,
+       "fer_trace": 0.72503662109375,
+       "fer_fresh": 0.7265625,
+       "fer_same": 0.72528076171875,
+       "disagree": 0.005126953125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 8.34,
+       "fer_trace": 0.47509765625,
+       "fer_fresh": 0.47283935546875,
+       "fer_same": 0.4749755859375,
+       "disagree": 0.0068359375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 11.34,
+       "fer_trace": 0.144287109375,
+       "fer_fresh": 0.1448974609375,
+       "fer_same": 0.1444091796875,
+       "disagree": 0.0045166015625,
+       "frames": 16384
+      }
+     ]
+    },
+    "16qam-1/2": {
+     "esno_db_at_fer10": 12.5,
+     "esno_db_at_fer1": 15.1,
+     "esno_db_at_fer01": 16.8,
+     "never": 0.0,
+     "payload_bytes": 597,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00977325439453125,
+      "p_loss_after_loss": 0.0523,
+      "mean_run": 1.055,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 8.530000000000001,
+       "fer_trace": 0.56634521484375,
+       "fer_fresh": 0.56597900390625,
+       "fer_same": 0.56683349609375,
+       "disagree": 0.0064697265625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 10.530000000000001,
+       "fer_trace": 0.28204345703125,
+       "fer_fresh": 0.275634765625,
+       "fer_same": 0.2752685546875,
+       "disagree": 0.01361083984375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 13.530000000000001,
+       "fer_trace": 0.0445556640625,
+       "fer_fresh": 0.0411376953125,
+       "fer_same": 0.04150390625,
+       "disagree": 0.00439453125,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 15.0
+    },
+    "16qam-3/4": {
+     "esno_db_at_fer10": 18.05,
+     "esno_db_at_fer1": 21.05,
+     "esno_db_at_fer01": 23.4,
+     "never": 6.103515625e-05,
+     "payload_bytes": 895,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0098876953125,
+      "p_loss_after_loss": 0.0378,
+      "mean_run": 1.039,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 12.32,
+       "fer_trace": 0.74163818359375,
+       "fer_fresh": 0.7427978515625,
+       "fer_same": 0.7415771484375,
+       "disagree": 0.00518798828125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 14.32,
+       "fer_trace": 0.4810791015625,
+       "fer_fresh": 0.4786376953125,
+       "fer_same": 0.48126220703125,
+       "disagree": 0.00592041015625,
+       "frames": 16384
+      },
+      {
+       "esno_db": 17.32,
+       "fer_trace": 0.14385986328125,
+       "fer_fresh": 0.14215087890625,
+       "fer_same": 0.14288330078125,
+       "disagree": 0.0032958984375,
+       "frames": 16384
+      }
+     ],
+     "e015_esno_db_at_fer1": 22.94590164498838
+    },
+    "64qam-2/3": {
+     "esno_db_at_fer10": 22.05,
+     "esno_db_at_fer1": 25.8,
+     "esno_db_at_fer01": 32.85,
+     "never": 0.00026702880859375,
+     "payload_bytes": 1194,
+     "bursts_at_fer1": {
+      "loss_rate": 0.00983428955078125,
+      "p_loss_after_loss": 0.0163,
+      "mean_run": 1.017,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 16.259999999999998,
+       "fer_trace": 0.73687744140625,
+       "fer_fresh": 0.73614501953125,
+       "fer_same": 0.73663330078125,
+       "disagree": 0.0078125,
+       "frames": 16384
+      },
+      {
+       "esno_db": 18.259999999999998,
+       "fer_trace": 0.46337890625,
+       "fer_fresh": 0.46337890625,
+       "fer_same": 0.4644775390625,
+       "disagree": 0.0081787109375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.259999999999998,
+       "fer_trace": 0.13916015625,
+       "fer_fresh": 0.13909912109375,
+       "fer_same": 0.139404296875,
+       "disagree": 0.004638671875,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-3/4": {
+     "esno_db_at_fer10": 25.2,
+     "esno_db_at_fer1": 31.5,
+     "esno_db_at_fer01": null,
+     "never": 0.00295257568359375,
+     "payload_bytes": 1343,
+     "bursts_at_fer1": {
+      "loss_rate": 0.0098114013671875,
+      "p_loss_after_loss": 0.0124,
+      "mean_run": 1.013,
+      "share_in_runs_ge8": 0.0
+     },
+     "check": [
+      {
+       "esno_db": 17.73,
+       "fer_trace": 0.79119873046875,
+       "fer_fresh": 0.79296875,
+       "fer_same": 0.79119873046875,
+       "disagree": 0.006591796875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 19.73,
+       "fer_trace": 0.549560546875,
+       "fer_fresh": 0.54876708984375,
+       "fer_same": 0.54779052734375,
+       "disagree": 0.00750732421875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 22.73,
+       "fer_trace": 0.2244873046875,
+       "fer_fresh": 0.22467041015625,
+       "fer_same": 0.224365234375,
+       "disagree": 0.0069580078125,
+       "frames": 16384
+      }
+     ]
+    },
+    "64qam-5/6": {
+     "esno_db_at_fer10": 31.05,
+     "esno_db_at_fer1": null,
+     "esno_db_at_fer01": null,
+     "never": 0.043060302734375,
+     "payload_bytes": 1492,
+     "check": [
+      {
+       "esno_db": 19.29,
+       "fer_trace": 0.8843994140625,
+       "fer_fresh": 0.88336181640625,
+       "fer_same": 0.8841552734375,
+       "disagree": 0.0042724609375,
+       "frames": 16384
+      },
+      {
+       "esno_db": 21.29,
+       "fer_trace": 0.709228515625,
+       "fer_fresh": 0.711181640625,
+       "fer_same": 0.71026611328125,
+       "disagree": 0.00701904296875,
+       "frames": 16384
+      },
+      {
+       "esno_db": 24.29,
+       "fer_trace": 0.42449951171875,
+       "fer_fresh": 0.4278564453125,
+       "fer_same": 0.4256591796875,
+       "disagree": 0.00762939453125,
+       "frames": 16384
+      }
+     ]
+    }
+   },
+   "seconds": 2426,
+   "decodes_per_s": 5328
+  }
+ },
+ "seconds": 5473
+}

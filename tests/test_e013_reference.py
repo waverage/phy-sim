@@ -56,4 +56,6 @@ def test_fixed_point_matches_the_modem_defaults(e013):
     import sys
     sys.path.insert(0, str(RESULTS.parent))
     from harness.fxmodem import FixedPoint
-    assert e013["fixed_point"] == FixedPoint().as_dict()
+    # M6 raised the LLR scale cap from 8 to 16 (e016: 8 floors the rate-3/4
+    # codes on TDL-C); e013 ran at 8, every other width is the default
+    assert e013["fixed_point"] == FixedPoint(llr_cap=8.0).as_dict()

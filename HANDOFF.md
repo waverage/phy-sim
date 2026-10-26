@@ -1,4 +1,4 @@
-# Handoff, 2026-10-25
+# Handoff, 2026-10-26
 
 Read this, then `README.md`. The plan with the full rationale, and the
 numerology decision, are in the hardware repo:
@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M5 done, M6 next
+## State: M0 to M6 done, M7 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -23,7 +23,8 @@ and `make check` gates everything.
 | M3 Zig modem, floating point first | done 2026-10-25 | `modem/src/*.zig`, `harness/modem.py`, `results/e011_zig_overlay.json`, `tests/test_m3_modem.py`, `tests/test_e011_reference.py` |
 | M4 fixed point and NumPy twins | done 2026-10-25 | `modem/src/fx*.zig`, `harness/twin.py`, `vectors/`, `results/e012_decoder_fixed.json`, `results/e013_fixed_point.json`, `tests/test_m4_twins.py`, `tests/test_m4_vectors.py`, `tests/test_e012_reference.py`, `tests/test_e013_reference.py` |
 | M5 synchronisation under stress | done 2026-10-25 | `modem/src/fxsync.zig`, `harness/sync.py`, `harness/synclink.py`, `vectors/sync_*.npz`, `results/e014_sync_design.json`, `results/e015_sync_gate.json`, `tests/test_m5_sync.py`, `tests/test_e014_reference.py`, `tests/test_e015_reference.py` |
-| M6 link layer and video model | not started | |
+| M6 link layer and video model | done 2026-10-26 | `harness/fading.py`, `harness/phytrace.py`, `harness/linklayer.py`, `results/e016_phy_traces.json`, `results/e016_traces/`, `results/e017_video_link.json`, `tests/test_m6_link.py`, `tests/test_e016_reference.py`, `tests/test_e017_reference.py` |
+| M7 first RTL blocks | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -190,17 +191,105 @@ design in floating point; e015 is the gate in fixed point.
   - For a drone at altitude all paths share roughly the LoS Doppler, and
     then warm alone is right. Sionna's model is the pessimistic case.
 
-## Next: M6, link layer and video model
+## What M6 decided and built (README "The link layer and video model")
 
-Packetiser, FEC and retransmission rules from nestua-zig, a synthetic H.265
-stream, freeze seconds per minute per SNR, and the MCS switching policy.
-Carry over:
-- **The AFC loop and its Doppler aid** belong in the control processor:
-  - bandwidth, lock detection, the cold-to-warm switch of the tracker gain;
-  - the telemetry path for the LoS Doppler.
-- **The adaptive estimator design** (Doppler class per frame) is still
-  the cheapest remaining dB on 64-QAM.
-- **Noise estimation:** the LLR scale still takes the true N0.
+- **Two steps.** e016 runs the M5 product chain (fixed TX, preamble,
+  oscillators, fixed synchroniser with the warm loop, fixed RX, tracker off)
+  on a minute of consecutive frames per channel, on a TDL that is
+  continuous in time (`harness/fading.py`). It stores, per frame and MCS,
+  the mean Es/N0 at which the frame decodes (bisection on one noise draw,
+  0.2 dB). e017 runs the link layer and video model over those traces at
+  any SNR trajectory, a minute of link in about half a second.
+  - The threshold model matches direct decoding with fresh noise
+    (FER within 0.001 to 0.005); at most 1.3 % of frames break
+    monotonicity, all within the 0.2 dB search resolution.
+  - At 50 Hz Doppler losses come in runs (P(loss | loss) 0.81, mean run 5
+    frames); at 600 Hz they are nearly independent (0.06).
+- **LLR scale cap raised from 8 to 16** (`FixedPoint.llr_cap`). The cap of
+  8 floored the rate-3/4 codes on TDL-C in the product receiver (fixed and
+  float alike; the genie receiver had no floor): qpsk-3/4 2.4 % FER at
+  40 dB, 64qam-5/6 18 %. A reliable RE 20 dB below the frame's mean gain
+  got an LLR of a few LSB and the min-sum offset erased it. At 16:
+  qpsk-3/4 has no floor (1 % at 15.2 dB), 16qam-3/4 needs 21.1 dB instead of
+  22.9, 64qam-5/6 at 40 dB drops to 7 %; TDL-D and AWGN unchanged.
+  64qam-5/6 on TDL-C still never reaches 1 %.
+- **The MAC model:** a 23-slot TDD superframe (9.94 ms, 22 downlink, one
+  uplink slot for NACKs, the decode ACK and the SNR report), one link
+  packet per PHY frame, 1080p60, a 30 ms link budget (a 40 ms
+  glass-to-glass target), a freeze is a display gap over 50 ms.
+- **nestua-zig's rules do not carry over as they are.** With a 30 ms budget
+  they are never freeze-free on a fading channel at its 0.85 bitrate
+  fraction; even with its 70 ms window they need 3 to 6 dB more than the
+  custom rules for 5 to 8 Mbit/s. The custom rules (e017 `CUSTOM`):
+  - Reed-Solomon 16+4 on every MCS (8+4 needs 3 dB more at 8 Mbit/s,
+    4+4 is 3 to 5 dB worse above 3 Mbit/s), parity on every frame;
+  - a 24-byte packet header;
+  - retransmission asked every superframe until 3 ms before the deadline.
+    nestua's stop rule (min(window/2, 20 ms) left) costs 1 to 4 dB, worst
+    at 50 Hz; no retransmission costs 2 to 4 dB;
+  - recovery frames are not duplicated, a lost re-anchor is asked for again
+    after 20 ms, the encoder caps a frame at 60 % of what fits in the
+    budget (no cap: +3 to 5 dB at 5 Mbit/s), bitrate 0.6 of goodput.
+  - The latency budget is worth 1 to 3 dB: 20 ms costs up to 3 dB at
+    50 Hz, 50 ms gains 1 to 2.
+- **Freeze-free bitrate (custom rules, best rung):** Es/N0 for 1.5, 3, 5,
+  8 Mbit/s: AWGN 1.5, 1.5, 4.5, 10.5 dB; TDL-D 600 Hz 4.5, 5.0, 8.0, 14.0;
+  TDL-D 50 Hz 6.0, 7.0, 10.0, 16.0; TDL-C 8.5, 8.5, 13.5, 19.0.
+- **MCS policy chosen: `SnrPolicy`, outer loop at 1 % pre-FEC packet loss,
+  200 ms SNR filter, a 3 dB penalty on an MCS whose step up lost a block**
+  (decaying 0.3 dB/s), up one MCS after 200 ms, down at once. On the
+  flight (out to 4 km and back at 30 m/s, shadowing, banking dips, 253 s)
+  it freezes 1.32 s/min, against 1.29 for fixed qpsk-1/2 (the floor: the
+  dips at range defeat every MCS), at 5.0 Mbit/s against 2.3, with 40 MCS
+  changes per minute. nestua-zig's ladder freezes 3.57 s/min at 3.1 Mbit/s;
+  an SNR table without the outer loop freezes 6 s/min on TDL-C (its
+  thresholds ignore the channel). Outer-loop targets of 5 % freeze 2.3 s/min.
+- **Per-SNR freeze table** (the M6 gate; e017's summary and
+  `results/e017_video_link.png`), freeze s/min / Mbit/s:
+
+  | Es/N0 | 2 | 4 | 6 | 8 | 12 | 16 | 20 | 24 | 30 dB |
+  |---|---|---|---|---|---|---|---|---|---|
+  | AWGN | 0.2/2.3 | 0.2/2.3 | 0.4/3.6 | 0.5/4.9 | 0.0/7.4 | 0.4/11.1 | 0.0/12.5 | 0.0/12.5 | 0.0/12.5 |
+  | TDL-D 600 Hz | 58/2.3 | 0.4/2.3 | 0.0/2.4 | 0.0/2.7 | 0.0/5.0 | 0.1/7.5 | 0.0/10.2 | 0.1/12.2 | 0.0/12.5 |
+  | TDL-D 50 Hz | 49/2.3 | 5.6/2.3 | 0.1/2.3 | 0.2/2.6 | 0.3/4.9 | 0.2/7.5 | 0.2/10.2 | 0.0/12.5 | 0.0/12.5 |
+  | TDL-C 300 ns | 60/2.3 | 60/2.3 | 27/2.3 | 0.3/2.3 | 0.0/2.4 | 0.1/4.9 | 0.0/6.1 | 0.0/8.2 | 0.0/10.8 |
+
+  On AWGN the outer loop keeps 0.2 to 0.5 s/min at mid SNR: the waterfall
+  is a cliff, so each probe one MCS up loses a block. A per-MCS backoff
+  longer than the 3 dB penalty would fix it; fading channels do not need it.
+
+## Next: M7, first RTL blocks
+
+FFT, preamble correlator, CORDIC with cocotb tests against the golden
+vectors under Verilator. Open L2 work, for M7 or alongside it:
+- **The AFC loop and its Doppler aid** belong in the control processor
+  (bandwidth, lock detection, tracker gain switch, telemetry path). The
+  traces assume the warm loop is exact.
+- **Noise estimation:** the LLR scale still takes the true N0, and the
+  link model's SNR report is the true per-frame SNR plus an analytic
+  pilot-estimate error.
+- **The adaptive estimator** (design per frame) is still the cheapest dB
+  on 64-QAM, and TDL-C 64qam-5/6 still floors.
+- **The video model** is synthetic: frame sizes from nestua-zig's x265 and
+  Hantro numbers, no slices or intra refresh. Bitrate 0.75 of goodput gives
+  +25 % bitrate for +0.2 s/min of freeze on the flight; worth revisiting
+  with a real encoder trace.
+
+## Gotchas found in M6
+
+- **Airtime, not SNR, decides most freezes.** At a 30 ms budget a frame
+  must leave in about 10 ms; an IDR or a duplicated re-anchor that does not
+  fit is lost, and the next recovery frame fails the same way (a freeze
+  until the next periodic IDR). Cap frame sizes in the encoder.
+- **nestua's 10 ms re-request interval is just over the 9.94 ms
+  superframe,** so a lost request was repeated only every other
+  superframe. Ask every superframe.
+- **Compare link configurations by freeze-free bitrate at an SNR, not by
+  the SNR one MCS needs:** more parity always lowers the latter.
+- **e016 takes about 2 h** (5,000 decodes/s); e017 about 50 min on 24
+  cores. Quick traces are 1.8 s long and wrap, fine for debugging only.
+- **A Python `multiprocessing` pool and the Zig threads share the CPU:**
+  run e016 and e017 one at a time.
 
 ## Gotchas found in M5
 

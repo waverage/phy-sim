@@ -142,7 +142,9 @@ def test_tdl_channel_unit_energy():
     torch.manual_seed(0)
     link = OfdmLink(NUM_10MHZ, MCS_TABLE[0], channel="tdl", doppler_hz=600.0, device=default_device(), compile=False)
     e = float(torch.cat([link.time_channel(100) for _ in range(4)]).abs().square().sum(-1).mean())
-    assert abs(e - 1) < 0.03, f"mean channel energy {e:.3f}"
+    # Sionna's TDL draws are not pinned by the seed; a frame's energy spreads
+    # by about 0.3, so the mean of 400 by about 0.015: 0.05 is over 3 sigma
+    assert abs(e - 1) < 0.05, f"mean channel energy {e:.3f}"
 
 
 def test_ls_estimator_error_free_at_high_snr():

@@ -309,8 +309,11 @@ class FxSync:
         batch, n = buf.shape[0], buf.shape[1]
         out = (SyncOut * batch)()
         self._lib.nphy_sync_run(self._h, _ptr(buf, ctypes.POINTER(ctypes.c_int16)), n, batch, out)
-        return np.array([tuple(getattr(o, f) for f in SYNC_OUT_FIELDS) for o in out],
-                        dtype=[(f, np.int64) for f in SYNC_OUT_FIELDS])
+        raw = np.ctypeslib.as_array(out)          # the C records, zero copy
+        rec = np.empty(batch, dtype=[(f, np.int64) for f in SYNC_OUT_FIELDS])
+        for f in SYNC_OUT_FIELDS:
+            rec[f] = raw[f]
+        return rec
 
     def __call__(self, buf: np.ndarray) -> SyncResult:
         return result_of(self.raw(buf), self.num.fft_size)
