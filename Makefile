@@ -98,7 +98,8 @@ BUILD_DIR ?= /mnt/e/phy-sim-build
 VIVADO ?= /mnt/e/amd/2026.1/Vivado/bin/vivado.bat
 ARM_GCC ?= /mnt/e/amd/2026.1/gnu/aarch32/nt/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe
 fpga-src:
-	rm -rf $(BUILD_DIR)/rtl $(BUILD_DIR)/fpga && mkdir -p $(BUILD_DIR) && cp -r rtl fpga $(BUILD_DIR)/ && rm -rf $(BUILD_DIR)/rtl/*/sim_build
+	rm -rf $(BUILD_DIR)/rtl $(BUILD_DIR)/fpga && mkdir -p $(BUILD_DIR) && \
+	  tar -c --exclude=sim_build --exclude=results.xml --exclude=__pycache__ rtl fpga | tar -x -C $(BUILD_DIR)
 fpga-ooc: fpga-src
 	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log ooc.log -source fpga/ooc.tcl -tclargs rtl loopback out
 # FPGA_TOP=onchip_axi FPGA_OUT=out_onchip builds the M9 whole-radio design

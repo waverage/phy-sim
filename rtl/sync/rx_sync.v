@@ -99,25 +99,39 @@ module rx_sync #(
     end
     wire [31:0] flen = {28'd0, r_nsym} * SLOT32;   // S slot
 
-    // ---- the buffer: written with every sample, one read port
+    // ---- the buffer: written with every sample (a clock late), one read
+    // port, its address and its word registered twice: a read's word comes three clocks after it
     reg  [23:0]   m_buf [0:(1 << BW) - 1];
-    reg  [31:0]   wn;                          // samples written
+    reg  [31:0]   wi;                          // samples in
+    reg  [31:0]   wn;                          // samples in the buffer
+    reg           buf_we;
+    reg  [BW-1:0] buf_wa;
+    reg  [23:0]   buf_wd;
     wire [BW-1:0] rd_a;
-    reg  [23:0]   rd_q;
+    reg  [BW-1:0] rd_aq;
+    reg  [23:0]   rd_q0, rd_q;
     always @(posedge clk) begin
-        if (in_valid)
-            m_buf[wn[BW-1:0]] <= {in_re, in_im};
-        rd_q <= m_buf[rd_a];
+        buf_we <= in_valid && rst_n;
+        buf_wa <= wi[BW-1:0];
+        buf_wd <= {in_re, in_im};
+        if (buf_we)
+            m_buf[buf_wa] <= buf_wd;
+        rd_aq <= rd_a;
+        rd_q0 <= m_buf[rd_aq];
+        rd_q <= rd_q0;
     end
     wire signed [11:0] q_re = rd_q[23:12], q_im = rd_q[11:0];
     reg ph;                                    // 0: the detector may read, 1: the sequencer
     always @(posedge clk) begin
         if (!rst_n) begin
+            wi <= 32'd0;
             wn <= 32'd0;
             ph <= 1'b0;
         end else begin
             ph <= !ph;
             if (in_valid)
+                wi <= wi + 32'd1;
+            if (buf_we)
                 wn <= wn + 32'd1;
         end
     end
@@ -142,8 +156,10 @@ module rx_sync #(
     reg  [31:0] dp;                            // the next sample it reads
     reg  [31:0] det_base;
     reg         det_restart;
-    wire        det_issue = !ph && det_run && avail(dp);
-    reg         det_v;
+    reg  [31:0] det_dpq;                       // dp, a clock ago, and whether it was there
+    reg         det_ok, det_gone;
+    wire        det_issue = !ph && det_run && det_ok && det_dpq == dp;
+    reg         det_v1, det_v1b, det_v;        // its reads in flight; det_v: its word is here
     wire        sc_done, sc_det;
     wire [31:0] sc_peak;
     wire signed [33:0] sc_pr, sc_pi;
@@ -178,7 +194,7 @@ module rx_sync #(
     reg  [12:0] cnt;                           // reads issued, or a step counter
     reg         nco_first;                     // the next NCO sample is the run's first
     reg  [31:0] start_rel;
-    reg         seq_rd;                        // the sequencer's read issued last clock: its data is here
+    reg         seq_rd1, seq_rd1b, seq_rd;     // the sequencer's reads in flight; seq_rd: its word is here
     reg         seq_issue;
 
     // the angles: one angle30 for P (coarse) and for the prefix sum
@@ -225,13 +241,27 @@ module rx_sync #(
             m_z[z_wa] <= z_wd;
         z_q <= m_z[cnt[7:0]];
     end
-    wire [7:0] zi = fft_oidx ^ 8'h80;          // natural index of the bin
+    // the FFT's output, registered (C1): z and the CIR's power work from it
+    reg               c1_v;
+    reg        [7:0]  c1_i;
+    reg signed [15:0] c1_re, c1_im;
+    wire [7:0] zi = c1_i ^ 8'h80;              // natural index of the bin
     wire       z_used = (zi >= r_glo) && (zi < 8'd0 - r_ghi) && !(r_dc && zi == 8'h80);
     wire [7:0] z_f = zi - r_glo - ((r_dc && zi > 8'h80) ? 8'd1 : 8'd0);
     wire [1:0] z_sg = t_sg[z_f];
-    wire signed [17:0] yr = {{2{fft_ore[15]}}, fft_ore}, yi = {{2{fft_oim[15]}}, fft_oim};
+    wire signed [17:0] yr = {{2{c1_re[15]}}, c1_re}, yi = {{2{c1_im[15]}}, c1_im};
     wire signed [17:0] z_r2 = (z_sg[1] ? -yr : yr) + (z_sg[0] ? -yi : yi);     // sa yr + sb yi
     wire signed [17:0] z_i2 = (z_sg[1] ? -yi : yi) - (z_sg[0] ? -yr : yr);     // sa yi - sb yr
+    reg               zz_v, zz_used;
+    reg        [7:0]  zz_i;
+    reg signed [17:0] zz_r2, zz_i2;
+    always @(posedge clk) begin
+        zz_v    <= c1_v && rst_n;
+        zz_i    <= c1_i;
+        zz_used <= z_used;
+        zz_r2   <= z_r2;
+        zz_i2   <= z_i2;
+    end
     function signed [15:0] half_sat;           // sat16(rshr(x, 1))
         input signed [17:0] x;
         reg signed [17:0] q;
@@ -253,12 +283,33 @@ module rx_sync #(
             m_pw[pw_wa] <= pw_wd;
         pw_q <= m_pw[pw_ra];
     end
-    wire signed [31:0] sq_re = fft_ore * fft_ore, sq_im = fft_oim * fft_oim;
-    wire [32:0] pw_now = {1'b0, sq_re} + {1'b0, sq_im};
+    // the CIR's power, two registers behind the FFT's output (the squares, their sum)
+    reg               c2_v;
+    reg        [7:0]  c2_i;
+    reg signed [31:0] sq_re, sq_im;
+    reg        [32:0] pw_now;
+    always @(posedge clk) begin
+        c1_v  <= fft_ov && rst_n;
+        c1_i  <= fft_oidx;
+        c1_re <= fft_ore;
+        c1_im <= fft_oim;
+        sq_re <= fft_ore * fft_ore;
+        sq_im <= fft_oim * fft_oim;
+        c2_v  <= c1_v && rst_n;
+        c2_i  <= c1_i;
+        pw_now <= {1'b0, sq_re} + {1'b0, sq_im};
+    end
     reg  [40:0] total, near;
     reg  [32:0] pmax;
     reg  [7:0]  pk, first;
-    reg  [47:0] nf_floor;                      // noise_floor (total - near)
+    // noise_floor (total - near): the difference, then the product, a clock each;
+    // they settle at the start of Q_FIRST, before its first test
+    reg  [40:0] floor_d;
+    reg  [47:0] nf_floor;
+    always @(posedge clk) begin
+        floor_d  <= total - near;
+        nf_floor <= r_nf * {7'd0, floor_d};
+    end
     reg         nr1, nr2;                      // NEAR: a read in flight, its word next
     reg  [5:0]  j;
     reg  [32:0] cand_p;
@@ -269,6 +320,14 @@ module rx_sync #(
     reg signed [11:0] cp_bre, cp_bim;          // r[n], waiting for its partner
     reg signed [39:0] qr, qi;
     reg               cp_odd;                  // the arriving word is r[n + N]
+    reg               cpp_v;                   // a pair's products, accumulated next clock
+    reg signed [23:0] cp_a, cp_b, cp_c, cp_d;
+    always @(posedge clk) begin
+        cp_a <= q_re * cp_bre;
+        cp_b <= q_im * cp_bim;
+        cp_c <= q_im * cp_bre;
+        cp_d <= q_re * cp_bim;
+    end
 
     // the output FIFO: 32 deep, with room for the NCO's samples in flight
     reg  [32:0] m_o [0:31];
@@ -291,13 +350,29 @@ module rx_sync #(
             default: want = start_rel - {26'd0, r_backoff} + {19'd0, cnt};
         endcase
     end
-    wire [31:0] want_abs = base + want;
-    assign rd_a = det_issue ? dp[BW-1:0] : want_abs[BW-1:0];
+    reg  [BW-1:0] want_abs;                    // base + want (its buffer address), a clock ago, for state want_sq and count want_cnt
+    reg  [3:0]  want_sq;
+    reg  [12:0] want_cnt;
+    reg         want_ok, want_gone;
+    reg  [31:0] want_full;                     // and gone, a clock later, for gone_sq and gone_cnt
+    reg  [3:0]  gone_sq;
+    reg  [12:0] gone_cnt;
+    always @(posedge clk) begin
+        want_abs  <= base[BW-1:0] + want[BW-1:0];
+        want_sq   <= sq;
+        want_cnt  <= cnt;
+        want_ok   <= avail(base + want);
+        want_full <= base + want;
+        want_gone <= gone(want_full);
+        gone_sq   <= want_sq;
+        gone_cnt  <= want_cnt;
+    end
+    assign rd_a = det_issue ? dp[BW-1:0] : want_abs;
     wire        cp_total = (cnt == {3'd0, r_nsym, 6'd0});               // 2 cp S reads
     wire        o_room = (o_cnt + o_fly) < 6'd28;
     always @(*) begin
         seq_issue = 1'b0;
-        if (ph && avail(want_abs)) begin
+        if (ph && want_ok && want_sq == sq && want_cnt == cnt) begin
             case (sq)
                 Q_PRD:   seq_issue = (cnt != 13'd256);
                 Q_CP:    seq_issue = !cp_total;
@@ -311,8 +386,16 @@ module rx_sync #(
     wire [48:0] c1_lhs = {16'd0, cand_p} << r_fps;
     wire [40:0] c2_lhs = cand_p * 8'd191;      // floor_n = N - (2 cp + 1)
     wire        cand_ok = (c1_lhs >= {16'd0, pmax}) && ({7'd0, c2_lhs} >= nf_floor);
+    reg         cand_okq;
+    always @(posedge clk)
+        cand_okq <= cand_ok;
     wire [48:0] pm256 = {8'd0, pmax, 8'd0};
-    wire [48:0] ratio_total = r_ratio * total;
+    reg  [48:0] ratio_total;
+    reg         cir_bad;
+    always @(posedge clk) begin
+        ratio_total <= r_ratio * total;
+        cir_bad <= pm256 < ratio_total;
+    end
     wire [31:0] tau32 = {{24{first[7]}}, first};                        // first - N if first >= N / 2
     wire [31:0] st_abs = base + cd + PRE32 + tau32;
     /* verilator lint_off UNUSEDSIGNAL */
@@ -326,11 +409,16 @@ module rx_sync #(
         if (!rst_n) begin
             det_run <= 1'b0;
             det_restart <= 1'b0;
+            det_v1 <= 1'b0;
+            det_v1b <= 1'b0;
             det_v <= 1'b0;
             en_q <= 1'b0;
             pend <= 1'b0;
             sq <= Q_IDLE;
+            seq_rd1 <= 1'b0;
+            seq_rd1b <= 1'b0;
             seq_rd <= 1'b0;
+            cpp_v <= 1'b0;
             ang_in <= 1'b0;
             fft_in <= 1'b0;
             z_we <= 1'b0;
@@ -356,10 +444,15 @@ module rx_sync #(
             en_q <= r_en;
 
             // ---- the detector: one sample a read, until its peak
-            det_v <= det_issue;
+            det_v1 <= det_issue;
+            det_v1b <= det_v1;
+            det_v <= det_v1b;
+            det_dpq <= dp;
+            det_ok <= avail(dp);
+            det_gone <= gone(dp);
             if (det_issue) begin
                 dp <= dp + 32'd1;
-                if (gone(dp))
+                if (det_gone)
                     n_overrun <= n_overrun + 32'd1;
             end
             if (sc_done && sc_det && det_run) begin
@@ -376,15 +469,24 @@ module rx_sync #(
             else if (!en_q) begin              // enabled: search from the next sample
                 det_run <= 1'b1;
                 det_restart <= 1'b1;
+                det_v1 <= 1'b0;
+                det_v1b <= 1'b0;
                 det_base <= wn;
                 dp <= wn;
             end
 
             // ---- the sequencer's reads
-            seq_rd <= seq_issue;
+            seq_rd1 <= seq_issue;
+            seq_rd1b <= seq_rd1;
+            seq_rd <= seq_rd1b;
+            cpp_v <= (sq == Q_CP) && seq_rd && cp_odd;
+            if (cpp_v) begin
+                qr <= qr + {{16{cp_a[23]}}, cp_a} + {{16{cp_b[23]}}, cp_b};
+                qi <= qi + {{16{cp_c[23]}}, cp_c} - {{16{cp_d[23]}}, cp_d};
+            end
             if (seq_issue) begin
                 cnt <= cnt + 13'd1;
-                if (gone(want_abs))
+                if (want_gone && gone_sq == sq && gone_cnt == cnt)
                     n_overrun <= n_overrun + 32'd1;
             end
             if (nco_in)
@@ -444,13 +546,13 @@ module rx_sync #(
                         sq <= Q_ALIGN;
                     end
                 end
-                Q_PRD: if (cnt == 13'd256 && !seq_rd)          // the window is in the NCO
+                Q_PRD: if (cnt == 13'd256 && !seq_rd1 && !seq_rd1b && !seq_rd)          // the window is in the NCO
                     sq <= Q_FFT;
-                Q_FFT: if (fft_ov) begin
+                Q_FFT: if (zz_v) begin
                     z_we <= 1'b1;
-                    z_wa <= fft_oidx;
-                    z_wd <= z_used ? {half_sat(z_r2), half_sat(z_i2)} : 32'd0;
-                    if (fft_oidx == 8'd255) begin
+                    z_wa <= zz_i;
+                    z_wd <= zz_used ? {half_sat(zz_r2), half_sat(zz_i2)} : 32'd0;
+                    if (zz_i == 8'd255) begin
                         sq <= Q_IFFT;
                         cnt <= 13'd0;
                     end
@@ -471,16 +573,16 @@ module rx_sync #(
                         pk <= 8'd0;
                     end
                 end
-                Q_CIRO: if (fft_ov) begin       // the CIR comes out in natural order
+                Q_CIRO: if (c2_v) begin         // the CIR comes out in natural order
                     pw_we <= 1'b1;
-                    pw_wa <= fft_oidx;
+                    pw_wa <= c2_i;
                     pw_wd <= pw_now;
                     total <= total + {8'd0, pw_now};
-                    if (fft_oidx == 8'd0 || pw_now > pmax) begin
+                    if (c2_i == 8'd0 || pw_now > pmax) begin
                         pmax <= pw_now;
-                        pk <= fft_oidx;
+                        pk <= c2_i;
                     end
-                    if (fft_oidx == 8'd255) begin
+                    if (c2_i == 8'd255) begin
                         sq <= Q_NEAR;
                         near <= 41'd0;
                         cnt <= 13'd0;
@@ -496,27 +598,27 @@ module rx_sync #(
                     if (nr2)
                         near <= near + {8'd0, pw_q};
                     if (cnt == 13'd65 && !nr1 && !nr2) begin
-                        nf_floor <= r_nf * {7'd0, total - near};
                         sq <= Q_FIRST;
                         j <= 6'd0;
                         cnt <= 13'd0;
                     end
                 end
                 Q_FIRST: begin                  // the earliest candidate within a cp before the peak
-                    case (cnt[1:0])             // one every four clocks: address, read, word, test
-                        2'd0: begin
+                    case (cnt[2:0])             // one every five clocks: address, read, word, test, decision
+                        3'd0: begin
                             pw_ra <= pk - 8'd31 + {2'd0, j};
                             cnt <= 13'd1;
                         end
-                        2'd1: cnt <= 13'd2;
-                        2'd2: begin
+                        3'd1: cnt <= 13'd2;
+                        3'd2: begin
                             cand_p <= pw_q;
                             cand_t <= pk - 8'd31 + {2'd0, j};
                             cand_last <= (j == 6'd31);
                             cnt <= 13'd3;
                         end
+                        3'd3: cnt <= 13'd4;     // the test, registered
                         default: begin
-                            if (cand_ok || cand_last) begin
+                            if (cand_okq || cand_last) begin
                                 first <= cand_t;
                                 sq <= Q_DEC;
                             end else begin
@@ -527,11 +629,13 @@ module rx_sync #(
                     endcase
                 end
                 Q_DEC: begin
-                    if (pm256 < ratio_total) begin
+                    if (cir_bad) begin
                         // the CIR check failed: search again past this preamble
                         n_reject <= n_reject + 32'd1;
                         det_run <= r_en;
                         det_restart <= 1'b1;
+                        det_v1 <= 1'b0;
+                        det_v1b <= 1'b0;
                         det_base <= base + cd + PRE32;
                         dp <= base + cd + PRE32;
                         sq <= Q_IDLE;
@@ -539,6 +643,8 @@ module rx_sync #(
                         start_rel <= cd + PRE32 + tau32;
                         det_run <= r_en;
                         det_restart <= 1'b1;
+                        det_v1 <= 1'b0;
+                        det_v1b <= 1'b0;
                         det_base <= st_abs + flen - {22'd0, r_rearm};
                         dp <= st_abs + flen - {22'd0, r_rearm};
                         n_sync <= n_sync + 32'd1;
@@ -565,11 +671,9 @@ module rx_sync #(
                             cp_bre <= q_re;
                             cp_bim <= q_im;
                         end else begin
-                            qr <= qr + q_re * cp_bre + q_im * cp_bim;
-                            qi <= qi + q_im * cp_bre - q_re * cp_bim;
                         end
                     end
-                    if (cp_total && !seq_rd) begin
+                    if (cp_total && !seq_rd1 && !seq_rd1b && !seq_rd && !cpp_v) begin
                         ang_in <= 1'b1;
                         ang_re <= {{8{qr[39]}}, qr};
                         ang_im <= {{8{qi[39]}}, qi};
@@ -597,13 +701,13 @@ module rx_sync #(
                     o_m <= 13'd0;
                     sq <= Q_PH2;
                 end
-                Q_ALIGN: if (cnt == flen[12:0] && !seq_rd)
+                Q_ALIGN: if (cnt == flen[12:0] && !seq_rd1 && !seq_rd1b && !seq_rd)
                     sq <= Q_DRAIN;
                 default: if (o_fly == 6'd0)      // Q_DRAIN: the last samples are in the FIFO
                     sq <= Q_IDLE;
             endcase
             // disabled: drop whatever is in progress (once the NCO is empty)
-            if (!r_en && o_fly == 6'd0 && !seq_rd) begin
+            if (!r_en && o_fly == 6'd0 && !seq_rd1 && !seq_rd1b && !seq_rd) begin
                 sq <= Q_IDLE;
                 pend <= 1'b0;
                 o_wp <= 5'd0;

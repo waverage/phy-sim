@@ -8,7 +8,7 @@
 // phase0 = -n0 inc mod 2^32 (the control processor's job), sample i is
 // rotated by -(n0 + i) inc: the synchroniser's alignment of a frame that
 // starts at sample n0, and its derotation of the first pilot symbol.
-// `start` (with the first sample of a run) loads phase0. Latency 18.
+// `start` (with the first sample of a run) loads phase0. Latency 19.
 module nco_rot (
     input  wire               clk,
     input  wire               rst_n,
@@ -41,8 +41,18 @@ module nco_rot (
 
     wire signed [15:0] vr = tag[31:16];
     wire signed [15:0] vi = tag[15:0];
-    wire signed [35:0] re = vr * c - vi * sn;
-    wire signed [35:0] im = vr * sn + vi * c;
+    // the four products registered, then their sums, rounding and saturation
+    reg               pv;
+    reg signed [33:0] p_rc, p_is, p_rs, p_ic;
+    always @(posedge clk) begin
+        pv   <= cv && rst_n;
+        p_rc <= vr * c;
+        p_is <= vi * sn;
+        p_rs <= vr * sn;
+        p_ic <= vi * c;
+    end
+    wire signed [35:0] re = {{2{p_rc[33]}}, p_rc} - {{2{p_is[33]}}, p_is};
+    wire signed [35:0] im = {{2{p_rs[33]}}, p_rs} + {{2{p_ic[33]}}, p_ic};
 
     function signed [15:0] rnd_sat;          // rshr by 15 (half up), sat to 16 bits
         input signed [35:0] x;
@@ -64,7 +74,7 @@ module nco_rot (
             out_re <= 16'sd0;
             out_im <= 16'sd0;
         end else begin
-            out_valid <= cv;
+            out_valid <= pv;
             out_re <= rnd_sat(re);
             out_im <= rnd_sat(im);
         end

@@ -249,6 +249,30 @@ board over JTAG and requires its counters to equal e018's, writing
 `results/e019_board_loopback.json`). Vivado 2026.1 is the Windows
 install; the build folder is `BUILD_DIR` (default `/mnt/e/phy-sim-build`).
 
+## The real-time receiver and the radio on the chip (L3, M9)
+
+- `rx_frame` works on three frames at once (FFTs; estimate, tracker and
+  demapper; decoders) through two Y banks and two LLR banks, with three
+  `ldpc_dec` decoders: about 22,000 clocks a frame against 40,320 on the
+  air at 100 MHz. `ldpc_dec` runs its early-stop check beside the next
+  iteration and moves LLRs and bits 16 lanes a clock in its own layout
+  (`rtlcfg.ldpc_llr_slot`, `ldpc_out_bits`); the deinterleaver table
+  (`rtlcfg.rx_perm`) points into that layout.
+- `loopback` paces the emulator (`PACE`, 10 clocks a sample is the radio's
+  10 MS/s) and counts dropped frames and lost samples. `tools/board.py all
+  10` runs e018's points at that rate: `results/e020_board_realtime.json`.
+- `sync`: `rx_sync`, the synchroniser on an endless ADC stream, bit exact
+  against `twin.TwinSync.stream` (which defines how the search restarts).
+- `tx`: `tx_frame`, the preamble and the transmitter (LDPC encoder as a
+  program, `rtlcfg.ldpc_enc_program`; mapper; IFFT and CP), bit exact.
+- `onchip`: the whole radio: `tx_frame`, an NCO for a carrier offset,
+  `chan_emu`, `rx_sync`, `rx_frame` and the counters; model
+  `harness/onchip.OnChipLink`. `make fpga FPGA_TOP=onchip_axi
+  FPGA_OUT=out_onchip` builds it, `tools/board_onchip.py all` runs it on
+  the board (`results/e021_board_onchip.json`). It needs 6 clocks a sample
+  or more: nothing holds the air back, so a faster stream overruns the
+  synchroniser.
+
 ## The simulator viewer
 
 `make viewer` starts a local web page at http://localhost:8050 (WSL

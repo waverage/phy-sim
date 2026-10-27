@@ -170,7 +170,8 @@ endmodule
 
 
 // The angle of a wide complex sum (Sync.angle): shifted right until it fits
-// 30 bits (arithmetic, so the shift floors), then vectored. Latency 17.
+// 30 bits (arithmetic, so the shift floors), then vectored. Latency 19: the
+// largest magnitude, its bit length and the shift take a clock each.
 module angle30 #(
     parameter W = 48,
     parameter TAGW = 1
@@ -187,9 +188,20 @@ module angle30 #(
 );
     wire [W:0] are = in_re[W-1] ? -{in_re[W-1], in_re} : {in_re[W-1], in_re};
     wire [W:0] aim = in_im[W-1] ? -{in_im[W-1], in_im} : {in_im[W-1], in_im};
-    wire [W:0] mx = (are > aim) ? are : aim;
+    // A1: the larger magnitude
+    reg                a1v;
+    reg  [TAGW-1:0]    a1tag;
+    reg  signed [W-1:0] a1re, a1im;
+    reg  [W:0]         mx;
+    always @(posedge clk) begin
+        a1v   <= in_valid & rst_n;
+        a1tag <= in_tag;
+        a1re  <= in_re;
+        a1im  <= in_im;
+        mx    <= (are > aim) ? are : aim;
+    end
 
-    // bit length of mx
+    // A2: the bit length of mx, the shift
     reg [7:0] bl;
     integer b;
     always @(*) begin
@@ -198,19 +210,29 @@ module angle30 #(
             if (mx[b])
                 bl = b[7:0] + 8'd1;
     end
-    wire [7:0] sh = (bl > 8'd30) ? bl - 8'd30 : 8'd0;
+    reg                a2v;
+    reg  [TAGW-1:0]    a2tag;
+    reg  signed [W-1:0] a2re, a2im;
+    reg  [7:0]         sh;
+    always @(posedge clk) begin
+        a2v   <= a1v & rst_n;
+        a2tag <= a1tag;
+        a2re  <= a1re;
+        a2im  <= a1im;
+        sh    <= (bl > 8'd30) ? bl - 8'd30 : 8'd0;
+    end
 
     reg               nv;
     reg signed [31:0] nre, nim;
     reg    [TAGW-1:0] ntag;
     // after the shift both fit 30 bits: the top bits are sign copies
     /* verilator lint_off UNUSEDSIGNAL */
-    wire signed [W-1:0] sre = in_re >>> sh;
-    wire signed [W-1:0] sim = in_im >>> sh;
+    wire signed [W-1:0] sre = a2re >>> sh;
+    wire signed [W-1:0] sim = a2im >>> sh;
     /* verilator lint_on UNUSEDSIGNAL */
     always @(posedge clk) begin
-        nv   <= in_valid & rst_n;
-        ntag <= in_tag;
+        nv   <= a2v & rst_n;
+        ntag <= a2tag;
         nre  <= sre[31:0];
         nim  <= sim[31:0];
     end

@@ -18,7 +18,8 @@
 //
 // `restart` (rtl/sync, on a stream) starts a new buffer at the next sample:
 // the sums, the sample count and the search start again, as after reset.
-// DW is the width of the sample count and of d.
+// DW is the width of the sample count and of d. Pipelined for 100 MHz:
+// at most one sample every other clock.
 /* verilator lint_off DECLFILENAME */
 module stf_corr #(
     parameter PER = 32,
@@ -83,14 +84,51 @@ module stf_corr #(
     wire signed [11:0] rwre = d2[W-PER-1][23:12], rwim = d2[W-PER-1][11:0];     // r[m - W]
     wire signed [11:0] rdre = d3[PER-1][23:12], rdim = d3[PER-1][11:0];         // r[m - W - PER]
 
-    // a conj(b) and |a|^2
-    // (products of 12-bit samples, computed at the accumulators' widths)
-    wire signed [33:0] add_re = r0re * rpre + r0im * rpim;
-    wire signed [33:0] add_im = r0im * rpre - r0re * rpim;
-    wire signed [35:0] add_e  = r0re * r0re + r0im * r0im + rpre * rpre + rpim * rpim;
-    wire signed [33:0] sub_re = rwre * rdre + rwim * rdim;
-    wire signed [33:0] sub_im = rwim * rdre - rwre * rdim;
-    wire signed [35:0] sub_e  = rwre * rwre + rwim * rwim + rdre * rdre + rdim * rdim;
+    // a conj(b) and |a|^2 of 12-bit samples, pipelined for 100 MHz: A1 the
+    // products, A2 their sums (zero where the window is not full yet), then
+    // the running sums. One update per sample, in order, two clocks late.
+    reg               a1_v, a1_add, a1_sub, a1_out, a1_last;
+    reg      [DW-1:0] a1_d;
+    reg signed [23:0] p_rr, p_ii, p_ir, p_ri, q_rr, q_ii, q_ir, q_ri;          // add and sub cross products
+    reg signed [23:0] e_0r, e_0i, e_pr, e_pi, e_wr, e_wi, e_dr, e_di;          // the squares
+    reg               a2_v, a2_out, a2_last;
+    reg      [DW-1:0] a2_d;
+    reg signed [33:0] add_re, add_im, sub_re, sub_im;
+    reg signed [35:0] add_e, sub_e;
+    always @(posedge clk) begin
+        a1_v    <= in_valid && rst_n && !restart;
+        a1_add  <= (m >= PER16);
+        a1_sub  <= (m >= D16);
+        a1_out  <= (m >= WP1);
+        a1_d    <= m - WP1;
+        a1_last <= in_last;
+        p_rr <= r0re * rpre;
+        p_ii <= r0im * rpim;
+        p_ir <= r0im * rpre;
+        p_ri <= r0re * rpim;
+        q_rr <= rwre * rdre;
+        q_ii <= rwim * rdim;
+        q_ir <= rwim * rdre;
+        q_ri <= rwre * rdim;
+        e_0r <= r0re * r0re;
+        e_0i <= r0im * r0im;
+        e_pr <= rpre * rpre;
+        e_pi <= rpim * rpim;
+        e_wr <= rwre * rwre;
+        e_wi <= rwim * rwim;
+        e_dr <= rdre * rdre;
+        e_di <= rdim * rdim;
+        a2_v    <= a1_v && rst_n && !restart;
+        a2_out  <= a1_out;
+        a2_d    <= a1_d;
+        a2_last <= a1_last;
+        add_re <= a1_add ? {{10{p_rr[23]}}, p_rr} + {{10{p_ii[23]}}, p_ii} : 34'sd0;
+        add_im <= a1_add ? {{10{p_ir[23]}}, p_ir} - {{10{p_ri[23]}}, p_ri} : 34'sd0;
+        add_e  <= a1_add ? {{12{e_0r[23]}}, e_0r} + {{12{e_0i[23]}}, e_0i} + {{12{e_pr[23]}}, e_pr} + {{12{e_pi[23]}}, e_pi} : 36'sd0;
+        sub_re <= a1_sub ? {{10{q_rr[23]}}, q_rr} + {{10{q_ii[23]}}, q_ii} : 34'sd0;
+        sub_im <= a1_sub ? {{10{q_ir[23]}}, q_ir} - {{10{q_ri[23]}}, q_ri} : 34'sd0;
+        sub_e  <= a1_sub ? {{12{e_wr[23]}}, e_wr} + {{12{e_wi[23]}}, e_wi} + {{12{e_dr[23]}}, e_dr} + {{12{e_di[23]}}, e_di} : 36'sd0;
+    end
 
     reg signed [33:0] pr, pi;               // the running sums
     reg signed [35:0] e;
@@ -109,22 +147,17 @@ module stf_corr #(
         end else begin
             sv <= 1'b0;
             slast <= 1'b0;
-            if (in_valid) begin
+            if (in_valid)
                 m <= m + 1'b1;
-                if (m >= D16) begin
-                    pr <= pr + add_re - sub_re;
-                    pi <= pi + add_im - sub_im;
-                    e  <= e + add_e - sub_e;
-                end else if (m >= PER16) begin
-                    pr <= pr + add_re;
-                    pi <= pi + add_im;
-                    e  <= e + add_e;
-                end
-                if (m >= WP1) begin
+            if (a2_v) begin
+                pr <= pr + add_re - sub_re;
+                pi <= pi + add_im - sub_im;
+                e  <= e + add_e - sub_e;
+                if (a2_out) begin
                     sv <= 1'b1;
-                    sd <= m - WP1;
+                    sd <= a2_d;
                 end
-                slast <= in_last;
+                slast <= a2_last;
             end
         end
     end
@@ -196,6 +229,30 @@ module stf_corr #(
     reg        [63:0] best;
     localparam [DW-1:0] PREW = PRE;
 
+    // M5: the comparisons against the decision's state registered. With one
+    // sample every other clock at most (rtl/sync), the state they read
+    // already holds the previous d's decision.
+    reg                m5_v, m5_last, m5_over, m5_gt, m5_end;
+    reg       [DW-1:0] m5_d;
+    reg  signed [25:0] m5_pr, m5_pi;
+    reg         [27:0] m5_e;
+    reg  signed [33:0] m5_fr, m5_fi;
+    reg         [63:0] m5_mag;
+    always @(posedge clk) begin
+        m5_v    <= m4_v && rst_n && !restart;
+        m5_last <= m4_last;
+        m5_over <= m4_over;
+        m5_gt   <= m4_mag > best;
+        m5_end  <= m4_d == d0 + PREW;
+        m5_d    <= m4_d;
+        m5_pr   <= m4_pr;
+        m5_pi   <= m4_pi;
+        m5_e    <= m4_e;
+        m5_fr   <= m4_fr;
+        m5_fi   <= m4_fi;
+        m5_mag  <= m4_mag;
+    end
+
     always @(posedge clk) begin
         if (!rst_n || restart) begin
             trace_valid <= 1'b0;
@@ -218,27 +275,27 @@ module stf_corr #(
             trace_pi <= m1_pi;
             trace_e <= m1_e;
             done <= 1'b0;
-            if (m4_v && !fin) begin
-                if (found || m4_over) begin
+            if (m5_v && !fin) begin
+                if (found || m5_over) begin
                     if (!found) begin
                         found <= 1'b1;
-                        d0 <= m4_d;
+                        d0 <= m5_d;
                     end
-                    if (!found || m4_mag > best) begin
-                        best <= m4_mag;
-                        peak <= m4_d;
-                        peak_pr <= m4_pr;
-                        peak_pi <= m4_pi;
-                        peak_e <= m4_e;
-                        peak_pr_full <= m4_fr;
-                        peak_pi_full <= m4_fi;
+                    if (!found || m5_gt) begin
+                        best <= m5_mag;
+                        peak <= m5_d;
+                        peak_pr <= m5_pr;
+                        peak_pi <= m5_pi;
+                        peak_e <= m5_e;
+                        peak_pr_full <= m5_fr;
+                        peak_pi_full <= m5_fi;
                     end
-                    if ((found && m4_d == d0 + PREW) || m4_last) begin
+                    if ((found && m5_end) || m5_last) begin
                         done <= 1'b1;
                         fin <= 1'b1;
                         detected <= 1'b1;
                     end
-                end else if (m4_last) begin
+                end else if (m5_last) begin
                     done <= 1'b1;
                     fin <= 1'b1;
                     detected <= 1'b0;

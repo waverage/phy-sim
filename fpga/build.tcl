@@ -38,6 +38,12 @@ make_wrapper -files [get_files sys.bd] -top -import
 set_property top sys_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 
+# the whole radio fills 70 % of the LUTs: the explore strategies and a
+# physical optimisation after routing win the last few hundred ps
+if {$top eq "onchip_axi"} {
+    set_property strategy Flow_PerfOptimized_high [get_runs synth_1]
+    set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
+}
 launch_runs impl_1 -to_step write_bitstream -jobs 8
 wait_on_run impl_1
 open_run impl_1

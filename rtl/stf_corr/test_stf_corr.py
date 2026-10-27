@@ -40,11 +40,16 @@ async def run(dut, r: np.ndarray, thr: int) -> dict:
         if dut.ang_valid.value:
             out.update(ang_coarse=s(dut.ang_coarse), inc_coarse=s(dut.inc_coarse))
 
+    # one sample every other clock at most (stf_corr's decision takes two;
+    # rtl/sync feeds it at that rate)
     for i in range(len(r)):
         dut.in_valid.value = 1
         dut.in_re.value = int(r[i, 0])
         dut.in_im.value = int(r[i, 1])
         dut.in_last.value = int(i == len(r) - 1)
+        await RisingEdge(dut.clk)
+        sample()
+        dut.in_valid.value = 0
         await RisingEdge(dut.clk)
         sample()
     dut.in_valid.value = 0

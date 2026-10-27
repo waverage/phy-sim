@@ -54,7 +54,12 @@ module rx_chest (
     reg  [7:0]  ls_wa;
     reg  [35:0] ls_wd;
     reg  [35:0] ls0_q, ls1_q;
-    wire [7:0]  pos0 = st_data + {3'd0, jp, 1'b0};
+    // A0: the pair, its subcarrier's window start (the start table) registered
+    reg         a0_v, a0_first, a0_last, a0_two;
+    reg  [7:0]  a0_f, a0_st;
+    reg  [3:0]  a0_jp;
+    reg  [1:0]  a0_t;
+    wire [7:0]  pos0 = a0_st + {3'd0, a0_jp, 1'b0};
     always @(posedge clk) begin
         if (ls_we)
             ls_mem[ls_wa] <= ls_wd;
@@ -66,7 +71,7 @@ module rx_chest (
     assign st_addr = f;
     assign sg_addr = tf + {2'd0, p};
     assign y_addr  = sf + {4'd0, p};
-    assign tp_addr = {f, jp};
+    assign tp_addr = {a0_f, a0_jp};
 
     // C_COPY pipeline: the address at p, the word a clock later, LS, the write
     reg        c1_v;
@@ -80,7 +85,7 @@ module rx_chest (
     wire signed [17:0] lr = ayr + byi;     // a yr + b yi
     wire signed [17:0] li = ayi - byr;     // a yi - b yr
 
-    // C_FILT pipeline: 0 the addresses, 1 the RAMs answer, 2 their words
+    // C_FILT pipeline: A0 the pair, 0 the addresses, 1 the RAMs answer, 2 their words
     // registered, 3 the products, 4 the pair's sum, then the accumulation
     reg        p1_v, p1_first, p1_last, p1_two;
     reg [9:0]  p1_a;
@@ -115,7 +120,7 @@ module rx_chest (
     endfunction
 
     wire filt = (st == C_FILT);
-    wire busy_pipe = c1_v || ls_we || p1_v || p2_v || p3_v || p4_v || hf_we;
+    wire busy_pipe = c1_v || ls_we || a0_v || p1_v || p2_v || p3_v || p4_v || hf_we;
 
     always @(posedge clk) begin
         // copy pipeline
@@ -126,11 +131,19 @@ module rx_chest (
         ls_wa <= c1_p;
         ls_wd <= {lr, li};
         // filter pipeline
-        p1_v     <= filt && rst_n;
-        p1_first <= (jp == 4'd0);
-        p1_last  <= last_pair;
-        p1_two   <= ({2'b00, jp, 1'b1} < {1'b0, taps});
-        p1_a     <= {t, f};
+        a0_v     <= filt && rst_n;
+        a0_first <= (jp == 4'd0);
+        a0_last  <= last_pair;
+        a0_two   <= ({2'b00, jp, 1'b1} < {1'b0, taps});
+        a0_f     <= f;
+        a0_st    <= st_data;
+        a0_jp    <= jp;
+        a0_t     <= t;
+        p1_v     <= a0_v && rst_n;
+        p1_first <= a0_first;
+        p1_last  <= a0_last;
+        p1_two   <= a0_two;
+        p1_a     <= {a0_t, a0_f};
         p2_v     <= p1_v && rst_n;
         p2_first <= p1_first;
         p2_last  <= p1_last;
