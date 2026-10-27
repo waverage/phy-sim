@@ -614,3 +614,43 @@ class TwinSync:
         valid = (n >= 0) & (n < r.shape[0])
         v = rot16(r[np.clip(n, 0, r.shape[0] - 1)], nco(n, inc))
         return np.where(valid[:, None], v, 0).astype(np.int16)
+
+    def stream(self, r: np.ndarray, rearm: int = 64) -> list[dict]:
+        """The synchroniser on an endless sample stream (rtl/sync/rx_sync):
+        run_one on the stream from a search base, which starts at 0. A frame
+        whose CIR check fails moves the base past its preamble (base + peak
+        + pre); a synchronised frame is aligned and moves the base to rearm
+        samples before its end (start + S slot - rearm), where the next
+        preamble may begin. Each found frame: run_one's fields with start and
+        peak absolute, its base, and the aligned frame ("frame", S slot
+        samples, rotated as run_one's buffer counts: from the base)."""
+        c = self.c
+        r = np.asarray(r, np.int64)
+        P, W, N = c.period, c.window, c.fft_size
+        flen = c.num_symbols * self.slot
+        need = self.pre + c.pilot_symbol * self.slot + flen + 2 * N       # samples past the crossing
+        out, base = [], 0
+        while base + P + W + 1 <= r.shape[0]:
+            seg = r[base:]
+            cr, ci = self._mul_conj(seg[P:], seg[:-P])
+            en = seg[:, 0] ** 2 + seg[:, 1] ** 2
+            e = en[P:] + en[:-P]
+            cs = [np.concatenate([[0], np.cumsum(v)]) for v in (cr, ci, e)]
+            pr, pi, es = (s[W:] - s[:-W] for s in cs)
+            ms = c.metric_shift
+            psr, psi, ess = pr >> ms, pi >> ms, es >> ms
+            over = (psr * psr + psi * psi) * 1024 > c.threshold_q8 * ess * ess
+            if not over.any():
+                break
+            d0 = int(over.argmax())
+            if base + d0 + need > r.shape[0]:
+                break                                   # the stream ends inside this frame
+            o = self.run_one(r[base:base + d0 + need])
+            if not o["detected"] & 2:
+                base += o["peak"] + self.pre
+                continue
+            o = {**o, "base": base, "start": base + o["start"], "peak": base + o["peak"]}
+            o["frame"] = self.align(r[base:], o["start"] - base, o["inc"], flen)
+            out.append(o)
+            base = o["start"] + flen - rearm
+        return out

@@ -15,15 +15,21 @@
 // if tied) over the next PRE samples or to the end of the buffer (`last` on
 // its final sample) is the peak. trace_* gives Ps, Es for every d (the
 // golden vectors' trace_p, trace_e).
+//
+// `restart` (rtl/sync, on a stream) starts a new buffer at the next sample:
+// the sums, the sample count and the search start again, as after reset.
+// DW is the width of the sample count and of d.
 /* verilator lint_off DECLFILENAME */
 module stf_corr #(
     parameter PER = 32,
     parameter W = 256,
     parameter PRE = 288,
-    parameter MS = 8
+    parameter MS = 8,
+    parameter DW = 16
 ) (
     input  wire               clk,
     input  wire               rst_n,
+    input  wire               restart,
     input  wire        [8:0]  threshold_q8,
     input  wire               in_valid,
     input  wire signed [11:0] in_re,
@@ -31,14 +37,14 @@ module stf_corr #(
     input  wire               in_last,
     // every d
     output reg                trace_valid,
-    output reg         [15:0] trace_d,
+    output reg         [DW-1:0] trace_d,
     output reg  signed [25:0] trace_pr,
     output reg  signed [25:0] trace_pi,
     output reg         [27:0] trace_e,
     // once per buffer
     output reg                done,
     output reg                detected,
-    output reg         [15:0] peak,
+    output reg         [DW-1:0] peak,
     output reg  signed [25:0] peak_pr,     // shifted by MS
     output reg  signed [25:0] peak_pi,
     output reg         [27:0] peak_e,
@@ -46,9 +52,9 @@ module stf_corr #(
     output reg  signed [33:0] peak_pi_full
 );
     localparam D = W + PER;
-    localparam [15:0] PER16 = PER, D16 = D, WP1 = PER + W - 1;
+    localparam [DW-1:0] PER16 = PER, D16 = D, WP1 = PER + W - 1;
 
-    reg        [15:0] m;                    // samples so far
+    reg        [DW-1:0] m;                  // samples so far
 
     // Delay lines (shift registers, SRLs in an FPGA), shifted per sample:
     // at sample m, d1 holds r[m-1] .. r[m-PER], d2 r[m-PER-1] .. r[m-W] and
@@ -89,22 +95,22 @@ module stf_corr #(
     reg signed [33:0] pr, pi;               // the running sums
     reg signed [35:0] e;
     reg               sv, slast;            // the sums hold d = m - PER - W + 1
-    reg        [15:0] sd;
+    reg        [DW-1:0] sd;
 
     always @(posedge clk) begin
-        if (!rst_n) begin
-            m <= 16'd0;
+        if (!rst_n || restart) begin
+            m <= {DW{1'b0}};
             pr <= 34'sd0;
             pi <= 34'sd0;
             e <= 36'sd0;
             sv <= 1'b0;
             slast <= 1'b0;
-            sd <= 16'd0;
+            sd <= {DW{1'b0}};
         end else begin
             sv <= 1'b0;
             slast <= 1'b0;
             if (in_valid) begin
-                m <= m + 16'd1;
+                m <= m + 1'b1;
                 if (m >= D16) begin
                     pr <= pr + add_re - sub_re;
                     pi <= pi + add_im - sub_im;
@@ -138,19 +144,20 @@ module stf_corr #(
     wire        [73:0] rhs = threshold_q8 * es * es;
 
     reg               found, fin;
-    reg        [15:0] d0;
+    reg        [DW-1:0] d0;
     reg        [63:0] best;
+    localparam [DW-1:0] PREW = PRE;
 
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst_n || restart) begin
             trace_valid <= 1'b0;
             done <= 1'b0;
             fin <= 1'b0;
             detected <= 1'b0;
             found <= 1'b0;
-            d0 <= 16'd0;
+            d0 <= {DW{1'b0}};
             best <= 64'd0;
-            peak <= 16'd0;
+            peak <= {DW{1'b0}};
             peak_pr <= 26'sd0;
             peak_pi <= 26'sd0;
             peak_e <= 28'd0;
@@ -178,7 +185,7 @@ module stf_corr #(
                         peak_pr_full <= pr;
                         peak_pi_full <= pi;
                     end
-                    if ((found && sd == d0 + PRE) || slast) begin
+                    if ((found && sd == d0 + PREW) || slast) begin
                         done <= 1'b1;
                         fin <= 1'b1;
                         detected <= 1'b1;
@@ -222,7 +229,7 @@ module stf_detect (
 );
     wire signed [33:0] pr_full, pi_full;
     stf_corr core (
-        .clk(clk), .rst_n(rst_n), .threshold_q8(threshold_q8), .in_valid(in_valid), .in_re(in_re), .in_im(in_im),
+        .clk(clk), .rst_n(rst_n), .restart(1'b0), .threshold_q8(threshold_q8), .in_valid(in_valid), .in_re(in_re), .in_im(in_im),
         .in_last(in_last), .trace_valid(trace_valid), .trace_d(trace_d), .trace_pr(trace_pr), .trace_pi(trace_pi),
         .trace_e(trace_e), .done(done), .detected(detected), .peak(peak), .peak_pr(peak_pr), .peak_pi(peak_pi),
         .peak_e(peak_e), .peak_pr_full(pr_full), .peak_pi_full(pi_full));

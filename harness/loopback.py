@@ -35,8 +35,9 @@ class EmuLink:
     Es/N0 continue the frame sequence, a new Es/N0 restarts it at r = 0."""
 
     def __init__(self, num: Numerology, mcs: MCS, *, design: EstimatorDesign = EstimatorDesign(),
-                 fp: FixedPoint = FixedPoint(), num_frames: int = BOARD_FRAMES, info_seed: int = INFO_SEED):
-        self.link = FxOfdmLink(num, mcs, design=design, fp=fp, device="cpu", genie=False, channel="awgn")
+                 fp: FixedPoint = FixedPoint(), num_frames: int = BOARD_FRAMES, info_seed: int = INFO_SEED,
+                 **link_kw):
+        self.link = FxOfdmLink(num, mcs, design=design, fp=fp, device="cpu", genie=False, channel="awgn", **link_kw)
         self.num, self.mcs, self.fp, self.plan = num, mcs, fp, self.link.plan
         p = self.plan
         rng = np.random.default_rng(info_seed)
@@ -95,31 +96,38 @@ def twin_modem(link: FxOfdmLink) -> twin.TwinModem:
     return tw
 
 
-def board_words(emu: EmuLink, esno_db: float) -> dict:
+def ref_words(code: twin.LdpcCode, info: np.ndarray) -> np.ndarray:
+    """The information bits [codewords, k] of one frame in rx_frame's output
+    layout: [codewords, output words] of 16 bits (rtlcfg.ldpc_out_bits)."""
+    v = rtlcfg.ldpc_out_bits(code)
+    bits = np.where(v >= 0, info[:, np.maximum(v, 0)], 0).astype(np.int64)     # [cw, words, 16]
+    return (bits << np.arange(16)).sum(-1)
+
+
+def board_words(emu: EmuLink, esno_db: float, pace: int = 0) -> dict:
     """What the ARM writes for one SNR point of rtl/loopback, as word
     (address, data) lists: the receiver's configuration, the TX frames,
-    the information bits and the run registers (NFRAMES excluded)."""
+    the information bits and the run registers (NFRAMES excluded). pace:
+    clocks a sample (0: as fast as the receiver takes them)."""
     emu.link.set_noise(10 ** (-esno_db / 10))
     st = emu.setting(esno_db)
     tw = twin_modem(emu.link)
     rx = [(LB_RX + a, d) for a, d in rtlcfg.rx_cfg(tw, emu.link.ref.l_min) + rtlcfg.rx_scale_cfg(st["llr_scale"])]
     tx = [(LB_TX + 4096 * f + i, ((int(x[0]) & 0xFFF) << 12) | (int(x[1]) & 0xFFF))
           for f in range(len(emu.tx)) for i, x in enumerate(emu.tx[f])]
-    ref = []
-    for f in range(len(emu.info)):
-        bits = emu.info[f].reshape(-1).astype(np.uint64)
-        bits = np.concatenate([bits, np.zeros((-len(bits)) % 32, np.uint64)]).reshape(-1, 32)
-        words = (bits << np.arange(32, dtype=np.uint64)).sum(-1)
-        ref += [(LB_REF + 512 * f + w, int(v)) for w, v in enumerate(words)]
+    outw = rtlcfg.ldpc_out_words(tw.code)
+    ref = [(LB_REF + 1024 * f + c * outw + w, int(v))
+           for f in range(len(emu.info)) for c, row in enumerate(ref_words(tw.code, emu.info[f])) for w, v in enumerate(row)]
     regs = [(3, st["seed0"]), (4, st["gx"]), (5, st["gn"]), (6, len(emu.tx)), (7, emu.tx.shape[1]),
-            (8, emu.plan.k)]
+            (8, emu.plan.num_codewords), (9, outw), (LB_PACE, pace)]
     return {"rx": rx, "tx": tx, "ref": ref, "regs": regs, "setting": st}
 
 
 LB_RX, LB_TX, LB_REF = 0x10000, 0x20000, 0x28000
-LB_CTRL, LB_STATUS, LB_NFRAMES = 0, 1, 2
+LB_CTRL, LB_STATUS, LB_NFRAMES, LB_PACE = 0, 1, 2, 10
 LB_COUNTERS = {"frames": 16, "frame_errors": 17, "codeword_errors": 18, "bit_errors": 19, "iterations": 20,
-               "clocks_lo": 21, "clocks_hi": 22}
+               "clocks_lo": 21, "clocks_hi": 22, "dropped": 23, "lost": 24, "fifo_high": 25, "unmarked": 26}
+REAL_TIME_PACE = 10      # clocks a sample at 100 MHz: 10 MS/s
 
 
 def frame_seconds(num: Numerology) -> float:

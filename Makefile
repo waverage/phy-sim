@@ -18,7 +18,7 @@ test-modem:
 
 # Every RTL block's cocotb test under Verilator and Icarus (a failing test
 # fails make through cocotb's results.xml), and a -Wall lint.
-RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot ldpc_dec rx chan_emu loopback
+RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot ldpc_dec rx sync tx chan_emu loopback
 RX_SRC := rx/rx_frame.v rx/rx_fe.v rx/rx_chest.v rx/rx_track.v rx/rx_demap.v fft256/fft256.v fft256/fft256_twiddle.v cordic/cordic.v ldpc_dec/ldpc_dec.v
 
 test-rtl: lint-rtl
@@ -35,6 +35,8 @@ lint-rtl:
 	cd rtl && verilator --lint-only -Wall --top-module nco_rot nco_rot/nco_rot.v cordic/cordic.v
 	cd rtl && verilator --lint-only -Wall --top-module ldpc_dec ldpc_dec/ldpc_dec.v
 	cd rtl && verilator --lint-only -Wall --top-module chan_emu chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v cordic/cordic.v
+	cd rtl && verilator --lint-only -Wall --top-module rx_sync sync/rx_sync.v stf_corr/stf_corr.v nco_rot/nco_rot.v cordic/cordic.v fft256/fft256.v fft256/fft256_twiddle.v
+	cd rtl && verilator --lint-only -Wall --top-module tx_frame tx/tx_frame.v fft256/fft256.v fft256/fft256_twiddle.v
 	cd rtl && verilator --lint-only -Wall --top-module loopback_axi loopback/loopback_axi.v loopback/loopback.v chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v $(RX_SRC)
 
 # The RTL's constant tables (committed), generated from the twin

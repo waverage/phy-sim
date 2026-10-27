@@ -30,5 +30,5 @@ while {1} {
     if {$status == 2 || $status == 0xBAD} break
     con
 }
-mrd -bin -file $res $RES [expr {8 * $npoints}]
+mrd -bin -file $res $RES [expr {16 * $npoints}]
 puts "done in [expr {[clock seconds] - $t0}] s"

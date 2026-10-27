@@ -1,6 +1,6 @@
 """A small board job for checking the JTAG flow (tools/board.py): two
 points of a few frames, with the expected counts from the model.
-  python -I tools/board_smoke.py        then  tools/board.py run / check with BOARD_WORK=.../board_smoke
+  python -I tools/board_smoke.py [pace]   then  tools/board.py run / peek with BOARD_WORK=.../board_smoke
 """
 import json
 import pathlib
@@ -17,15 +17,15 @@ from tools import board                                            # noqa: E402
 POINTS = (("qpsk-1/2", 1.0, 20), ("64qam-3/4", 15.75, 10))
 
 
-def main():
+def main(pace: int = 0):
     mcs = {m.name: m for m in MCS_TABLE}
     points, words = [], []
     for name, esno, nframes in POINTS:
         emu = EmuLink(NUM_10MHZ, mcs[name])
-        w = board_words(emu, esno)
+        w = board_words(emu, esno, pace)
         ws = w["rx"] + w["tx"] + w["ref"] + w["regs"]
         exp = emu.run(nframes, esno)
-        points.append({"mcs": name, "esno_db": esno, "nframes": nframes, "nwords": len(ws),
+        points.append({"mcs": name, "esno_db": esno, "nframes": nframes, "nwords": len(ws), "pace": pace,
                        "expected": {k: exp[k] for k in ("frames", "frame_errors", "codeword_errors", "bit_errors")}})
         words.append(np.array(ws, np.uint32).reshape(-1))
     hdr = [board.JOB_MAGIC, len(points), 0, 0]
@@ -41,4 +41,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 0)

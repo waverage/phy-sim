@@ -1,0 +1,1308 @@
+{
+ "experiment": "e020_board_realtime",
+ "date": "2026-10-27T11:42:54",
+ "git": "b87af7d",
+ "sionna": "2.2.0",
+ "torch": "2.14.1+cu126",
+ "points": [
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 0.656,
+   "nframes": 500,
+   "nwords": 47734,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 498,
+    "bit_errors": 167968
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 498,
+    "bit_errors": 167968,
+    "iterations": 9999,
+    "clocks_lo": 20200006,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.2467895306563
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 0.906,
+   "nframes": 500,
+   "nwords": 14278,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 445,
+    "codeword_errors": 445,
+    "bit_errors": 108118
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 445,
+    "codeword_errors": 445,
+    "bit_errors": 108118,
+    "iterations": 9842,
+    "clocks_lo": 20200006,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.2467895306563
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.156,
+   "nframes": 500,
+   "nwords": 14278,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 202,
+    "codeword_errors": 202,
+    "bit_errors": 31464
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 202,
+    "codeword_errors": 202,
+    "bit_errors": 31464,
+    "iterations": 8683,
+    "clocks_lo": 20200006,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.2467895306563
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.406,
+   "nframes": 5500,
+   "nwords": 14278,
+   "pace": 10,
+   "expected": {
+    "frames": 5500,
+    "frame_errors": 208,
+    "codeword_errors": 208,
+    "bit_errors": 19622
+   },
+   "board": {
+    "frames": 5500,
+    "frame_errors": 208,
+    "codeword_errors": 208,
+    "bit_errors": 19622,
+    "iterations": 69739,
+    "clocks_lo": 221786567,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.8616410343734
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.656,
+   "nframes": 20000,
+   "nwords": 14278,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 26,
+    "codeword_errors": 26,
+    "bit_errors": 2381
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 26,
+    "codeword_errors": 26,
+    "bit_errors": 2381,
+    "iterations": 202251,
+    "clocks_lo": 806430551,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.064771256415
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.906,
+   "nframes": 20000,
+   "nwords": 14278,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 167814,
+    "clocks_lo": 806425239,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0811076797163
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 3.586,
+   "nframes": 500,
+   "nwords": 48418,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 133964
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 133964,
+    "iterations": 9999,
+    "clocks_lo": 20202098,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2474.990468811705
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 3.836,
+   "nframes": 500,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 479,
+    "codeword_errors": 479,
+    "bit_errors": 91913
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 479,
+    "codeword_errors": 479,
+    "bit_errors": 91913,
+    "iterations": 9934,
+    "clocks_lo": 20196215,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.711414242718
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.086,
+   "nframes": 500,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 279,
+    "codeword_errors": 279,
+    "bit_errors": 34642
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 279,
+    "codeword_errors": 279,
+    "bit_errors": 34642,
+    "iterations": 8844,
+    "clocks_lo": 20189075,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2476.5869659704567
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.336,
+   "nframes": 3500,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 3500,
+    "frame_errors": 224,
+    "codeword_errors": 224,
+    "bit_errors": 19696
+   },
+   "board": {
+    "frames": 3500,
+    "frame_errors": 224,
+    "codeword_errors": 224,
+    "bit_errors": 19696,
+    "iterations": 43117,
+    "clocks_lo": 141147647,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.6729342572744
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.586,
+   "nframes": 20000,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 25,
+    "codeword_errors": 25,
+    "bit_errors": 1160
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 25,
+    "codeword_errors": 25,
+    "bit_errors": 1160,
+    "iterations": 183498,
+    "clocks_lo": 806427647,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0737021358595
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.836,
+   "nframes": 20000,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3,
+    "iterations": 148231,
+    "clocks_lo": 806423363,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.086877145696
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 5.086,
+   "nframes": 20000,
+   "nwords": 14314,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3,
+    "iterations": 127947,
+    "clocks_lo": 806421935,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0912688467483
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 5.776,
+   "nframes": 500,
+   "nwords": 53909,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 330512
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 330512,
+    "iterations": 10000,
+    "clocks_lo": 20245540,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2469.679741809801
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.026,
+   "nframes": 500,
+   "nwords": 19189,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 264729
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 264729,
+    "iterations": 10000,
+    "clocks_lo": 20245540,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2469.679741809801
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.276,
+   "nframes": 500,
+   "nwords": 19189,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 434,
+    "codeword_errors": 434,
+    "bit_errors": 137083
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 434,
+    "codeword_errors": 434,
+    "bit_errors": 137083,
+    "iterations": 9867,
+    "clocks_lo": 20245540,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2469.679741809801
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.526,
+   "nframes": 1500,
+   "nwords": 19189,
+   "pace": 10,
+   "expected": {
+    "frames": 1500,
+    "frame_errors": 294,
+    "codeword_errors": 294,
+    "bit_errors": 44079
+   },
+   "board": {
+    "frames": 1500,
+    "frame_errors": 294,
+    "codeword_errors": 294,
+    "bit_errors": 44079,
+    "iterations": 25052,
+    "clocks_lo": 60545101,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2477.491944393651
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.776,
+   "nframes": 20000,
+   "nwords": 19189,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 73,
+    "codeword_errors": 73,
+    "bit_errors": 7467
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 73,
+    "codeword_errors": 73,
+    "bit_errors": 7467,
+    "iterations": 249996,
+    "clocks_lo": 806451733,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.999630678455
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 7.026,
+   "nframes": 20000,
+   "nwords": 19189,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 204001,
+    "clocks_lo": 806485540,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.895671781046
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 9.567,
+   "nframes": 500,
+   "nwords": 55044,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 283387
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 283387,
+    "iterations": 10000,
+    "clocks_lo": 20232312,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.294432391118
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 9.817,
+   "nframes": 500,
+   "nwords": 19092,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 224719
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 224719,
+    "iterations": 9999,
+    "clocks_lo": 20232312,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.294432391118
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.067,
+   "nframes": 500,
+   "nwords": 19092,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 446,
+    "codeword_errors": 446,
+    "bit_errors": 126689
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 446,
+    "codeword_errors": 446,
+    "bit_errors": 126689,
+    "iterations": 9888,
+    "clocks_lo": 20232312,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.294432391118
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.317,
+   "nframes": 1000,
+   "nwords": 19092,
+   "pace": 10,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 222,
+    "codeword_errors": 222,
+    "bit_errors": 30361
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 222,
+    "codeword_errors": 222,
+    "bit_errors": 30361,
+    "iterations": 16058,
+    "clocks_lo": 40392312,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.7186466573144
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.567,
+   "nframes": 20000,
+   "nwords": 19092,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 121,
+    "codeword_errors": 121,
+    "bit_errors": 11873
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 121,
+    "codeword_errors": 121,
+    "bit_errors": 11873,
+    "iterations": 231353,
+    "clocks_lo": 806445431,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.019010734528
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.817,
+   "nframes": 20000,
+   "nwords": 19092,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 181368,
+    "clocks_lo": 806442760,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0272247468624
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 13.509,
+   "nframes": 500,
+   "nwords": 61087,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 394472
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 394472,
+    "iterations": 20000,
+    "clocks_lo": 20239154,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2470.458992505319
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 13.759,
+   "nframes": 500,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 937,
+    "bit_errors": 278058
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 937,
+    "bit_errors": 278058,
+    "iterations": 19872,
+    "clocks_lo": 20229614,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.624026044194
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.009,
+   "nframes": 500,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 399,
+    "codeword_errors": 538,
+    "bit_errors": 104116
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 399,
+    "codeword_errors": 538,
+    "bit_errors": 104116,
+    "iterations": 18345,
+    "clocks_lo": 20239154,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2470.458992505319
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.259,
+   "nframes": 1000,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 213,
+    "codeword_errors": 224,
+    "bit_errors": 29865
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 213,
+    "codeword_errors": 224,
+    "bit_errors": 29865,
+    "iterations": 28869,
+    "clocks_lo": 40375527,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2476.7478576812136
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.509,
+   "nframes": 20000,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 127,
+    "codeword_errors": 127,
+    "bit_errors": 15067
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 127,
+    "codeword_errors": 127,
+    "bit_errors": 15067,
+    "iterations": 436643,
+    "clocks_lo": 806452770,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.9964417011056
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.759,
+   "nframes": 20000,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 3,
+    "codeword_errors": 3,
+    "bit_errors": 94
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 3,
+    "codeword_errors": 3,
+    "bit_errors": 94,
+    "iterations": 360051,
+    "clocks_lo": 806450506,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.003403953472
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 15.009,
+   "nframes": 20000,
+   "nwords": 23903,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 311649,
+    "clocks_lo": 806446471,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.01581248162
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 14.985,
+   "nframes": 500,
+   "nwords": 61504,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 369581
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 369581,
+    "iterations": 20000,
+    "clocks_lo": 20228501,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.7600182040183
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.235,
+   "nframes": 500,
+   "nwords": 23872,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 970,
+    "bit_errors": 267374
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 970,
+    "bit_errors": 267374,
+    "iterations": 19948,
+    "clocks_lo": 20228501,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.7600182040183
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.485,
+   "nframes": 500,
+   "nwords": 23872,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 418,
+    "codeword_errors": 595,
+    "bit_errors": 104064
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 418,
+    "codeword_errors": 595,
+    "bit_errors": 104064,
+    "iterations": 18554,
+    "clocks_lo": 20228322,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2471.7818907569294
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.735,
+   "nframes": 1000,
+   "nwords": 23872,
+   "pace": 10,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 221,
+    "codeword_errors": 241,
+    "bit_errors": 26181
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 221,
+    "codeword_errors": 241,
+    "bit_errors": 26181,
+    "iterations": 28641,
+    "clocks_lo": 40388002,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2475.9828426273725
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.985,
+   "nframes": 20000,
+   "nwords": 23872,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 139,
+    "codeword_errors": 139,
+    "bit_errors": 10909
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 139,
+    "codeword_errors": 139,
+    "bit_errors": 10909,
+    "iterations": 419316,
+    "clocks_lo": 806446399,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.016033898863
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 16.235,
+   "nframes": 20000,
+   "nwords": 23872,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 340445,
+    "clocks_lo": 806451879,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2479.9991816994702
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 16.545,
+   "nframes": 500,
+   "nwords": 62159,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 374411
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 374411,
+    "iterations": 20000,
+    "clocks_lo": 20226335,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2472.0247143142838
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 16.795,
+   "nframes": 500,
+   "nwords": 23855,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 987,
+    "bit_errors": 274124
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 987,
+    "bit_errors": 274124,
+    "iterations": 19980,
+    "clocks_lo": 20226335,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2472.0247143142838
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.045,
+   "nframes": 500,
+   "nwords": 23855,
+   "pace": 10,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 462,
+    "codeword_errors": 711,
+    "bit_errors": 120653
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 462,
+    "codeword_errors": 711,
+    "bit_errors": 120653,
+    "iterations": 19060,
+    "clocks_lo": 20226335,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2472.0247143142838
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.295,
+   "nframes": 1000,
+   "nwords": 23855,
+   "pace": 10,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 266,
+    "codeword_errors": 287,
+    "bit_errors": 27825
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 266,
+    "codeword_errors": 287,
+    "bit_errors": 27825,
+    "iterations": 29402,
+    "clocks_lo": 40383794,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2476.240840570849
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.545,
+   "nframes": 20000,
+   "nwords": 23855,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 191,
+    "codeword_errors": 193,
+    "bit_errors": 11929
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 191,
+    "codeword_errors": 193,
+    "bit_errors": 11929,
+    "iterations": 415869,
+    "clocks_lo": 806449279,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0071772399715
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.795,
+   "nframes": 20000,
+   "nwords": 23855,
+   "pace": 10,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 326513,
+    "clocks_lo": 806444994,
+    "clocks_hi": 0,
+    "dropped": 0,
+    "lost": 0,
+    "fifo_high": 133,
+    "unmarked": 0
+   },
+   "match": true,
+   "no_drops": true,
+   "board_frames_per_s": 2480.0203546182597
+  }
+ ],
+ "all_match": true,
+ "fclk_mhz": 100.0,
+ "pace_clocks_per_sample": 10,
+ "board_minus_l2_db": {
+  "qpsk-1/2": 0.0037837719497106903,
+  "qpsk-3/4": -0.022694527886644167,
+  "16qam-1/2": 0.007543208697950554,
+  "16qam-3/4": 0.022926399900045524,
+  "64qam-2/3": 0.01759445771514656,
+  "64qam-3/4": 0.005329221413555629,
+  "64qam-5/6": -0.004160463268359393
+ },
+ "tolerance_db": 0.3,
+ "run": {
+  "seconds": 170
+ },
+ "air_frames_per_s": 2480.15873015873,
+ "frames": 345000,
+ "dropped": 0,
+ "lost": 0,
+ "fifo_high_max": 133,
+ "gate_met": true,
+ "summary": "emulator at 10 MS/s: 345000 frames, no frame dropped, no sample lost, counters equal the model at every point; 2470 to 2480 frames/s with the pipeline's fill and drain (the air carries 2480)"
+}

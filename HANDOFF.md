@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M8 done, M9 next
+## State: M0 to M8 done, M9 in progress (the chip side done; the radio boards to come)
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -27,7 +27,7 @@ and `make check` gates everything.
 | M7 first RTL blocks | done 2026-10-26 | `rtl/fft256/`, `rtl/cordic/`, `rtl/stf_corr/`, `rtl/nco_rot/` (cocotb, Verilator and Icarus), `rtl/synth.sh`, `tools/gen_rtl.py`, `tests/test_m7_rtl.py` |
 | M8 receiver in RTL and the Arty Z7 loopback | done 2026-10-27 | `rtl/ldpc_dec/`, `rtl/rx/`, `rtl/chan_emu/`, `rtl/loopback/`, `fpga/`, `harness/rtlcfg.py`, `harness/chanemu.py`, `harness/loopback.py`, `results/e018_board_emulator.json`, `results/e019_board_loopback.json`, `tests/test_m8_board.py` |
 | Simulator viewer (between M8 and M9, asked for by the user) | done 2026-10-27 | `make viewer`, `harness/viewer.py`, `tools/viewer.py`, `tools/viewer.html`, `tests/test_viewer.py`; README "The simulator viewer" |
-| M9 over a cable | not started | |
+| M9 over a cable | in progress. Done 2026-10-27: the real-time receiver on the board (e020), the synchroniser and the transmitter in RTL, the whole chain on the chip in simulation. To do: the chain on the board, then the AD936x boards over a cable | `rtl/rx/` (pipelined), `rtl/ldpc_dec/` (word I/O, early stop beside the decoding), `rtl/sync/`, `rtl/tx/`, `rtl/onchip/`, `harness/onchip.py`, `results/e020_board_realtime.json`, `tests/test_m9_realtime.py` |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -333,20 +333,60 @@ design in floating point; e015 is the gate in fixed point.
   iteration plus the syndrome pass). 340 to 990 frames/s on the board at
   100 MHz (above); the air carries 2,480 frames/s.
 
-## Next: M9 over a cable, and the real-time receiver
+## What M9 built so far (the chip side)
 
-- **Real time** needs about 3 to 6 times the throughput: overlap the
-  phases (FFT of the next frame during the decode), more decoder lanes
-  (32, or z), the demapper one RE a clock. Then the synchroniser's rest in
-  RTL (first-path search, CP-CFO accumulation, sequencing) and the TX
-  chain (encoder, mapper, IFFT), so the PL carries the whole modem.
+- **The receiver is real time: e020 on the board.** The M8 job (44 points,
+  345,000 frames) with the emulator at 10 MS/s like a radio: no frame
+  dropped, no sample lost, 2,480 frames/s on the long points (the air's
+  rate), every counter equal to e018's model. Before: 340 to 990 frames/s.
+  - **Three stages on three frames** (`rtl/rx/rx_frame.v`): A the FFTs into
+    one of two Y banks; B estimate, tracker and demapper into one of two
+    LLR banks; C the decoders. A frame costs the slowest stage: 22,215
+    clocks (the FFTs, unpaced), 31,708 for 64-QAM with the tracker, against
+    40,320 a frame on the air at 100 MHz.
+  - **The decoder** (`rtl/ldpc_dec`): the syndrome check runs beside the
+    next iteration on a copy of the hard decisions (two memories by
+    iteration parity), so the early stop costs no extra pass: about half
+    the clocks, same bits and iteration counts as the twin. LLRs load and
+    bits leave 16 lanes a clock in the decoder's own layout (the
+    deinterleaver table now points into it: `rtlcfg.rx_perm`).
+  - **Three decoders**: two fall behind when every frame fails (64qam-2/3,
+    two codewords of 45,600 clocks at 20 iterations); three keep up with
+    any frame. Capping the iterations instead costs too much: 16 instead of
+    20 gives 4x the FER at the 1 % point.
+  - **The demapper** is pipelined, one RE every 2^(B/2) clocks (was 15 to
+    25); **the estimate** copies each pilot row to a buffer and takes two
+    taps a clock.
+- **Vivado (Arty Z7-20, 100 MHz, WNS +0.03 ns):** 22,800 LUT (43 %), 124 of
+  140 BRAM (88 %, of which the loopback's TX frames are 22), 89 DSP48.
+- **The synchroniser on a stream** (`rtl/sync/rx_sync.v`): fxsync.runOne
+  and alignOne for an endless ADC stream, bit exact against
+  `twin.TwinSync.stream` (start, tau, angles, increment, CIR and every
+  aligned sample; false alarms rejected and the search resumed past them).
+  A 8,192-sample buffer, one read port shared by the detector and the
+  sequencer. The stream rules: a failed CIR check restarts the search at
+  base + d + pre, a synchronised frame at start + S slot - 64.
+- **The transmitter** (`rtl/tx/tx_frame.v`): the LDPC encoder as a short
+  program of shifted-vector XORs (`rtlcfg.ldpc_enc_program`, equal to the
+  Zig encoder for all 14 codes), the mapper through the receiver's own
+  deinterleaver table, the inverse FFT, the cyclic prefix and the
+  preamble: bit exact against the twin, about 24,000 clocks a frame.
+- **The whole chain on the chip** (`rtl/onchip`, model `harness/onchip.py`):
+  TX frames with gaps, an NCO for the carrier offset, chan_emu, the
+  synchroniser, the receiver. In software every frame is found and decoded
+  at 0, +20 and -90 kHz.
+
+## Next
+
+- **The chain on the board:** `rtl/onchip` needs its own Vivado top and
+  board job (it replaces the loopback; the BRAM fits once the loopback's TX
+  frame memory goes).
+- **The AD936x boards over a cable** (AntSDR E200 pair or ADRV9364-Z7020,
+  30 + 10 dB attenuators): the user is ordering them. Then the chip's TX
+  into the AD9363's DAC port and the ADC port into rx_sync.
 - **stf_detect's 34 DSPs** are the detection metric's wide squares
   (|P|^2, E^2 at 26 to 28 bits); one sample per 10 clocks lets one
   multiplier be shared.
-- **The simulator GUI** (asked for right after M8): a browser page on the
-  harness: spectrum, waterfall, waveform, constellation before and after
-  equalisation, channel estimate, decoded errors; sliders for SNR, MCS,
-  channel, CFO, interference.
 - **The Kria KV260** the user also has: 2.2x the LUTs, 5.7x the DSPs and
   an H.264/H.265 encoder on chip, but little I/O for an AD9363; not needed
   for M8/M9 (the AntSDR and ADRV9364-Z7020 are XC7Z020 class), useful later

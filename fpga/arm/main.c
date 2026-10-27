@@ -19,7 +19,8 @@
 
 enum { J_MAGIC, J_NPOINTS, J_STATUS, J_POINT, J_POINTS };          /* job header words */
 enum { P_OFFSET, P_NWORDS, P_NFRAMES, P_FLAGS, P_WORDS };           /* per point */
-enum { LB_CTRL = 0, LB_STATUS = 1, LB_NFRAMES = 2, LB_COUNTERS = 16, N_COUNTERS = 7 };
+enum { LB_CTRL = 0, LB_STATUS = 1, LB_NFRAMES = 2, LB_COUNTERS = 16, N_COUNTERS = 11 };
+enum { RES_WORDS = 16 };          /* per point: the counters, then the magic in the last word */
 enum { S_RUNNING = 1, S_DONE = 2, S_BAD_JOB = 0xBAD };
 
 int main(void)
@@ -41,8 +42,8 @@ int main(void)
         while (PL[LB_STATUS] & 1)
             ;
         for (uint32_t k = 0; k < N_COUNTERS; k++)
-            RESULTS[8 * p + k] = PL[LB_COUNTERS + k];
-        RESULTS[8 * p + 7] = RES_MAGIC;
+            RESULTS[RES_WORDS * p + k] = PL[LB_COUNTERS + k];
+        RESULTS[RES_WORDS * p + RES_WORDS - 1] = RES_MAGIC;
         JOB[J_POINT] = p + 1;
     }
     JOB[J_STATUS] = S_DONE;

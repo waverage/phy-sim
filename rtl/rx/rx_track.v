@@ -161,7 +161,7 @@ module rx_track (
     wire [4:0]  ru_t = ru - {1'b0, num_sym};
     /* verilator lint_on UNUSEDSIGNAL */
     wire [3:0]  ru_s = ru_h ? psym_of(ru_t[1:0]) : ru[3:0];
-    wire [9:0]  ru_tf = ru_t[1:0] * nf;
+    wire [9:0]  ru_tf = {ru_t[1:0], 8'd0};       // the pilot estimates are at {t, f}
     wire [11:0] ru_sf = ru[3:0] * nf;
     reg  [11:0] ru_base;
     reg         ru_hr;
@@ -197,7 +197,7 @@ module rx_track (
         end
     endfunction
 
-    wire [9:0] kk_tf = kk[1:0] * nf;
+    wire [9:0] kk_tf = {kk[1:0], 8'd0};
     always @(*) begin
         hf_raddr = kk_tf + {2'd0, f};
         y_raddr  = ru_base + {4'd0, rf};

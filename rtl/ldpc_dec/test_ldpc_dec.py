@@ -8,7 +8,7 @@ from cocotb.triggers import RisingEdge, ReadOnly
 
 from tbutil import FRAME_FILES, load, start
 from harness import twin
-from harness.rtlcfg import ldpc_cfg
+from harness.rtlcfg import ldpc_cfg, ldpc_cycles, ldpc_llr_slot, ldpc_out_bits
 
 ICARUS = os.environ.get("SIM", "verilator") == "icarus"
 
@@ -22,44 +22,54 @@ async def configure(dut, cfg):
     dut.cfg_we.value = 0
 
 
-async def decode(dut, llr: np.ndarray, k: int) -> tuple[np.ndarray, int]:
+BASE = 37        # the codeword's first word in the LLR memory: any offset must work
+
+
+def llr_memory(code, llr: np.ndarray) -> list[int]:
+    """The LLR memory words (lane layout, 6 bits a lane) of one codeword;
+    the unused lanes hold noise, which the decoder must ignore."""
+    rng = np.random.default_rng(len(llr))
+    lanes = rng.integers(-32, 32, (1 << 10, 16))
+    word, lane = ldpc_llr_slot(code)
+    lanes[BASE + word, lane] = llr
+    return [sum((int(v) & 63) << (6 * j) for j, v in enumerate(row)) for row in lanes]
+
+
+async def decode(dut, code, llr: np.ndarray) -> tuple[np.ndarray, int, int]:
+    """One codeword: (bits, iterations, clocks from start to done)."""
+    mem = llr_memory(code, llr)
+    out = ldpc_out_bits(code)
+    dut.llr_base.value = BASE
     dut.start.value = 1
     await RisingEdge(dut.clk)
     dut.start.value = 0
-    # wait for in_ready, then one LLR per clock
+    bits = np.full(code.k, 2, np.uint8)
+    clocks = 1
     while True:
         await ReadOnly()
-        ready = int(dut.in_ready.value)
-        await RisingEdge(dut.clk)
-        if ready:
-            break
-    dut.in_valid.value = 1
-    dut.in_llr.value = int(llr[0])
-    i = 1
-    while True:
-        await RisingEdge(dut.clk)
-        if i == len(llr):
-            break
-        dut.in_llr.value = int(llr[i])
-        i += 1
-    dut.in_valid.value = 0
-    bits = np.full(k, 2, np.uint8)
-    while True:
-        await RisingEdge(dut.clk)
-        await ReadOnly()
+        re, addr = int(dut.llr_re.value), int(dut.llr_addr.value)
         if int(dut.out_valid.value):
-            bits[int(dut.out_idx.value)] = int(dut.out_bit.value)
+            a, wd, mk = int(dut.out_addr.value), int(dut.out_word.value), int(dut.out_mask.value)
+            for j in range(16):
+                assert ((mk >> j) & 1) == (out[a, j] >= 0), f"output word {a}: mask {mk:04x}"
+                if out[a, j] >= 0:
+                    bits[out[a, j]] = (wd >> j) & 1
         if int(dut.done.value):
             it = int(dut.iters.value)
             await RisingEdge(dut.clk)
-            return bits, it
+            return bits, it, clocks
+        await RisingEdge(dut.clk)
+        clocks += 1
+        if re:
+            dut.llr_data.value = mem[addr]
 
 
 async def setup(dut):
     dut.cfg_we.value = 0
     dut.start.value = 0
-    dut.in_valid.value = 0
-    dut.in_llr.value = 0
+    dut.llr_base.value = 0
+    dut.llr_data.value = 0
+    dut.out_ready.value = 1
     await start(dut)
 
 
@@ -70,10 +80,12 @@ async def check(dut, k, n, llrs, want_bits=None, **dec):
         tb, tit = twin.ldpc_decode(code, llr, **dec)
         if want_bits is not None:
             assert np.array_equal(tb, want_bits[c])
-        bits, it = await decode(dut, llr, k)
+        bits, it, clocks = await decode(dut, code, llr)
         assert np.array_equal(bits, tb), f"k={k} n={n} codeword {c}: {int((bits != tb).sum())} bits differ"
         assert it == tit, f"k={k} n={n} codeword {c}: {it} iterations, twin {tit}"
-        dut._log.info(f"k={k} n={n} codeword {c}: {it} iterations, {int(tb.sum())} ones, match")
+        est = ldpc_cycles(code, it, dec.get("early_stop", True), dec.get("num_iter", 20))
+        dut._log.info(f"k={k} n={n} codeword {c}: {it} iterations, {int(tb.sum())} ones, match; "
+                      f"{clocks} clocks (model {est})")
 
 
 @cocotb.test()

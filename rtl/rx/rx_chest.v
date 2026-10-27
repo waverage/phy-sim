@@ -4,8 +4,12 @@
 // (+-1 +-j) times a constant, so this is two additions), then for each
 // subcarrier f the frequency filter, L complex taps over the subcarriers
 // start[f] .. start[f] + L - 1, accumulated exactly and rounded half up by
-// 15 bits, saturated to 16. One tap per clock: npsym F L clocks, in a
-// 6-stage pipeline.
+// 15 bits, saturated to 16.
+//
+// Per pilot symbol t: the F least-squares values go to a buffer of their
+// own (one a clock), then the filter takes two taps a clock from it (taps
+// j and j + 1 from the even and odd tap memories): about
+// npsym F (1 + L / 2) clocks. The estimate of (t, f) is written at {t, f}.
 //
 // Tables (rx_frame): start[f] and the pilot signs read without latency,
 // the taps and the frame memory with one clock.
@@ -23,8 +27,9 @@ module rx_chest (
     input  wire [7:0]  st_data,
     output wire [9:0]  sg_addr,
     input  wire [1:0]  sg_data,            // {pilot re < 0, pilot im < 0}
-    output wire [12:0] tp_addr,
-    input  wire [31:0] tp_data,            // {re, im} Q15
+    output wire [11:0] tp_addr,            // {f, j / 2}
+    input  wire [31:0] tp0_data,           // tap j, {re, im} Q15
+    input  wire [31:0] tp1_data,           // tap j + 1
     output wire [11:0] y_addr,
     input  wire [31:0] y_data,
     output reg         hf_we,
@@ -32,49 +37,68 @@ module rx_chest (
     output reg  [31:0] hf_data,
     output reg         done
 );
-    reg        run;
-    reg [1:0]  t;
-    reg [7:0]  f;
-    reg [4:0]  j;
+    localparam C_IDLE = 3'd0, C_COPY = 3'd1, C_WAIT = 3'd2, C_FILT = 3'd3, C_NEXT = 3'd4, C_END = 3'd5;
+    reg  [2:0] st;
+    reg  [1:0] t;
+    reg  [7:0] f, p;
+    reg  [3:0] jp;                         // the tap pair
     wire [3:0] s = (t == 2'd0) ? psym0 : (t == 2'd1) ? psym1 : psym2;
     wire [11:0] sf = s * nf;
     wire [9:0]  tf = t * nf;
-    wire [7:0]  pos = st_data + {3'd0, j};
-    wire last_tap = ({1'b0, j} == taps - 6'd1);
+    wire [4:0]  npair_m1 = taps[5:1] + {4'd0, taps[0]} - 5'd1;
+    wire last_pair = ({1'b0, jp} == npair_m1);
 
-    // pipeline: 0 the addresses, 1 the RAMs answer, 2 their words registered,
-    // 3 LS, 4 products, then the accumulation
-    reg        p0_v, p0_first, p0_last;
-    reg [9:0]  p0_a, p0_sga;
-    reg [11:0] p0_ya;
-    reg [12:0] p0_tpa;
+    // ---- the least-squares buffer: written in C_COPY, two reads in C_FILT
+    reg  [35:0] ls_mem [0:255];
+    reg         ls_we;
+    reg  [7:0]  ls_wa;
+    reg  [35:0] ls_wd;
+    reg  [35:0] ls0_q, ls1_q;
+    wire [7:0]  pos0 = st_data + {3'd0, jp, 1'b0};
+    always @(posedge clk) begin
+        if (ls_we)
+            ls_mem[ls_wa] <= ls_wd;
+        ls0_q <= ls_mem[pos0];
+    end
+    always @(posedge clk)
+        ls1_q <= ls_mem[pos0 + 8'd1];
+
     assign st_addr = f;
-    assign sg_addr = p0_sga;
-    assign y_addr  = p0_ya;
-    assign tp_addr = p0_tpa;
-    reg        p1_v, p1_first, p1_last;
-    reg [1:0]  p1_sg;
+    assign sg_addr = tf + {2'd0, p};
+    assign y_addr  = sf + {4'd0, p};
+    assign tp_addr = {f, jp};
+
+    // C_COPY pipeline: the address at p, the word a clock later, LS, the write
+    reg        c1_v;
+    reg [7:0]  c1_p;
+    reg [1:0]  c1_sg;
+    wire signed [15:0] yr = y_data[31:16], yi = y_data[15:0];
+    wire signed [17:0] ayr = c1_sg[1] ? -{{2{yr[15]}}, yr} : {{2{yr[15]}}, yr};
+    wire signed [17:0] ayi = c1_sg[1] ? -{{2{yi[15]}}, yi} : {{2{yi[15]}}, yi};
+    wire signed [17:0] byr = c1_sg[0] ? -{{2{yr[15]}}, yr} : {{2{yr[15]}}, yr};
+    wire signed [17:0] byi = c1_sg[0] ? -{{2{yi[15]}}, yi} : {{2{yi[15]}}, yi};
+    wire signed [17:0] lr = ayr + byi;     // a yr + b yi
+    wire signed [17:0] li = ayi - byr;     // a yi - b yr
+
+    // C_FILT pipeline: 0 the addresses, 1 the RAMs answer, 2 their words
+    // registered, 3 the products, 4 the pair's sum, then the accumulation
+    reg        p1_v, p1_first, p1_last, p1_two;
     reg [9:0]  p1_a;
-    reg        p2_v, p2_first, p2_last;
-    reg [1:0]  p2_sg;
+    reg        p2_v, p2_first, p2_last, p2_two;
     reg [9:0]  p2_a;
-    reg [31:0] p2_y, p2_w;
+    reg [35:0] p2_l0, p2_l1;
+    reg [31:0] p2_w0, p2_w1;
     reg        p3_v, p3_first, p3_last;
     reg [9:0]  p3_a;
-    reg signed [17:0] p3_lr, p3_li;
-    reg signed [15:0] p3_wr, p3_wi;
+    reg signed [34:0] p3_pr0, p3_pi0, p3_pr1, p3_pi1;
     reg        p4_v, p4_first, p4_last;
     reg [9:0]  p4_a;
-    reg signed [34:0] p4_pr, p4_pi;
+    reg signed [35:0] p4_pr, p4_pi;
     reg signed [47:0] acc_r, acc_i;
-
-    wire signed [15:0] yr = p2_y[31:16], yi = p2_y[15:0];
-    wire signed [17:0] ayr = p2_sg[1] ? -{{2{yr[15]}}, yr} : {{2{yr[15]}}, yr};
-    wire signed [17:0] ayi = p2_sg[1] ? -{{2{yi[15]}}, yi} : {{2{yi[15]}}, yi};
-    wire signed [17:0] byr = p2_sg[0] ? -{{2{yr[15]}}, yr} : {{2{yr[15]}}, yr};
-    wire signed [17:0] byi = p2_sg[0] ? -{{2{yi[15]}}, yi} : {{2{yi[15]}}, yi};
-    wire signed [47:0] nr = (p4_first ? 48'sd0 : acc_r) + {{13{p4_pr[34]}}, p4_pr};
-    wire signed [47:0] ni = (p4_first ? 48'sd0 : acc_i) + {{13{p4_pi[34]}}, p4_pi};
+    wire signed [17:0] l0r = p2_l0[35:18], l0i = p2_l0[17:0], l1r = p2_l1[35:18], l1i = p2_l1[17:0];
+    wire signed [15:0] w0r = p2_w0[31:16], w0i = p2_w0[15:0], w1r = p2_w1[31:16], w1i = p2_w1[15:0];
+    wire signed [47:0] nr = (p4_first ? 48'sd0 : acc_r) + {{12{p4_pr[35]}}, p4_pr};
+    wire signed [47:0] ni = (p4_first ? 48'sd0 : acc_i) + {{12{p4_pi[35]}}, p4_pi};
 
     function signed [15:0] rnd_sat15;
         input signed [47:0] x;
@@ -90,78 +114,99 @@ module rx_chest (
         end
     endfunction
 
+    wire filt = (st == C_FILT);
+    wire busy_pipe = c1_v || ls_we || p1_v || p2_v || p3_v || p4_v || hf_we;
+
     always @(posedge clk) begin
+        // copy pipeline
+        c1_v  <= (st == C_COPY) && rst_n;
+        c1_p  <= p;
+        c1_sg <= sg_data;
+        ls_we <= c1_v && rst_n;
+        ls_wa <= c1_p;
+        ls_wd <= {lr, li};
+        // filter pipeline
+        p1_v     <= filt && rst_n;
+        p1_first <= (jp == 4'd0);
+        p1_last  <= last_pair;
+        p1_two   <= ({2'b00, jp, 1'b1} < {1'b0, taps});
+        p1_a     <= {t, f};
+        p2_v     <= p1_v && rst_n;
+        p2_first <= p1_first;
+        p2_last  <= p1_last;
+        p2_two   <= p1_two;
+        p2_a     <= p1_a;
+        p2_l0    <= ls0_q;
+        p2_l1    <= ls1_q;
+        p2_w0    <= tp0_data;
+        p2_w1    <= tp1_data;
+        p3_v     <= p2_v && rst_n;
+        p3_first <= p2_first;
+        p3_last  <= p2_last;
+        p3_a     <= p2_a;
+        p3_pr0   <= w0r * l0r - w0i * l0i;
+        p3_pi0   <= w0r * l0i + w0i * l0r;
+        p3_pr1   <= p2_two ? w1r * l1r - w1i * l1i : 35'sd0;
+        p3_pi1   <= p2_two ? w1r * l1i + w1i * l1r : 35'sd0;
+        p4_v     <= p3_v && rst_n;
+        p4_first <= p3_first;
+        p4_last  <= p3_last;
+        p4_a     <= p3_a;
+        p4_pr    <= {p3_pr0[34], p3_pr0} + {p3_pr1[34], p3_pr1};
+        p4_pi    <= {p3_pi0[34], p3_pi0} + {p3_pi1[34], p3_pi1};
+        if (p4_v) begin
+            acc_r <= nr;
+            acc_i <= ni;
+        end
+        hf_we   <= p4_v && p4_last && rst_n;
+        hf_addr <= p4_a;
+        hf_data <= {rnd_sat15(nr), rnd_sat15(ni)};
+
         if (!rst_n) begin
-            run <= 1'b0;
-            p0_v <= 1'b0;
-            p1_v <= 1'b0;
-            p2_v <= 1'b0;
-            p3_v <= 1'b0;
-            p4_v <= 1'b0;
-            hf_we <= 1'b0;
+            st <= C_IDLE;
             done <= 1'b0;
         end else begin
             done <= 1'b0;
-            if (start) begin
-                run <= 1'b1;
-                t <= 2'd0;
-                f <= 8'd0;
-                j <= 5'd0;
-            end else if (run) begin
-                if (last_tap) begin
-                    j <= 5'd0;
-                    if (f == nf - 8'd1) begin
-                        f <= 8'd0;
-                        t <= t + 2'd1;
-                        if (t == npsym - 2'd1)
-                            run <= 1'b0;
+            case (st)
+                C_IDLE: if (start) begin
+                    st <= C_COPY;
+                    t <= 2'd0;
+                    p <= 8'd0;
+                end
+                C_COPY: begin
+                    p <= p + 8'd1;
+                    if (p == nf - 8'd1)
+                        st <= C_WAIT;
+                end
+                C_WAIT: if (!busy_pipe) begin    // the buffer is complete (and the last symbol's writes are out)
+                    st <= C_FILT;
+                    f <= 8'd0;
+                    jp <= 4'd0;
+                end
+                C_FILT: begin
+                    if (last_pair) begin
+                        jp <= 4'd0;
+                        if (f == nf - 8'd1)
+                            st <= C_NEXT;
+                        else
+                            f <= f + 8'd1;
                     end else
-                        f <= f + 8'd1;
-                end else
-                    j <= j + 5'd1;
-            end
-            p0_v     <= run;
-            p0_first <= (j == 5'd0);
-            p0_last  <= last_tap;
-            p0_a     <= tf + {2'd0, f};
-            p0_sga   <= tf + {2'd0, pos};
-            p0_ya    <= sf + {4'd0, pos};
-            p0_tpa   <= {f, j};
-            p1_v     <= p0_v;
-            p1_first <= p0_first;
-            p1_last  <= p0_last;
-            p1_a     <= p0_a;
-            p1_sg    <= sg_data;
-            p2_v     <= p1_v;
-            p2_first <= p1_first;
-            p2_last  <= p1_last;
-            p2_a     <= p1_a;
-            p2_sg    <= p1_sg;
-            p2_y     <= y_data;
-            p2_w     <= tp_data;
-            p3_v     <= p2_v;
-            p3_first <= p2_first;
-            p3_last  <= p2_last;
-            p3_a     <= p2_a;
-            p3_lr    <= ayr + byi;                 // a yr + b yi
-            p3_li    <= ayi - byr;                 // a yi - b yr
-            p3_wr    <= p2_w[31:16];
-            p3_wi    <= p2_w[15:0];
-            p4_v     <= p3_v;
-            p4_first <= p3_first;
-            p4_last  <= p3_last;
-            p4_a     <= p3_a;
-            p4_pr    <= p3_wr * p3_lr - p3_wi * p3_li;
-            p4_pi    <= p3_wr * p3_li + p3_wi * p3_lr;
-            if (p4_v) begin
-                acc_r <= nr;
-                acc_i <= ni;
-            end
-            hf_we   <= p4_v && p4_last;
-            hf_addr <= p4_a;
-            hf_data <= {rnd_sat15(nr), rnd_sat15(ni)};
-            if (p4_v && p4_last && !p3_v)
-                done <= 1'b1;
+                        jp <= jp + 4'd1;
+                end
+                C_NEXT: if (!busy_pipe) begin    // the filter has read the buffer for the last time
+                    if (t == npsym - 2'd1)
+                        st <= C_END;
+                    else begin
+                        t <= t + 2'd1;
+                        p <= 8'd0;
+                        st <= C_COPY;
+                    end
+                end
+                default: begin                   // C_END
+                    st <= C_IDLE;
+                    done <= 1'b1;
+                end
+            endcase
         end
     end
 endmodule
