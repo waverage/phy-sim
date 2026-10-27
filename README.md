@@ -199,9 +199,11 @@ golden vectors through it and requires zero difference, under Verilator
 and Icarus (`rtl/run.sh <block> [SIM=icarus]`, all of them in
 `make test-rtl`, with a `verilator -Wall` lint):
 - `fft256`: the 16-bit radix-2 FFT/IFFT of fx.Fft, round half to even,
-  in one true-dual-port RAM (a butterfly reads its pair in one clock and
-  writes it in the next; 2560 clocks a transform). Twiddles are generated
-  from the twin (`make rtl-tables`, `tools/gen_rtl.py`).
+  in two simple-dual-port banks split by address parity, with a 6-clock
+  butterfly pipeline (one butterfly a clock, about 1590 clocks a
+  transform; M8 changed it from one true-dual-port RAM, which Vivado does
+  not infer, and a one-clock butterfly, which missed 100 MHz by 14 ns).
+  Twiddles are generated from the twin (`make rtl-tables`, `tools/gen_rtl.py`).
 - `cordic`: `cordic_vec` (vectoring), `cordic_rot` (rotation) and
   `angle30` (normalise to 30 bits, then vector), 14-stage pipelines.
 - `stf_corr`: the preamble correlator: running sums of the lag-32
@@ -214,5 +216,35 @@ and Icarus (`rtl/run.sh <block> [SIM=icarus]`, all of them in
 Vectors covered: blocks.npz (FFT, CORDIC), every OFDM symbol of the frame
 vectors (rx to y), and from the sync vectors the correlator trace, the
 detection, the peak, both angles, the pilot FFT, the impulse response and
-the aligned frame. `rtl/synth.sh` gives a Yosys resource estimate for
-the Arty's XC7A35T.
+the aligned frame. `rtl/synth.sh` gives a Yosys resource estimate.
+
+## The receiver in RTL and the board loopback (L3, M8)
+
+The board is the Arty Z7-20 (Zynq XC7Z020: two ARM cores and the FPGA).
+Blocks, each bit exact in cocotb (Verilator and Icarus) against the Zig
+fixed-point modem and the twins:
+- `ldpc_dec`: layered offset min-sum, 16 lanes (every lifting of the MCS
+  table is a multiple of 16), the early stop; configured per code by the
+  control processor (`harness/rtlcfg.ldpc_cfg`). Tested on blocks.npz,
+  every frame vector and all 14 codes of both pilot layouts.
+- `rx`: `rx_frame`, the whole fixed-point receiver after alignment: CP
+  removal and FFT (`rx_fe`), pilot LS and frequency filter (`rx_chest`),
+  phase tracker (`rx_track`), time filter and max-log demapper
+  (`rx_demap`), deinterleaver, decoder. Tables and registers come from
+  `harness/rtlcfg.rx_cfg`. Every intermediate result and the bits match
+  on all 8 frame vectors and the 6 aligned sync frames.
+- `chan_emu`: the board's AWGN channel: counter-hashed Box-Muller noise,
+  gain and the 12-bit ADC; NumPy twin `harness/chanemu.py`.
+- `loopback`: TX frames from the ARM, the emulator, `rx_frame`, the bit
+  comparison and error counters behind a register bus; `loopback_axi`
+  puts it on the Zynq's AXI GP0. `harness/loopback.EmuLink` is its
+  software model, and the cocotb test requires equal counters.
+
+e018 (`make e018`) compares the board model's FER with L2's under AWGN
+for every MCS. The board itself: `make fpga` (Vivado: bitstream and
+.xsa from `fpga/build.tcl`), `make fpga-ooc` (utilisation and timing of
+the loopback alone), `make arm` (the bare-metal error counter in
+`fpga/arm/`), `make board` (`tools/board.py`: runs e018's points on the
+board over JTAG and requires its counters to equal e018's, writing
+`results/e019_board_loopback.json`). Vivado 2026.1 is the Windows
+install; the build folder is `BUILD_DIR` (default `/mnt/e/phy-sim-build`).

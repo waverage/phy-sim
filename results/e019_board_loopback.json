@@ -1,0 +1,1038 @@
+{
+ "experiment": "e019_board_loopback",
+ "date": "2026-10-27T01:09:29",
+ "git": "d7c1ab4",
+ "sionna": "2.2.0",
+ "torch": "2.14.1+cu126",
+ "points": [
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 0.656,
+   "nframes": 500,
+   "nwords": 47132,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 498,
+    "bit_errors": 167968
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 498,
+    "bit_errors": 167968,
+    "iterations": 9999,
+    "clocks_lo": 65540696,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 762.8847884068854
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 0.906,
+   "nframes": 500,
+   "nwords": 14276,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 445,
+    "codeword_errors": 445,
+    "bit_errors": 108118
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 445,
+    "codeword_errors": 445,
+    "bit_errors": 108118,
+    "iterations": 9842,
+    "clocks_lo": 65197812,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 766.8969013868134
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.156,
+   "nframes": 500,
+   "nwords": 14276,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 202,
+    "codeword_errors": 202,
+    "bit_errors": 31464
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 202,
+    "codeword_errors": 202,
+    "bit_errors": 31464,
+    "iterations": 8683,
+    "clocks_lo": 62571700,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 799.0832916478216
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.406,
+   "nframes": 5500,
+   "nwords": 14276,
+   "expected": {
+    "frames": 5500,
+    "frame_errors": 208,
+    "codeword_errors": 208,
+    "bit_errors": 19622
+   },
+   "board": {
+    "frames": 5500,
+    "frame_errors": 208,
+    "codeword_errors": 208,
+    "bit_errors": 19622,
+    "iterations": 69739,
+    "clocks_lo": 626527737,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 877.8541914737289
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.656,
+   "nframes": 20000,
+   "nwords": 14276,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 26,
+    "codeword_errors": 26,
+    "bit_errors": 2381
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 26,
+    "codeword_errors": 26,
+    "bit_errors": 2381,
+    "iterations": 202251,
+    "clocks_lo": 2150938346,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 929.8267445551413
+  },
+  {
+   "mcs": "qpsk-1/2",
+   "esno_db": 1.906,
+   "nframes": 20000,
+   "nwords": 14276,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 167814,
+    "clocks_lo": 2064896549,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 968.5715252749934
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 3.586,
+   "nframes": 500,
+   "nwords": 47464,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 133964
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 133964,
+    "iterations": 9999,
+    "clocks_lo": 67953590,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 735.7962986208676
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 3.836,
+   "nframes": 500,
+   "nwords": 14312,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 479,
+    "codeword_errors": 479,
+    "bit_errors": 91913
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 479,
+    "codeword_errors": 479,
+    "bit_errors": 91913,
+    "iterations": 9934,
+    "clocks_lo": 67800980,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 737.4524675012073
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.086,
+   "nframes": 500,
+   "nwords": 14312,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 279,
+    "codeword_errors": 279,
+    "bit_errors": 34642
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 279,
+    "codeword_errors": 279,
+    "bit_errors": 34642,
+    "iterations": 8844,
+    "clocks_lo": 65110920,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 767.9203427013471
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.336,
+   "nframes": 3500,
+   "nwords": 14312,
+   "expected": {
+    "frames": 3500,
+    "frame_errors": 224,
+    "codeword_errors": 224,
+    "bit_errors": 19696
+   },
+   "board": {
+    "frames": 3500,
+    "frame_errors": 224,
+    "codeword_errors": 224,
+    "bit_errors": 19696,
+    "iterations": 43117,
+    "clocks_lo": 407519680,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 858.8542276044191
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.586,
+   "nframes": 20000,
+   "nwords": 14312,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 25,
+    "codeword_errors": 25,
+    "bit_errors": 1160
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 25,
+    "codeword_errors": 25,
+    "bit_errors": 1160,
+    "iterations": 183498,
+    "clocks_lo": 2161879850,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 925.1207924436688
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 4.836,
+   "nframes": 20000,
+   "nwords": 14312,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3,
+    "iterations": 148231,
+    "clocks_lo": 2067454460,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 967.3731821884967
+  },
+  {
+   "mcs": "qpsk-3/4",
+   "esno_db": 5.086,
+   "nframes": 20000,
+   "nwords": 14312,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 1,
+    "codeword_errors": 1,
+    "bit_errors": 3,
+    "iterations": 127947,
+    "clocks_lo": 2013047620,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 993.5184742425516
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 5.776,
+   "nframes": 500,
+   "nwords": 52643,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 330512
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 330512,
+    "iterations": 10000,
+    "clocks_lo": 111256500,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 449.4119444706601
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.026,
+   "nframes": 500,
+   "nwords": 19187,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 264729
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 264729,
+    "iterations": 10000,
+    "clocks_lo": 111256500,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 449.4119444706601
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.276,
+   "nframes": 500,
+   "nwords": 19187,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 434,
+    "codeword_errors": 434,
+    "bit_errors": 137083
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 434,
+    "codeword_errors": 434,
+    "bit_errors": 137083,
+    "iterations": 9867,
+    "clocks_lo": 110574426,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 452.18412438333615
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.526,
+   "nframes": 1500,
+   "nwords": 19187,
+   "expected": {
+    "frames": 1500,
+    "frame_errors": 294,
+    "codeword_errors": 294,
+    "bit_errors": 44079
+   },
+   "board": {
+    "frames": 1500,
+    "frame_errors": 294,
+    "codeword_errors": 294,
+    "bit_errors": 44079,
+    "iterations": 25052,
+    "clocks_lo": 305678808,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 490.71115194874744
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 6.776,
+   "nframes": 20000,
+   "nwords": 19187,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 73,
+    "codeword_errors": 73,
+    "bit_errors": 7467
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 73,
+    "codeword_errors": 73,
+    "bit_errors": 7467,
+    "iterations": 249996,
+    "clocks_lo": 3560529660,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 561.7141804683071
+  },
+  {
+   "mcs": "16qam-1/2",
+   "esno_db": 7.026,
+   "nframes": 20000,
+   "nwords": 19187,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 204001,
+    "clocks_lo": 3270711090,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 611.4878217507129
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 9.567,
+   "nframes": 500,
+   "nwords": 53138,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 283387
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 500,
+    "bit_errors": 283387,
+    "iterations": 10000,
+    "clocks_lo": 101319000,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 493.4908556144454
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 9.817,
+   "nframes": 500,
+   "nwords": 19090,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 224719
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 499,
+    "codeword_errors": 499,
+    "bit_errors": 224719,
+    "iterations": 9999,
+    "clocks_lo": 101316347,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 493.5037778257046
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.067,
+   "nframes": 500,
+   "nwords": 19090,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 446,
+    "codeword_errors": 446,
+    "bit_errors": 126689
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 446,
+    "codeword_errors": 446,
+    "bit_errors": 126689,
+    "iterations": 9888,
+    "clocks_lo": 100835902,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 495.8551369927746
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.317,
+   "nframes": 1000,
+   "nwords": 19090,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 222,
+    "codeword_errors": 222,
+    "bit_errors": 30361
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 222,
+    "codeword_errors": 222,
+    "bit_errors": 30361,
+    "iterations": 16058,
+    "clocks_lo": 184062884,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 543.2925847233819
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.567,
+   "nframes": 20000,
+   "nwords": 19090,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 121,
+    "codeword_errors": 121,
+    "bit_errors": 11873
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 121,
+    "codeword_errors": 121,
+    "bit_errors": 11873,
+    "iterations": 231353,
+    "clocks_lo": 3228907187,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 619.4046109631952
+  },
+  {
+   "mcs": "16qam-3/4",
+   "esno_db": 10.817,
+   "nframes": 20000,
+   "nwords": 19090,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 181368,
+    "clocks_lo": 2970832944,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 673.2118694318613
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 13.509,
+   "nframes": 500,
+   "nwords": 58549,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 394472
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 394472,
+    "iterations": 20000,
+    "clocks_lo": 145619000,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 343.3617865800479
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 13.759,
+   "nframes": 500,
+   "nwords": 23901,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 937,
+    "bit_errors": 278058
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 498,
+    "codeword_errors": 937,
+    "bit_errors": 278058,
+    "iterations": 19872,
+    "clocks_lo": 145161971,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 344.4428293137464
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.009,
+   "nframes": 500,
+   "nwords": 23901,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 399,
+    "codeword_errors": 538,
+    "bit_errors": 104116
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 399,
+    "codeword_errors": 538,
+    "bit_errors": 104116,
+    "iterations": 18345,
+    "clocks_lo": 139315535,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 358.8975199355908
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.259,
+   "nframes": 1000,
+   "nwords": 23901,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 213,
+    "codeword_errors": 224,
+    "bit_errors": 29865
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 213,
+    "codeword_errors": 224,
+    "bit_errors": 29865,
+    "iterations": 28869,
+    "clocks_lo": 246917347,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 404.99382167750247
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.509,
+   "nframes": 20000,
+   "nwords": 23901,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 127,
+    "codeword_errors": 127,
+    "bit_errors": 15067
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 127,
+    "codeword_errors": 127,
+    "bit_errors": 15067,
+    "iterations": 436643,
+    "clocks_lo": 49741963,
+    "clocks_hi": 1
+   },
+   "match": true,
+   "board_frames_per_s": 460.3299969628647
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 14.759,
+   "nframes": 20000,
+   "nwords": 23901,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 3,
+    "codeword_errors": 3,
+    "bit_errors": 94
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 3,
+    "codeword_errors": 3,
+    "bit_errors": 94,
+    "iterations": 360051,
+    "clocks_lo": 4016323133,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 497.9679009308437
+  },
+  {
+   "mcs": "64qam-2/3",
+   "esno_db": 15.009,
+   "nframes": 20000,
+   "nwords": 23901,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 311649,
+    "clocks_lo": 3808634042,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 525.1226497334343
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 14.985,
+   "nframes": 500,
+   "nwords": 58814,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 369581
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 369581,
+    "iterations": 20000,
+    "clocks_lo": 136782000,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 365.54517407261187
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.235,
+   "nframes": 500,
+   "nwords": 23870,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 970,
+    "bit_errors": 267374
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 970,
+    "bit_errors": 267374,
+    "iterations": 19948,
+    "clocks_lo": 136626085,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 365.9623270329381
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.485,
+   "nframes": 500,
+   "nwords": 23870,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 418,
+    "codeword_errors": 595,
+    "bit_errors": 104064
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 418,
+    "codeword_errors": 595,
+    "bit_errors": 104064,
+    "iterations": 18554,
+    "clocks_lo": 131913155,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 379.03725371438503
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.735,
+   "nframes": 1000,
+   "nwords": 23870,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 221,
+    "codeword_errors": 241,
+    "bit_errors": 26181
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 221,
+    "codeword_errors": 241,
+    "bit_errors": 26181,
+    "iterations": 28641,
+    "clocks_lo": 233385525,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 428.4755877640655
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 15.985,
+   "nframes": 20000,
+   "nwords": 23870,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 139,
+    "codeword_errors": 139,
+    "bit_errors": 10909
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 139,
+    "codeword_errors": 139,
+    "bit_errors": 10909,
+    "iterations": 419316,
+    "clocks_lo": 4092807795,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 488.6620872945244
+  },
+  {
+   "mcs": "64qam-3/4",
+   "esno_db": 16.235,
+   "nframes": 20000,
+   "nwords": 23870,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 340445,
+    "clocks_lo": 3792437735,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 527.3652831639699
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 16.545,
+   "nframes": 500,
+   "nwords": 59101,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 374411
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 1000,
+    "bit_errors": 374411,
+    "iterations": 20000,
+    "clocks_lo": 133591000,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 374.27671025742757
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 16.795,
+   "nframes": 500,
+   "nwords": 23853,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 987,
+    "bit_errors": 274124
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 500,
+    "codeword_errors": 987,
+    "bit_errors": 274124,
+    "iterations": 19980,
+    "clocks_lo": 133534441,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 374.43523652448584
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.045,
+   "nframes": 500,
+   "nwords": 23853,
+   "expected": {
+    "frames": 500,
+    "frame_errors": 462,
+    "codeword_errors": 711,
+    "bit_errors": 120653
+   },
+   "board": {
+    "frames": 500,
+    "frame_errors": 462,
+    "codeword_errors": 711,
+    "bit_errors": 120653,
+    "iterations": 19060,
+    "clocks_lo": 130602166,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 382.8420426044082
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.295,
+   "nframes": 1000,
+   "nwords": 23853,
+   "expected": {
+    "frames": 1000,
+    "frame_errors": 266,
+    "codeword_errors": 287,
+    "bit_errors": 27825
+   },
+   "board": {
+    "frames": 1000,
+    "frame_errors": 266,
+    "codeword_errors": 287,
+    "bit_errors": 27825,
+    "iterations": 29402,
+    "clocks_lo": 231712355,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 431.5695639103923
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.545,
+   "nframes": 20000,
+   "nwords": 23853,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 191,
+    "codeword_errors": 193,
+    "bit_errors": 11929
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 191,
+    "codeword_errors": 193,
+    "bit_errors": 11929,
+    "iterations": 415869,
+    "clocks_lo": 4023240172,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 497.111759302646
+  },
+  {
+   "mcs": "64qam-5/6",
+   "esno_db": 17.795,
+   "nframes": 20000,
+   "nwords": 23853,
+   "expected": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0
+   },
+   "board": {
+    "frames": 20000,
+    "frame_errors": 0,
+    "codeword_errors": 0,
+    "bit_errors": 0,
+    "iterations": 326513,
+    "clocks_lo": 3700412371,
+    "clocks_hi": 0
+   },
+   "match": true,
+   "board_frames_per_s": 540.4803031343016
+  }
+ ],
+ "all_match": true,
+ "fclk_mhz": 100.0,
+ "board_minus_l2_db": {
+  "qpsk-1/2": 0.0037837719497106903,
+  "qpsk-3/4": -0.022694527886644167,
+  "16qam-1/2": 0.007543208697950554,
+  "16qam-3/4": 0.022926399900045524,
+  "64qam-2/3": 0.01759445771514656,
+  "64qam-3/4": 0.005329221413555629,
+  "64qam-5/6": -0.004160463268359393
+ },
+ "tolerance_db": 0.3,
+ "gate_met": true,
+ "run": {
+  "seconds": 593
+ },
+ "summary": "board counters equal the model at every point; board - L2 at 1 % FER per MCS (e018): {'qpsk-1/2': 0.0037837719497106903, 'qpsk-3/4': -0.022694527886644167, '16qam-1/2': 0.007543208697950554, '16qam-3/4': 0.022926399900045524, '64qam-2/3': 0.01759445771514656, '64qam-3/4': 0.005329221413555629, '64qam-5/6': -0.004160463268359393}"
+}

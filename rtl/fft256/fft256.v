@@ -7,12 +7,15 @@
 // even by 16 or 17 bits and saturated to 16 bits; twiddles are Q16 in 18
 // bits (fft256_twiddle). The inverse conjugates the twiddles.
 //
-// The data sit in one true-dual-port RAM of 256 x 32 bits (one RAMB18):
-// a butterfly reads its pair on both ports in one clock and writes the
-// results back in the next, so 1024 butterflies take 2048 clocks. With
-// the load and the unload, 2560 clocks a transform: 25.6 us at 100 MHz,
-// inside the 28.8 us an OFDM symbol (256 + 32 samples) takes at 10 MS/s.
-// Four DSP48 multipliers.
+// The data sit in two 128 x 32 simple-dual-port banks split by address
+// parity: the two addresses of a butterfly differ in one bit, so a pair is
+// always one word from each bank, and within a bank address a sits at
+// a[7:1]. (One true-dual-port RAM of this shape is not inferred by Vivado.)
+// The butterfly is a 6-clock pipeline: a pair is read every clock and its
+// results written back 6 clocks later, through the banks' write ports; the
+// pipeline drains between stages, which read what the stage before wrote.
+// 8 (128 + 6) clocks of butterflies, about 1590 with the load and the unload
+// (15.9 us at 100 MHz, inside the 28.8 us of an OFDM symbol). Four DSP48s.
 //
 // Interface: 256 input samples in natural order (in_ready high while
 // loading, `inverse` sampled with the first one), then the butterflies,
@@ -30,72 +33,15 @@ module fft256 (
     output wire signed [15:0] out_im,
     output reg         [7:0]  out_idx
 );
-    localparam LOAD = 2'd0, CALC = 2'd1, UNLOAD = 2'd2;
+    localparam LOAD = 2'd0, CALC = 2'd1, DRAIN = 2'd2, UNLOAD = 2'd3;
 
     reg        [1:0]  state;
     reg        [7:0]  cnt;
     reg        [2:0]  stage;
     reg        [6:0]  k;
-    reg               ph;                  // butterfly phase: 0 read, 1 write
     reg               inv;
 
     assign in_ready = (state == LOAD);
-
-    // butterfly addresses: group g = k >> stage, j = k mod 2^stage
-    wire [7:0] half = 8'd1 << stage;
-    wire [7:0] jj   = {1'b0, k} & (half - 8'd1);
-    wire [7:0] i0   = (({1'b0, k} >> stage) << ({1'b0, stage} + 4'd1)) | jj;
-    wire [7:0] i1   = i0 | half;
-    wire [6:0] tw_j = jj[6:0] << (3'd7 - stage);
-
-    // ---- the RAM: port A and port B, each read-first with a registered read
-    reg  [31:0] mem [0:255];
-    reg  [7:0]  addr_a, addr_b;
-    reg         we_a, we_b;
-    reg  [31:0] din_a, din_b;
-    reg  [31:0] dout_a, dout_b;
-    always @(posedge clk) begin
-        if (we_a)
-            mem[addr_a] <= din_a;
-        dout_a <= mem[addr_a];
-    end
-    always @(posedge clk) begin
-        if (we_b)
-            mem[addr_b] <= din_b;
-        dout_b <= mem[addr_b];
-    end
-
-    // ---- the butterfly, on the pair read in the previous clock
-    wire signed [17:0] wr, wi_rom;
-    fft256_twiddle rom (.j(tw_j), .wr(wr), .wi(wi_rom));
-    wire signed [17:0] wi = inv ? -wi_rom : wi_rom;
-
-    wire signed [15:0] a_re = dout_a[31:16], a_im = dout_a[15:0];
-    wire signed [15:0] b_re = dout_b[31:16], b_im = dout_b[15:0];
-    wire signed [39:0] tr = wr * b_re - wi * b_im;
-    wire signed [39:0] ti = wr * b_im + wi * b_re;
-    wire signed [39:0] ar = {{8{a_re[15]}}, a_re, 16'd0};
-    wire signed [39:0] ai = {{8{a_im[15]}}, a_im, 16'd0};
-    wire        [4:0]  sh = stage[0] ? 5'd16 : 5'd17;     // even stages halve
-
-    // x >> s rounded half to even, saturated to 16 bits
-    function signed [15:0] rnd_sat;
-        input signed [39:0] x;
-        input        [4:0]  s;
-        reg signed [39:0] q, r, h, v;
-        begin
-            q = x >>> s;
-            r = x - (q <<< s);
-            h = 40'sd1 <<< (s - 5'd1);
-            v = (r > h || (r == h && q[0])) ? q + 40'sd1 : q;
-            if (v > 40'sd32767)
-                rnd_sat = 16'sh7fff;
-            else if (v < -40'sd32768)
-                rnd_sat = 16'sh8000;
-            else
-                rnd_sat = v[15:0];
-        end
-    endfunction
 
     // natural index -> bit-reversed address
     function [7:0] bitrev;
@@ -107,42 +53,189 @@ module fft256 (
         end
     endfunction
 
-    // ---- the RAM's ports, from the state
+    // butterfly addresses: group g = k >> stage, j = k mod 2^stage
+    wire [7:0] half = 8'd1 << stage;
+    wire [7:0] jj   = {1'b0, k} & (half - 8'd1);
+    wire [7:0] i0   = (({1'b0, k} >> stage) << ({1'b0, stage} + 4'd1)) | jj;
+    /* verilator lint_off UNUSEDSIGNAL */
+    wire [7:0] i1   = i0 | half;               // bit 0 is i0[0]: the bank parity decides
+    /* verilator lint_on UNUSEDSIGNAL */
+    wire [6:0] tw_j = jj[6:0] << (3'd7 - stage);
+    wire       issue = (state == CALC);
+
+    // ---- the banks
+    reg  [31:0] bank0 [0:127];
+    reg  [31:0] bank1 [0:127];
+    reg  [6:0]  ra0, ra1, wa0, wa1;
+    reg         we0, we1;
+    reg  [31:0] wd0, wd1;
+    reg  [31:0] q0, q1;
+    always @(posedge clk) begin
+        if (we0)
+            bank0[wa0] <= wd0;
+        q0 <= bank0[ra0];
+    end
+    always @(posedge clk) begin
+        if (we1)
+            bank1[wa1] <= wd1;
+        q1 <= bank1[ra1];
+    end
+
+    // ---- the pipeline. p1: the pair arrives; p2: products; p3: sums;
+    // p4: quotient and rounding bit; p5: rounded, saturated; then written.
+    wire       p0_par = ^i0;                   // the bank of i0 (i1 is in the other)
+    reg        p1_v, p1_par, p1_sh;
+    reg  [6:0] p1_a0, p1_a1;
+    reg  [6:0] p1_tw;
+    reg        p2_v, p2_par, p2_sh;
+    reg  [6:0] p2_a0, p2_a1;
+    reg signed [15:0] p2_ar, p2_ai;
+    reg signed [35:0] p2_m0, p2_m1, p2_m2, p2_m3;
+    reg        p3_v, p3_par, p3_sh;
+    reg  [6:0] p3_a0, p3_a1;
+    reg signed [39:0] p3_x [0:3];              // top re, top im, bottom re, bottom im
+    reg        p4_v, p4_par;
+    reg  [6:0] p4_a0, p4_a1;
+    reg signed [23:0] p4_q [0:3];
+    reg        [3:0]  p4_up;
+    reg        p5_v, p5_par;
+    reg  [6:0] p5_a0, p5_a1;
+    reg  [31:0] p5_top, p5_bot;
+
+    wire [31:0] da = p1_par ? q1 : q0;         // the word at i0
+    wire [31:0] db = p1_par ? q0 : q1;         // the word at i1
+    wire signed [15:0] b_re = db[31:16], b_im = db[15:0];
+    wire signed [17:0] wr, wi_rom;
+    fft256_twiddle rom (.j(p1_tw), .wr(wr), .wi(wi_rom));
+    wire signed [17:0] wi = inv ? -wi_rom : wi_rom;
+
+    wire signed [39:0] tr = {{4{p2_m0[35]}}, p2_m0} - {{4{p2_m1[35]}}, p2_m1};
+    wire signed [39:0] ti = {{4{p2_m2[35]}}, p2_m2} + {{4{p2_m3[35]}}, p2_m3};
+    wire signed [39:0] ar = {{8{p2_ar[15]}}, p2_ar, 16'd0};
+    wire signed [39:0] ai = {{8{p2_ai[15]}}, p2_ai, 16'd0};
+
+    // x >> s (s = 16 or 17) and whether rounding half to even goes up
+    function [24:0] div_rnd;                   // {up, quotient[23:0]}
+        input signed [39:0] x;
+        input               s17;
+        reg signed [39:0] q, r, h;
+        begin
+            q = s17 ? (x >>> 17) : (x >>> 16);
+            r = x - (s17 ? (q <<< 17) : (q <<< 16));
+            h = s17 ? 40'sd65536 : 40'sd32768;
+            div_rnd = {(r > h || (r == h && q[0])), q[23:0]};
+        end
+    endfunction
+    function [15:0] sat16;
+        input signed [23:0] q;
+        input               up;
+        reg signed [24:0] v;
+        begin
+            v = {q[23], q} + {24'd0, up};
+            if (v > 25'sd32767)
+                sat16 = 16'h7fff;
+            else if (v < -25'sd32768)
+                sat16 = 16'h8000;
+            else
+                sat16 = v[15:0];
+        end
+    endfunction
+
+    reg [24:0] dr [0:3];
+    integer n;
     always @(*) begin
-        addr_a = 8'd0;
-        addr_b = 8'd0;
-        we_a = 1'b0;
-        we_b = 1'b0;
-        din_a = {in_re, in_im};
-        din_b = 32'd0;
+        for (n = 0; n < 4; n = n + 1)
+            dr[n] = div_rnd(p3_x[n], p3_sh);
+    end
+
+    // ---- the banks' ports, from the state
+    wire [7:0] lda = bitrev(cnt);
+    always @(*) begin
+        ra0 = 7'd0;
+        ra1 = 7'd0;
+        we0 = 1'b0;
+        we1 = 1'b0;
+        wa0 = p5_par ? p5_a1 : p5_a0;
+        wa1 = p5_par ? p5_a0 : p5_a1;
+        wd0 = p5_par ? p5_bot : p5_top;
+        wd1 = p5_par ? p5_top : p5_bot;
         case (state)
             LOAD: begin
-                addr_a = bitrev(cnt);
-                we_a = in_valid;
+                wa0 = lda[7:1];
+                wa1 = lda[7:1];
+                wd0 = {in_re, in_im};
+                wd1 = {in_re, in_im};
+                we0 = in_valid && !(^lda);
+                we1 = in_valid && (^lda);
             end
-            CALC: begin
-                addr_a = i0;
-                addr_b = i1;
-                we_a = ph;
-                we_b = ph;
-                din_a = {rnd_sat(ar + tr, sh), rnd_sat(ai + ti, sh)};
-                din_b = {rnd_sat(ar - tr, sh), rnd_sat(ai - ti, sh)};
+            UNLOAD: begin
+                ra0 = cnt[7:1];
+                ra1 = cnt[7:1];
             end
-            default:                           // UNLOAD
-                addr_a = cnt;
+            default: begin                     // CALC, DRAIN
+                ra0 = p0_par ? i1[7:1] : i0[7:1];
+                ra1 = p0_par ? i0[7:1] : i1[7:1];
+                we0 = p5_v;
+                we1 = p5_v;
+            end
         endcase
     end
 
-    assign out_re = dout_a[31:16];
-    assign out_im = dout_a[15:0];
+    // the unload reads bank parity(cnt); the word lands a clock later
+    reg out_par;
+    wire [31:0] dout = out_par ? q1 : q0;
+    assign out_re = dout[31:16];
+    assign out_im = dout[15:0];
 
     always @(posedge clk) begin
+        // pipeline
+        p1_v   <= issue && rst_n;
+        p1_par <= p0_par;
+        p1_sh  <= ~stage[0];                   // even stages: 17 bits
+        p1_a0  <= i0[7:1];
+        p1_a1  <= i1[7:1];
+        p1_tw  <= tw_j;
+        p2_v   <= p1_v && rst_n;
+        p2_par <= p1_par;
+        p2_sh  <= p1_sh;
+        p2_a0  <= p1_a0;
+        p2_a1  <= p1_a1;
+        p2_ar  <= da[31:16];
+        p2_ai  <= da[15:0];
+        p2_m0  <= wr * b_re;
+        p2_m1  <= wi * b_im;
+        p2_m2  <= wr * b_im;
+        p2_m3  <= wi * b_re;
+        p3_v   <= p2_v && rst_n;
+        p3_par <= p2_par;
+        p3_sh  <= p2_sh;
+        p3_a0  <= p2_a0;
+        p3_a1  <= p2_a1;
+        p3_x[0] <= ar + tr;
+        p3_x[1] <= ai + ti;
+        p3_x[2] <= ar - tr;
+        p3_x[3] <= ai - ti;
+        p4_v   <= p3_v && rst_n;
+        p4_par <= p3_par;
+        p4_a0  <= p3_a0;
+        p4_a1  <= p3_a1;
+        for (n = 0; n < 4; n = n + 1) begin
+            p4_q[n]  <= dr[n][23:0];
+            p4_up[n] <= dr[n][24];
+        end
+        p5_v   <= p4_v && rst_n;
+        p5_par <= p4_par;
+        p5_a0  <= p4_a0;
+        p5_a1  <= p4_a1;
+        p5_top <= {sat16(p4_q[0], p4_up[0]), sat16(p4_q[1], p4_up[1])};
+        p5_bot <= {sat16(p4_q[2], p4_up[2]), sat16(p4_q[3], p4_up[3])};
+        out_par <= ^cnt;
+
         if (!rst_n) begin
             state     <= LOAD;
             cnt       <= 8'd0;
             stage     <= 3'd0;
             k         <= 7'd0;
-            ph        <= 1'b0;
             inv       <= 1'b0;
             out_valid <= 1'b0;
             out_idx   <= 8'd0;
@@ -157,19 +250,17 @@ module fft256 (
                         state <= CALC;
                         stage <= 3'd0;
                         k     <= 7'd0;
-                        ph    <= 1'b0;
                     end
                 end
                 CALC: begin
-                    ph <= ~ph;
-                    if (ph) begin
-                        k <= k + 7'd1;
-                        if (k == 7'd127) begin
-                            stage <= stage + 3'd1;
-                            if (stage == 3'd7)
-                                state <= UNLOAD;
-                        end
-                    end
+                    k <= k + 7'd1;
+                    if (k == 7'd127)
+                        state <= DRAIN;
+                end
+                DRAIN: if (!p1_v && !p2_v && !p3_v && !p4_v && !p5_v) begin
+                    // the stage's last write landed at the end of the previous clock
+                    stage <= stage + 3'd1;
+                    state <= (stage == 3'd7) ? UNLOAD : CALC;
                 end
                 default: begin                     // UNLOAD: the read lands next clock
                     out_valid <= 1'b1;

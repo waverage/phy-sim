@@ -14,9 +14,12 @@ def test_twiddle_rom_is_generated_from_the_twin():
         "rtl/fft256/fft256_twiddle.v is stale: make rtl-tables"
 
 
+BLOCKS = ("fft256", "cordic", "stf_corr", "nco_rot", "ldpc_dec", "rx", "chan_emu", "loopback")
+
+
 def test_every_block_has_a_cocotb_test():
-    for block in ("fft256", "cordic", "stf_corr", "nco_rot"):
+    for block in BLOCKS:
         d = ROOT / "rtl" / block
         assert (d / "Makefile").exists() and list(d.glob("test_*.py")), block
     mk = (ROOT / "Makefile").read_text()
-    assert all(b in mk.split("RTL_BLOCKS :=")[1].splitlines()[0] for b in ("fft256", "cordic", "stf_corr", "nco_rot"))
+    assert all(b in mk.split("RTL_BLOCKS :=")[1].splitlines()[0].split() for b in BLOCKS)

@@ -420,7 +420,7 @@ class TwinModem:
             bits.append(b)
             iters += it
         return {"bits": np.stack(bits), "llr": llr, "iters": iters, "y": Y.reshape(S * F, 2),
-                "h": h.reshape(-1, 2), "phi": phi}
+                "h": h.reshape(-1, 2), "phi": phi, "hf": hf.reshape(-1, 2)}
 
     def _track(self, Y: np.ndarray, hf: np.ndarray) -> np.ndarray:
         S = self.S

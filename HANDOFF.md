@@ -1,4 +1,4 @@
-# Handoff, 2026-10-26
+# Handoff, 2026-10-27
 
 Read this, then `README.md`. The plan with the full rationale, and the
 numerology decision, are in the hardware repo:
@@ -13,7 +13,7 @@ L1 research harness on NVIDIA Sionna (Python), L2 product modem in Zig
 Every hypothesis is a script in `experiments/` that writes JSON to `results/`,
 and `make check` gates everything.
 
-## State: M0 to M7 done, M8 next
+## State: M0 to M8 done, M9 next
 
 | Milestone | Status | Evidence |
 |---|---|---|
@@ -25,7 +25,8 @@ and `make check` gates everything.
 | M5 synchronisation under stress | done 2026-10-25 | `modem/src/fxsync.zig`, `harness/sync.py`, `harness/synclink.py`, `vectors/sync_*.npz`, `results/e014_sync_design.json`, `results/e015_sync_gate.json`, `tests/test_m5_sync.py`, `tests/test_e014_reference.py`, `tests/test_e015_reference.py` |
 | M6 link layer and video model | done 2026-10-26 | `harness/fading.py`, `harness/phytrace.py`, `harness/linklayer.py`, `results/e016_phy_traces.json`, `results/e016_traces/`, `results/e017_video_link.json`, `tests/test_m6_link.py`, `tests/test_e016_reference.py`, `tests/test_e017_reference.py` |
 | M7 first RTL blocks | done 2026-10-26 | `rtl/fft256/`, `rtl/cordic/`, `rtl/stf_corr/`, `rtl/nco_rot/` (cocotb, Verilator and Icarus), `rtl/synth.sh`, `tools/gen_rtl.py`, `tests/test_m7_rtl.py` |
-| M8 full chain in RTL and Arty loopback | not started | |
+| M8 receiver in RTL and the Arty Z7 loopback | done 2026-10-27 | `rtl/ldpc_dec/`, `rtl/rx/`, `rtl/chan_emu/`, `rtl/loopback/`, `fpga/`, `harness/rtlcfg.py`, `harness/chanemu.py`, `harness/loopback.py`, `results/e018_board_emulator.json`, `results/e019_board_loopback.json`, `tests/test_m8_board.py` |
+| M9 over a cable | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
 Es/N0 per resource element where FER crosses 1 %):
@@ -289,17 +290,68 @@ design in floating point; e015 is the gate in fixed point.
   control processor computes the NCO's start phase -n0 inc); the
   estimator, demapper and LDPC decoder are M8.
 
-## Next: M8, full chain in RTL and the Arty loopback
+## What M8 built (README "The receiver in RTL and the board loopback")
 
-Equaliser, demapper, LDPC decoder, channel emulator, ARM error counter;
-the gate is the FER on the board within 0.3 dB of L2. Before the board:
+- **The board is the Arty Z7-20** (Zynq XC7Z020: two Cortex-A9 and Artix-7
+  class fabric, 53,200 LUTs, 220 DSP48, 140 RAMB36), not the Arty A7-35T the M7 Yosys
+  numbers assumed. Vivado 2026.1 and its ARM GCC are the Windows install
+  (`E:\amd\2026.1`), the build folder is `BUILD_DIR` (`/mnt/e/phy-sim-build`).
+- **The whole fixed-point receiver after alignment is RTL**, bit exact in
+  cocotb under Verilator and Icarus (`rtl/rx/rx_frame`): FFT front end
+  with the timing phase, pilot LS and frequency filter, phase tracker
+  (z sums, common shift, CORDIC, weighted ramp, restoring division,
+  derotation), time filter and max-log demapper, deinterleaver, and the
+  layered min-sum decoder `rtl/ldpc_dec` (16 lanes, all 14 codes of both
+  pilot layouts, the early stop). Every intermediate result matches on
+  the 8 frame vectors and the 6 aligned sync frames; tables and registers
+  come from `harness/rtlcfg.py`.
+- **The board loopback** (`rtl/loopback`, AXI4-Lite `loopback_axi`):
+  TX frames and information bits from the ARM, the AWGN emulator
+  `rtl/chan_emu` (counter-hashed Box-Muller, bit exact with
+  `harness/chanemu.py`), the receiver, bit comparison and counters.
+  `harness/loopback.EmuLink` is its software model; cocotb requires equal
+  counters, and so does the board.
+- **e018: the board's FER is L2's** under AWGN: board model minus L2 at
+  1 % FER is -0.02 to +0.02 dB for all seven MCS (gate 0.3 dB), 200 errors
+  a point on a 0.25 dB grid.
+- **e019, on the board** (`make board`, `tools/board.py`): the e018 points
+  (44 points, 345,000 frames, 593 s with the JTAG load) with the same
+  seeds and frame counts: every counter equals the model at every point,
+  so the board meets the gate. Measured 740 to 990 frames/s at QPSK, 450
+  to 670 at 16-QAM, 340 to 540 at 64-QAM (fewer decoder iterations at
+  higher SNR). `tools/board_smoke.py` is a two-point job for checking the
+  JTAG flow.
+- **Vivado, XC7Z020 at 100 MHz, timing met (WNS +0.2 ns):** 14,100 LUT
+  (26 %), 10,200 FF, 80 DSP48 (36 %), 77 RAMB36 + 6 RAMB18 (57 %). Of it:
+  decoder 3,100 LUT and 16 BRAM; tracker 5,000 LUT and 17 DSP (two CORDICs
+  are 2,300 of it); demapper 2,300 LUT and 16 DSP; emulator 1,600 LUT and
+  32 DSP; the tables and frame memories 25 BRAM; the TX frames 32 BRAM.
+- **Throughput, not real time:** the phases run one after another on one
+  frame: about 1,600 clocks an FFT, npsym F L for the estimate, ~20 a data
+  RE for the demapper, then the decoder (edges Q + rows (d + 7) clocks an
+  iteration plus the syndrome pass). 340 to 990 frames/s on the board at
+  100 MHz (above); the air carries 2,480 frames/s.
+
+## Next: M9 over a cable, and the real-time receiver
+
+- **Real time** needs about 3 to 6 times the throughput: overlap the
+  phases (FFT of the next frame during the decode), more decoder lanes
+  (32, or z), the demapper one RE a clock. Then the synchroniser's rest in
+  RTL (first-path search, CP-CFO accumulation, sequencing) and the TX
+  chain (encoder, mapper, IFFT), so the PL carries the whole modem.
 - **stf_detect's 34 DSPs** are the detection metric's wide squares
   (|P|^2, E^2 at 26 to 28 bits); one sample per 10 clocks lets one
   multiplier be shared.
-- **Timing:** nothing is constrained yet. The FFT butterfly (four
-  multipliers, a 40-bit add and the rounding in one clock) and the
-  correlator's metric are the long paths; Vivado will tell.
-Open L2 work, for M8 or alongside it:
+- **The simulator GUI** (asked for right after M8): a browser page on the
+  harness: spectrum, waterfall, waveform, constellation before and after
+  equalisation, channel estimate, decoded errors; sliders for SNR, MCS,
+  channel, CFO, interference.
+- **The Kria KV260** the user also has: 2.2x the LUTs, 5.7x the DSPs and
+  an H.264/H.265 encoder on chip, but little I/O for an AD9363; not needed
+  for M8/M9 (the AntSDR and ADRV9364-Z7020 are XC7Z020 class), useful later
+  for the video encoder's latency and quality, or if the real-time PHY
+  outgrows the 7020.
+Open L2 work, alongside:
 - **The AFC loop and its Doppler aid** belong in the control processor
   (bandwidth, lock detection, tracker gain switch, telemetry path). The
   traces assume the warm loop is exact.
@@ -312,6 +364,35 @@ Open L2 work, for M8 or alongside it:
   Hantro numbers, no slices or intra refresh. Bitrate 0.75 of goodput gives
   +25 % bitrate for +0.2 s/min of freeze on the flight; worth revisiting
   with a real encoder trace.
+
+## Gotchas found in M8
+
+- **Vivado does not infer a true-dual-port RAM of 256 x 32 with two
+  write ports** ("Unsupported RAM template", even with ram_style block),
+  though Verilator, Icarus and Yosys accept it. fft256 now uses two
+  simple-dual-port banks split by address parity: a butterfly's pair
+  differs in one bit, so it is always one word from each bank.
+- **First Vivado timing: -14 ns.** Everything written "one step a clock"
+  missed 100 MHz: the FFT butterfly (multiply, 40-bit add, round, saturate),
+  the demapper's 64-bit products, the tracker's maximum and bit length of
+  six 48-bit values, a 16-adder chain in the decoder's init, the twiddle
+  lookup behind a multiply. Size every product to its value range and
+  register each multiply, each wide add and each table lookup; the tests
+  stay bit exact because only the latency changes. Expect three or four
+  Vivado rounds (25 minutes each out of context, 45 for the Zynq build).
+- **Out-of-context timing is optimistic**: -0.35 ns appeared in the Zynq
+  build where the OOC run passed. Leave slack.
+- **Two models agreeing by 0.001 dB on a 1 dB grid means nothing:** the
+  1 % crossing was interpolated between 37 % and 0 % FER. e018 uses its own
+  0.25 dB grid around the 1 % point with 200 errors a point.
+- **Deepening a pipeline can outgrow the reset:** chan_emu's hash went
+  from 3 to 7 stages and its valid delay line no longer cleared in the
+  testbench's 3 reset clocks, so Icarus saw X (Verilator and the FPGA start
+  at 0). Reset valid chains explicitly. The fix came after the board run;
+  the bitstream differs only in that reset.
+- **WSL interop:** Vivado and xsdb run as Windows programs (`cmd.exe /c`)
+  from WSL; give them Windows paths (`wslpath -w`) and a build folder on a
+  Windows drive. The board's JTAG shows up as an FTDI FT2232 (VID 0403).
 
 ## Gotchas found in M7
 

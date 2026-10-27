@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017
+.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017 e018 fpga-src fpga-ooc fpga arm board
 
 check: test-harness test-modem test-rtl
 
@@ -18,7 +18,8 @@ test-modem:
 
 # Every RTL block's cocotb test under Verilator and Icarus (a failing test
 # fails make through cocotb's results.xml), and a -Wall lint.
-RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot
+RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot ldpc_dec rx chan_emu loopback
+RX_SRC := rx/rx_frame.v rx/rx_fe.v rx/rx_chest.v rx/rx_track.v rx/rx_demap.v fft256/fft256.v fft256/fft256_twiddle.v cordic/cordic.v ldpc_dec/ldpc_dec.v
 
 test-rtl: lint-rtl
 	@for b in $(RTL_BLOCKS); do \
@@ -32,6 +33,9 @@ lint-rtl:
 	cd rtl && verilator --lint-only -Wall --top-module cordic_tb cordic/cordic.v cordic/cordic_tb.v
 	cd rtl && verilator --lint-only -Wall --top-module stf_detect stf_corr/stf_corr.v cordic/cordic.v
 	cd rtl && verilator --lint-only -Wall --top-module nco_rot nco_rot/nco_rot.v cordic/cordic.v
+	cd rtl && verilator --lint-only -Wall --top-module ldpc_dec ldpc_dec/ldpc_dec.v
+	cd rtl && verilator --lint-only -Wall --top-module chan_emu chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v cordic/cordic.v
+	cd rtl && verilator --lint-only -Wall --top-module loopback_axi loopback/loopback_axi.v loopback/loopback.v chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v $(RX_SRC)
 
 # The RTL's constant tables (committed), generated from the twin
 rtl-tables:
@@ -79,6 +83,28 @@ e016: modem
 	$(PY) -I experiments/e016_phy_traces.py --profile $(PROFILE)
 e017:
 	$(PY) -I experiments/e017_video_link.py --profile $(PROFILE)
+e018: modem
+	$(PY) -I experiments/e018_board_emulator.py --profile $(PROFILE)
+
+# The board (M8, Arty Z7-20). Vivado and the ARM toolchain are the Windows
+# install (VIVADO, ARM_GCC); BUILD_DIR is a Windows-visible build folder.
+# fpga-ooc: utilisation and timing of rtl/loopback alone; fpga: the Zynq
+# design, bitstream and .xsa; arm: the bare-metal error counter; board:
+# the e018 points on the board, checked against e018 (results/e019).
+BUILD_DIR ?= /mnt/e/phy-sim-build
+VIVADO ?= /mnt/e/amd/2026.1/Vivado/bin/vivado.bat
+ARM_GCC ?= /mnt/e/amd/2026.1/gnu/aarch32/nt/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe
+fpga-src:
+	rm -rf $(BUILD_DIR)/rtl $(BUILD_DIR)/fpga && mkdir -p $(BUILD_DIR) && cp -r rtl fpga $(BUILD_DIR)/ && rm -rf $(BUILD_DIR)/rtl/*/sim_build
+fpga-ooc: fpga-src
+	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log ooc.log -source fpga/ooc.tcl -tclargs rtl loopback out
+fpga: fpga-src
+	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log build.log -source fpga/build.tcl -tclargs rtl out
+arm:
+	mkdir -p $(BUILD_DIR)/arm && cp fpga/arm/* $(BUILD_DIR)/arm/ && cd $(BUILD_DIR)/arm && \
+	  $(ARM_GCC) -mcpu=cortex-a9 -marm -O2 -Wall -Wextra -ffreestanding -nostdlib -T link.ld start.S main.c -o loopback.elf
+board: arm
+	BUILD_DIR=$(BUILD_DIR) $(PY) -I tools/board.py all
 
 # Golden vectors for the RTL (committed); regenerate only for an intended
 # change to a fixed-point block.
