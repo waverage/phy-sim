@@ -80,6 +80,12 @@ canvas { width: 100%; display: block; }
 .cws { display: flex; flex-wrap: wrap; gap: 4px; }
 .cws span { font-size: 12px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--ring); }
 .busy { opacity: .55; transition: opacity .2s; }
+.q { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin: 0 4px; border-radius: 50%;
+     border: 1px solid var(--axis); color: var(--ink2); font: 600 11px/1 system-ui, sans-serif; font-style: normal; cursor: help;
+     vertical-align: 1px; user-select: none; }
+.q:hover { background: var(--s1); border-color: var(--s1); color: #fff; }
+.tile { position: relative; } .tile .k { padding-right: 20px; } .tile .q { position: absolute; top: 9px; right: 8px; margin: 0; }
+.tip.hint { white-space: normal; max-width: 300px; font-size: 13px; line-height: 1.45; }
 details { color: var(--ink2); font-size: 13px; margin-top: 12px; }
 </style>
 </head>
@@ -289,13 +295,17 @@ const range = (a, pad = 0.05) => {
 const hovers = new Map();
 function hover(cv, fn) { hovers.set(cv, fn); }
 document.addEventListener("mousemove", ev => {
-  const tip = $("tip"); const fn = hovers.get(ev.target);
-  if (!fn || !data) { tip.style.display = "none"; return; }
-  const r = ev.target.getBoundingClientRect(); const text = fn(ev.clientX - r.left, ev.clientY - r.top);
+  const tip = $("tip"), q = ev.target.closest && ev.target.closest(".q");
+  let text = null;
+  if (q) text = q.dataset.hint;
+  else { const fn = hovers.get(ev.target); if (fn && data) { const r = ev.target.getBoundingClientRect(); text = fn(ev.clientX - r.left, ev.clientY - r.top); } }
   if (!text) { tip.style.display = "none"; return; }
-  tip.innerHTML = text; tip.style.display = "block";
+  tip.classList.toggle("hint", !!q);
+  if (q) tip.textContent = text; else tip.innerHTML = text;
+  tip.style.display = "block";
   const tw = tip.offsetWidth; let x = ev.clientX + 14; if (x + tw > innerWidth - 8) x = ev.clientX - tw - 14;
-  tip.style.left = x + "px"; tip.style.top = (ev.clientY + 14) + "px";
+  let y = ev.clientY + 14; if (y + tip.offsetHeight > innerHeight - 8) y = ev.clientY - tip.offsetHeight - 10;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
 });
 function lineHover(cv, f, xs, series, xname, unit) {
   // series: [{name, y}]; snaps to the nearest x and redraws the crosshair on an overlay
@@ -505,15 +515,21 @@ function tiles() {
   const good = e.frame_errors === 0;
   const t = [
     ["Frames received correctly", `<span class="${good ? "ok" : "no"}">${e.frames - e.frame_errors} of ${e.frames}</span>`,
-      e.missed ? `${e.missed} not found at all` : "every frame was found"],
-    ["Wrong bits before correction", (100 * e.raw_bit_errors / e.coded_bits).toFixed(2) + " %", `${e.raw_bit_errors.toLocaleString()} of ${e.coded_bits.toLocaleString()}`],
-    ["Wrong bits after correction", (100 * e.bit_errors / e.info_bits).toFixed(e.bit_errors ? 2 : 0) + " %", `decoder used ${e.mean_iterations.toFixed(1)} of ${e.max_iterations} rounds on average`],
-    ["Measured signal to noise", c.snr_db.toFixed(1) + " dB", `set in the air: ${p.esno_db} dB (frame 0, after the receiver)`],
+      e.missed ? `${e.missed} not found at all` : "every frame was found",
+      "How many frames arrived with every bit right. One wrong bit spoils the whole frame. This is the number that matters most."],
+    ["Wrong bits before correction", (100 * e.raw_bit_errors / e.coded_bits).toFixed(2) + " %", `${e.raw_bit_errors.toLocaleString()} of ${e.coded_bits.toLocaleString()}`,
+      "Bits the receiver got wrong straight off the air, before repair. A few percent is normal. The error correction fixes them."],
+    ["Wrong bits after correction", (100 * e.bit_errors / e.info_bits).toFixed(e.bit_errors ? 2 : 0) + " %", `decoder used ${e.mean_iterations.toFixed(1)} of ${e.max_iterations} rounds on average`,
+      "Bits still wrong after the error correction tried to repair them. This should be 0. The decoder works in rounds; more rounds means it worked harder."],
+    ["Measured signal to noise", c.snr_db.toFixed(1) + " dB", `set in the air: ${p.esno_db} dB (frame 0, after the receiver)`,
+      "How clean the signal was by the time the receiver finished, measured from the received points. Close to the slider value means the receiver lost almost nothing."],
     ["Frame found", s.detected ? `<span class="ok">${s.start_error === 0 ? "exact" : (s.start_error > 0 ? "+" : "") + s.start_error + " samples"}</span>` : `<span class="no">missed</span>`,
-      s.detected ? `frequency error ${s.cfo_error_hz.toFixed(0)} Hz` : "the preamble was too weak"],
-    ["Speed setting", `${info.rate_mbps.toFixed(1)} Mbit/s`, `${p.mcs}, ${info.codewords} codeword(s) of ${info.k} bits per frame`],
+      s.detected ? `frequency error ${s.cfo_error_hz.toFixed(0)} Hz` : "the preamble was too weak",
+      "Did the receiver find where the frame starts, and how far off was it. It also shows how well it measured the frequency mismatch between the radios."],
+    ["Speed setting", `${info.rate_mbps.toFixed(1)} Mbit/s`, `${p.mcs}, ${info.codewords} codeword(s) of ${info.k} bits per frame`,
+      "How much useful data this setting carries per second. Faster settings need a cleaner signal."],
   ];
-  $("tiles").innerHTML = t.map(([k, v, d]) => `<div class="tile"><div class="k">${k}</div><div class="val">${v}</div><div class="d">${d}</div></div>`).join("");
+  $("tiles").innerHTML = t.map(([k, v, d, hint]) => `<div class="tile"><div class="k">${k}<i class="q" data-hint="${hint}">?</i></div><div class="val">${v}</div><div class="d">${d}</div></div>`).join("");
   $("cws").innerHTML = e.frame0_codewords.map((x, i) => `<span class="${x ? "no" : "ok"}">block ${i + 1}</span>`).join("");
 }
 
@@ -526,6 +542,46 @@ function drawAll() {
   drawConst("con_pre", c.pre, c.wrong, null, 2.0);
   drawConst("con_eq", c.eq, c.wrong, c.levels, lim);
   drawChannel(); drawPhase(); drawGrid(); drawLlr();
+}
+
+// ---- "?" hints: keyed by a control's id (settings) or a chart's canvas id (cards) ----
+const HINTS = {
+  mcs: "How fast we send data. Faster settings pack more bits into each point and add less repair data, so they need a cleaner signal. Slower settings survive more noise.",
+  pilots: "Pilots are known points the receiver uses to measure the air path. 2 is enough when standing still or moving slowly. 3 helps when the drone moves fast and the path changes quickly.",
+  esno_db: "How much stronger our signal is than the background noise. Higher is cleaner. Below about 3 dB even the slowest setting starts to fail.",
+  channel: "How the signal travels from drone to ground. \"Clean line\" adds only noise. The other two add echoes from the ground and buildings, which make some frequencies weak.",
+  delay_spread_ns: "How long the echoes keep arriving after the direct signal. Bigger numbers mean longer echoes, like a big hall. Only used with the echo channels.",
+  doppler_hz: "How fast the air path changes because something is moving. 0 is standing still. 600 Hz is about 130 km/h. Only used with the echo channels.",
+  sir_db: "How much stronger our signal is than the Wi-Fi burst. Lower numbers mean louder Wi-Fi. Turn on the Wi-Fi box below to use it.",
+  wifi: "Adds a short Wi-Fi transmission on top of our frame, as if a nearby router sent a packet at the same time.",
+  cfo_khz: "The two radios never tune to exactly the same frequency. This is how far apart they are. The receiver has to measure and remove this difference.",
+  phase_noise: "Real radio oscillators wobble a little all the time. This adds that wobble, which slightly blurs every point.",
+  sco: "The two radios' clocks run at very slightly different speeds. This adds that difference, so samples slowly slide out of place.",
+  receiver: "Exact maths shows the best possible result. Chip arithmetic uses the same rounded whole-number maths as the real chip, to check it loses almost nothing.",
+  sync: "Real: the receiver must find the start of each frame by itself, like the real one. Ideal: we tell it where the frame starts, to see how much finding it costs.",
+  frames: "How many frames to send in one run. Only the first one is drawn. The error counts at the top cover all of them, so more frames give more reliable numbers.",
+  spectrum: "Shows how strong the signal is at each frequency. Sent should be flat. Dips in the received line are frequencies the echoes cancelled. The green line is the noise when nothing is sent.",
+  waterfall: "Like a picture of sound: time goes right, frequency goes up, brightness is strength. You can see the quiet start, the preamble, the frame, and any Wi-Fi burst.",
+  waveform: "How strong the signal is moment by moment. The dashed lines show where the frame really starts and where the receiver thought it starts. They should match.",
+  metric: "The frame starts with a pattern that repeats. The receiver looks for that repetition. When the curve rises above the dashed line, it says \"a frame is here\".",
+  cir: "After finding the frame, the receiver measures the echoes. The tallest bar is the direct signal; smaller bars to the right are echoes that arrive later.",
+  con_pre: "Each dot is one received data point. Left: as it arrived, twisted and stretched by the air. Right: after the receiver straightened it. Dots should sit on the crosses. Red dots landed on the wrong cross.",
+  chan: "How well each frequency gets through the air. Green is the truth from the simulator. The dashed blue line is what the receiver measured. Close lines mean a good measurement.",
+  phase: "The small leftover frequency difference slowly turns the points. This shows how much the receiver turned each symbol back. A smooth line is good.",
+  grid: "The whole frame as a picture: time across, frequency up. Each cell is one data point; brighter means it landed further from where it should. Bright stripes show weak frequencies or bad moments.",
+  llr: "For every bit, how sure the receiver was. Blue bars are right bits, orange are wrong. Good when wrong bits are only on the left, the unsure side, because the repair fixes those.",
+  cws: "The frame's data is split into blocks, each with its own repair data. Green means the block was repaired fully. Red means it could not be fixed.",
+};
+function addHints() {
+  const icon = text => { const q = document.createElement("i"); q.className = "q"; q.textContent = "?"; q.dataset.hint = text;
+    q.addEventListener("click", ev => ev.preventDefault()); return q; };   // a click must not toggle the box it sits in
+  for (const [id, text] of Object.entries(HINTS)) {
+    const el = $(id), card = el.closest(".card");
+    if (card && card.closest("main")) { card.querySelector("h3").appendChild(icon(text)); continue; }
+    const lab = el.closest("label");
+    if (lab.classList.contains("check")) { lab.appendChild(icon(text)); continue; }
+    lab.insertBefore(icon(text), lab.firstChild.nextSibling);   // right after the setting's name
+  }
 }
 
 // ---- controls ----
@@ -547,7 +603,9 @@ function labels() {
 }
 async function run() {
   if (busy) { pending = true; return; }
-  busy = true; $("main").classList.add("busy"); $("status").textContent = "simulating…";
+  // dim the charts only when a run is slow (a new setting builds its link); a normal 20 ms frame redraws in place
+  busy = true;
+  const slow = setTimeout(() => { $("main").classList.add("busy"); $("status").textContent = "simulating…"; }, 400);
   try {
     const r = await fetch("/api/capture", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params()) });
     const j = await r.json();
@@ -555,7 +613,7 @@ async function run() {
     data = j; drawAll();
     $("status").textContent = `frame seed ${seed}, ${j.elapsed_s.toFixed(2)} s` + (j.elapsed_s > 2 ? " (first run of a setting builds the link)" : "");
   } catch (e) { $("status").textContent = "error: " + e.message; }
-  busy = false; $("main").classList.remove("busy");
+  clearTimeout(slow); busy = false; $("main").classList.remove("busy");
   if (pending) { pending = false; run(); }
   else if (playing) setTimeout(() => { if (playing) { seed++; run(); } }, 250);
 }
@@ -565,6 +623,7 @@ $("new").onclick = () => { seed++; run(); };
 $("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Play"; if (playing) { seed++; run(); } };
 addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(drawAll, 150); });
 
+addHints();
 (async function init() {
   const o = await (await fetch("/api/options")).json(), d = Object.assign({}, o.defaults);
   // starting values from the address, e.g. ?channel=tdl-d&doppler_hz=600&theme=dark
@@ -578,8 +637,7 @@ addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(drawA
   for (const k of ["phase_noise", "sco", "wifi"]) $(k).checked = d[k];
   seed = d.seed;
   document.querySelectorAll("aside input, aside select").forEach(el => el.addEventListener("input", changed));
-  labels(); run();
-})();
+  labels(); run();})();
 </script>
 </body>
 </html>
