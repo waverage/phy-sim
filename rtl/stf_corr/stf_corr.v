@@ -129,19 +129,67 @@ module stf_corr #(
         end
     end
 
-    // ---- detection and the peak, one d per clock
+    // ---- detection and the peak, one d per clock, pipelined for 100 MHz:
+    // M1 the shifted sums, M2 the squares, M3 |P|^2 and threshold E^2,
+    // M4 the comparison, then the decision
     // the shifted sums fit 26 and 28 bits for 12-bit samples
     /* verilator lint_off UNUSEDSIGNAL */
     wire signed [33:0] psr_w = pr >>> MS;
     wire signed [33:0] psi_w = pi >>> MS;
     wire signed [35:0] es_w  = e >>> MS;
     /* verilator lint_on UNUSEDSIGNAL */
-    wire signed [25:0] psr = psr_w[25:0];
-    wire signed [25:0] psi = psi_w[25:0];
-    wire        [27:0] es  = es_w[27:0];
-    wire        [63:0] mag = psr * psr + psi * psi;
-    wire        [73:0] lhs = {mag, 10'd0};                          // 4 |P|^2 256
-    wire        [73:0] rhs = threshold_q8 * es * es;
+    reg                m1_v, m2_v, m3_v, m4_v;
+    reg                m1_last, m2_last, m3_last, m4_last;
+    reg       [DW-1:0] m1_d, m2_d, m3_d, m4_d;
+    reg  signed [25:0] m1_pr, m1_pi, m2_pr, m2_pi, m3_pr, m3_pi, m4_pr, m4_pi;
+    reg         [27:0] m1_e, m2_e, m3_e, m4_e;
+    reg  signed [33:0] m1_fr, m1_fi, m2_fr, m2_fi, m3_fr, m3_fi, m4_fr, m4_fi;
+    reg         [51:0] m2_sr, m2_si;
+    reg         [55:0] m2_e2;
+    reg         [63:0] m3_mag, m4_mag;
+    reg         [73:0] m3_rhs;
+    reg                m4_over;
+    always @(posedge clk) begin
+        m1_v    <= sv && rst_n && !restart;
+        m1_last <= slast;
+        m1_d    <= sd;
+        m1_pr   <= psr_w[25:0];
+        m1_pi   <= psi_w[25:0];
+        m1_e    <= es_w[27:0];
+        m1_fr   <= pr;
+        m1_fi   <= pi;
+        m2_v    <= m1_v && rst_n && !restart;
+        m2_last <= m1_last;
+        m2_d    <= m1_d;
+        m2_pr   <= m1_pr;
+        m2_pi   <= m1_pi;
+        m2_e    <= m1_e;
+        m2_fr   <= m1_fr;
+        m2_fi   <= m1_fi;
+        m2_sr   <= m1_pr * m1_pr;
+        m2_si   <= m1_pi * m1_pi;
+        m2_e2   <= m1_e * m1_e;
+        m3_v    <= m2_v && rst_n && !restart;
+        m3_last <= m2_last;
+        m3_d    <= m2_d;
+        m3_pr   <= m2_pr;
+        m3_pi   <= m2_pi;
+        m3_e    <= m2_e;
+        m3_fr   <= m2_fr;
+        m3_fi   <= m2_fi;
+        m3_mag  <= {12'd0, m2_sr} + {12'd0, m2_si};
+        m3_rhs  <= threshold_q8 * m2_e2;
+        m4_v    <= m3_v && rst_n && !restart;
+        m4_last <= m3_last;
+        m4_d    <= m3_d;
+        m4_pr   <= m3_pr;
+        m4_pi   <= m3_pi;
+        m4_e    <= m3_e;
+        m4_fr   <= m3_fr;
+        m4_fi   <= m3_fi;
+        m4_mag  <= m3_mag;
+        m4_over <= {m3_mag, 10'd0} > m3_rhs;                      // 4 |P|^2 256 > threshold E^2
+    end
 
     reg               found, fin;
     reg        [DW-1:0] d0;
@@ -164,33 +212,33 @@ module stf_corr #(
             peak_pr_full <= 34'sd0;
             peak_pi_full <= 34'sd0;
         end else begin
-            trace_valid <= sv;
-            trace_d <= sd;
-            trace_pr <= psr;
-            trace_pi <= psi;
-            trace_e <= es;
+            trace_valid <= m1_v;
+            trace_d <= m1_d;
+            trace_pr <= m1_pr;
+            trace_pi <= m1_pi;
+            trace_e <= m1_e;
             done <= 1'b0;
-            if (sv && !fin) begin
-                if (found || lhs > rhs) begin
+            if (m4_v && !fin) begin
+                if (found || m4_over) begin
                     if (!found) begin
                         found <= 1'b1;
-                        d0 <= sd;
+                        d0 <= m4_d;
                     end
-                    if (!found || mag > best) begin
-                        best <= mag;
-                        peak <= sd;
-                        peak_pr <= psr;
-                        peak_pi <= psi;
-                        peak_e <= es;
-                        peak_pr_full <= pr;
-                        peak_pi_full <= pi;
+                    if (!found || m4_mag > best) begin
+                        best <= m4_mag;
+                        peak <= m4_d;
+                        peak_pr <= m4_pr;
+                        peak_pi <= m4_pi;
+                        peak_e <= m4_e;
+                        peak_pr_full <= m4_fr;
+                        peak_pi_full <= m4_fi;
                     end
-                    if ((found && sd == d0 + PREW) || slast) begin
+                    if ((found && m4_d == d0 + PREW) || m4_last) begin
                         done <= 1'b1;
                         fin <= 1'b1;
                         detected <= 1'b1;
                     end
-                end else if (slast) begin
+                end else if (m4_last) begin
                     done <= 1'b1;
                     fin <= 1'b1;
                     detected <= 1'b0;

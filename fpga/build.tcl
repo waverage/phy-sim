@@ -2,10 +2,13 @@
 # FCLK0 100 MHz by default) with rtl/loopback on M_AXI_GP0 at 0x43c00000 (1 MB).
 # Writes the bitstream, the hardware platform (.xsa, with ps7_init.tcl) and
 # the utilisation and timing reports to <out dir>.
-#   vivado -mode batch -source fpga/build.tcl -tclargs <rtl dir> <out dir> [FCLK0 MHz, 100]
+#   vivado -mode batch -source fpga/build.tcl -tclargs <rtl dir> <out dir> [FCLK0 MHz, 100] [top, loopback_axi]
+# The top is rtl/loopback (M8, the receiver behind an emulator) or
+# rtl/onchip (M9, the whole radio: onchip_axi), at the same address.
 # M8 closed timing at 100 MHz with 0.2 ns to spare (0.6 ns at 90.9 MHz).
-lassign $argv rtl out mhz
+lassign $argv rtl out mhz top
 if {$mhz eq ""} { set mhz 100 }
+if {$top eq ""} { set top loopback_axi }
 source [file join [file dirname [info script]] sources.tcl]
 file mkdir $out
 set proj [file join $out proj]
@@ -19,7 +22,7 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7 ps7
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 \
     -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable"} [get_bd_cells ps7]
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $mhz CONFIG.PCW_USE_M_AXI_GP0 {1}] [get_bd_cells ps7]
-create_bd_cell -type module -reference loopback_axi lb
+create_bd_cell -type module -reference $top lb
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 \
     -config {Master "/ps7/M_AXI_GP0" Clk_master "Auto" Clk_slave "Auto" Clk_xbar "Auto" intc_ip "New AXI SmartConnect" master_apm "0"} \
     [get_bd_intf_pins lb/s_axi]

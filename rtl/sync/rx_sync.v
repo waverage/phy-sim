@@ -162,7 +162,15 @@ module rx_sync #(
     // ================= the sequencer =================
     localparam Q_IDLE = 4'd0, Q_ANG = 4'd1, Q_PRD = 4'd2, Q_FFT = 4'd3, Q_IFFT = 4'd4, Q_CIRO = 4'd5,
                Q_NEAR = 4'd6, Q_FIRST = 4'd7, Q_DEC = 4'd8, Q_CP = 4'd9, Q_CPANG = 4'd10, Q_INFO = 4'd11,
-               Q_ALIGN = 4'd12, Q_DRAIN = 4'd13;
+               Q_ALIGN = 4'd12, Q_DRAIN = 4'd13, Q_PH1 = 4'd14, Q_PH2 = 4'd15;
+    // the NCO's start phase -n inc: a 32 x 32 product, pipelined (3 registers)
+    reg  [31:0] mul_a, mul_b, mul_p1, mul_p2, mul_p3;
+    reg  [2:0]  mwait;
+    always @(posedge clk) begin
+        mul_p1 <= mul_a * mul_b;
+        mul_p2 <= mul_p1;
+        mul_p3 <= mul_p2;
+    end
     reg  [3:0]  sq;
     reg  [31:0] base, cd;                      // the frame's base and its coarse peak d
     reg signed [17:0] a1;
@@ -415,10 +423,26 @@ module rx_sync #(
                     a1 <= ang_out;
                     inc1 <= inc_coarse;
                     nco_inc <= inc_coarse;
-                    nco_ph0 <= -(ws0 * inc_coarse);
+                    mul_a <= ws0;
+                    mul_b <= inc_coarse;
+                    mwait <= 3'd0;
                     cnt <= 13'd0;
                     nco_first <= 1'b1;
-                    sq <= Q_PRD;
+                    sq <= Q_PH1;
+                end
+                Q_PH1: begin                    // -ws0 inc_coarse
+                    mwait <= mwait + 3'd1;
+                    if (mwait == 3'd4) begin
+                        nco_ph0 <= -mul_p3;
+                        sq <= Q_PRD;
+                    end
+                end
+                Q_PH2: begin                    // -(start - backoff) inc
+                    mwait <= mwait + 3'd1;
+                    if (mwait == 3'd4) begin
+                        nco_ph0 <= -mul_p3;
+                        sq <= Q_ALIGN;
+                    end
                 end
                 Q_PRD: if (cnt == 13'd256 && !seq_rd)          // the window is in the NCO
                     sq <= Q_FFT;
@@ -565,11 +589,13 @@ module rx_sync #(
                     info_ang_coarse <= a1;
                     info_inc <= inc;
                     nco_inc <= inc;
-                    nco_ph0 <= -((start_rel - {26'd0, r_backoff}) * inc);
+                    mul_a <= start_rel - {26'd0, r_backoff};
+                    mul_b <= inc;
+                    mwait <= 3'd0;
                     cnt <= 13'd0;
                     nco_first <= 1'b1;
                     o_m <= 13'd0;
-                    sq <= Q_ALIGN;
+                    sq <= Q_PH2;
                 end
                 Q_ALIGN: if (cnt == flen[12:0] && !seq_rd)
                     sq <= Q_DRAIN;

@@ -27,6 +27,10 @@ from .waveform import MCS, Numerology
 
 MATCH = 64
 REARM = 64
+# Nothing holds the air back (as with a radio), so the stream must not come
+# faster than the receiver takes frames (its FFTs, 22,215 clocks a frame):
+# 6 clocks a sample at least; 10 is the radio's rate.
+FAST_PACE = 6
 OC_RX, OC_TX, OC_REF, OC_SYNC = 0x10000, 0x20000, 0x28000, 0x2C000
 OC_CTRL, OC_STATUS, OC_NFRAMES = 0, 1, 2
 OC_COUNTERS = {"frames": 16, "frame_errors": 17, "codeword_errors": 18, "bit_errors": 19, "iterations": 20,
@@ -64,14 +68,15 @@ class OnChipLink(EmuLink):
         return np.concatenate(segs).astype(np.int64)
 
     def run(self, nframes: int, esno_db: float) -> dict:
+        """The counts of a run. The frames found are decoded by the Zig
+        fixed-point receiver, bit exact with twin.TwinModem.rx and the RTL."""
         self.link.set_noise(10 ** (-esno_db / 10))
         st = self.setting(esno_db)
-        tw = twin_modem(self.link)
         found = self.ts.stream(self.stream(esno_db, nframes))
         true0 = self.gap + len(self.pre)
         out = dict(frames=nframes, synced=0, missed=0, spurious=0, frame_errors=0, codewords=0, codeword_errors=0,
                    bit_errors=0, iterations=0)
-        r = 0
+        r, frames, which = 0, [], []
         for f in found:
             while r < nframes and f["start"] > r * self.seg + true0 + MATCH:
                 r += 1
@@ -79,24 +84,28 @@ class OnChipLink(EmuLink):
             if r >= nframes or f["start"] < r * self.seg + true0 - MATCH:
                 out["spurious"] += 1
                 continue
-            res = tw.rx(f["frame"], st["llr_scale"], 0)
-            err = res["bits"] != self.info[r % len(self.info)]
-            cw = err.any(-1)
-            out["synced"] += 1
-            out["frame_errors"] += int(cw.any())
-            out["codewords"] += int(cw.size)
-            out["codeword_errors"] += int(cw.sum())
-            out["bit_errors"] += int(err.sum())
-            out["iterations"] += int(res["iters"])
+            frames.append(f["frame"])
+            which.append(r)
             r += 1
         out["missed"] += nframes - r
+        if frames:
+            rx = self.link.fixed
+            rx.decoder_stats(reset=True)
+            bits = rx.rx(np.stack(frames), np.full(len(frames), st["llr_scale"]), 0)
+            out["iterations"], _ = rx.decoder_stats(reset=True)
+            err = bits != self.info[np.array(which) % len(self.info)]
+            cw = err.any(-1)
+            out.update(synced=len(frames), frame_errors=int(cw.any(-1).sum()), codewords=int(cw.size),
+                       codeword_errors=int(cw.sum()), bit_errors=int(err.sum()))
         out["frame_errors"] += out["missed"]
         return out
 
-    def board_words(self, esno_db: float, pace: int = 0) -> dict:
+    def board_words(self, esno_db: float, pace: int = 10) -> dict:
         """What the ARM writes for one SNR point of rtl/onchip: (address,
         data) lists of the receiver, transmitter, synchroniser and the
         information bits, and the run registers (NFRAMES excluded)."""
+        if pace < FAST_PACE:
+            raise ValueError(f"rtl/onchip needs {FAST_PACE} clocks a sample or more")
         self.link.set_noise(10 ** (-esno_db / 10))
         st = self.setting(esno_db)
         tw = twin_modem(self.link)

@@ -70,6 +70,20 @@ def test_onchip_model_finds_and_decodes_every_frame():
     assert r["synced"] == 5 and r["missed"] == 0 and r["spurious"] == 0 and r["frame_errors"] == 0
 
 
+def test_e021_whole_radio_on_the_board():
+    """tools/board_onchip.py: the transmitter, the emulated air with carrier
+    offsets, the synchroniser and the receiver on the chip at 10 MS/s, every
+    counter equal to harness/onchip's model."""
+    path = ROOT / "results" / "e021_board_onchip.json"
+    if not path.exists():
+        pytest.skip("run tools/board_onchip.py all with the Arty Z7-20 and the onchip bitstream first")
+    r = json.loads(path.read_text())
+    assert {p["mcs"] for p in r["points"]} == set(MCS)
+    assert all(p["match"] and p["board"]["sync_overruns"] == 0 for p in r["points"])
+    assert max(abs(p["cfo_hz"]) for p in r["points"]) >= 100e3
+    assert r["all_match"] and r["gate_met"]
+
+
 def test_e020_real_time_on_the_board():
     """tools/board.py at 10 MS/s: every frame of every e018 point taken at
     the air's rate (none dropped, no sample lost), counters equal to the

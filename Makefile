@@ -18,7 +18,7 @@ test-modem:
 
 # Every RTL block's cocotb test under Verilator and Icarus (a failing test
 # fails make through cocotb's results.xml), and a -Wall lint.
-RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot ldpc_dec rx sync tx chan_emu loopback
+RTL_BLOCKS := reg_passthrough fft256 cordic stf_corr nco_rot ldpc_dec rx sync tx chan_emu loopback onchip
 RX_SRC := rx/rx_frame.v rx/rx_fe.v rx/rx_chest.v rx/rx_track.v rx/rx_demap.v fft256/fft256.v fft256/fft256_twiddle.v cordic/cordic.v ldpc_dec/ldpc_dec.v
 
 test-rtl: lint-rtl
@@ -38,6 +38,7 @@ lint-rtl:
 	cd rtl && verilator --lint-only -Wall --top-module rx_sync sync/rx_sync.v stf_corr/stf_corr.v nco_rot/nco_rot.v cordic/cordic.v fft256/fft256.v fft256/fft256_twiddle.v
 	cd rtl && verilator --lint-only -Wall --top-module tx_frame tx/tx_frame.v fft256/fft256.v fft256/fft256_twiddle.v
 	cd rtl && verilator --lint-only -Wall --top-module loopback_axi loopback/loopback_axi.v loopback/loopback.v chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v $(RX_SRC)
+	cd rtl && verilator --lint-only -Wall --top-module onchip_axi onchip/onchip_axi.v onchip/onchip.v tx/tx_frame.v sync/rx_sync.v stf_corr/stf_corr.v nco_rot/nco_rot.v chan_emu/chan_emu.v chan_emu/chan_emu_rtab.v $(RX_SRC)
 
 # The RTL's constant tables (committed), generated from the twin
 rtl-tables:
@@ -100,8 +101,11 @@ fpga-src:
 	rm -rf $(BUILD_DIR)/rtl $(BUILD_DIR)/fpga && mkdir -p $(BUILD_DIR) && cp -r rtl fpga $(BUILD_DIR)/ && rm -rf $(BUILD_DIR)/rtl/*/sim_build
 fpga-ooc: fpga-src
 	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log ooc.log -source fpga/ooc.tcl -tclargs rtl loopback out
+# FPGA_TOP=onchip_axi FPGA_OUT=out_onchip builds the M9 whole-radio design
+FPGA_TOP ?= loopback_axi
+FPGA_OUT ?= out
 fpga: fpga-src
-	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log build.log -source fpga/build.tcl -tclargs rtl out
+	cd $(BUILD_DIR) && cmd.exe /c "$$(wslpath -w $(VIVADO))" -mode batch -nojournal -log build_$(FPGA_TOP).log -source fpga/build.tcl -tclargs rtl $(FPGA_OUT) 100 $(FPGA_TOP)
 arm:
 	mkdir -p $(BUILD_DIR)/arm && cp fpga/arm/* $(BUILD_DIR)/arm/ && cd $(BUILD_DIR)/arm && \
 	  $(ARM_GCC) -mcpu=cortex-a9 -marm -O2 -Wall -Wextra -ffreestanding -nostdlib -T link.ld start.S main.c -o loopback.elf

@@ -631,18 +631,26 @@ class TwinSync:
         need = self.pre + c.pilot_symbol * self.slot + flen + 2 * N       # samples past the crossing
         out, base = [], 0
         while base + P + W + 1 <= r.shape[0]:
-            seg = r[base:]
-            cr, ci = self._mul_conj(seg[P:], seg[:-P])
-            en = seg[:, 0] ** 2 + seg[:, 1] ** 2
-            e = en[P:] + en[:-P]
-            cs = [np.concatenate([[0], np.cumsum(v)]) for v in (cr, ci, e)]
-            pr, pi, es = (s[W:] - s[:-W] for s in cs)
-            ms = c.metric_shift
-            psr, psi, ess = pr >> ms, pi >> ms, es >> ms
-            over = (psr * psr + psi * psi) * 1024 > c.threshold_q8 * ess * ess
-            if not over.any():
+            # the first crossing from the base, in a window that grows until it has one
+            span, d0 = 4 * (self.pre + flen), None
+            while d0 is None:
+                seg = r[base:base + span]
+                cr, ci = self._mul_conj(seg[P:], seg[:-P])
+                en = seg[:, 0] ** 2 + seg[:, 1] ** 2
+                e = en[P:] + en[:-P]
+                cs = [np.concatenate([[0], np.cumsum(v)]) for v in (cr, ci, e)]
+                pr, pi, es = (s[W:] - s[:-W] for s in cs)
+                ms = c.metric_shift
+                psr, psi, ess = pr >> ms, pi >> ms, es >> ms
+                over = (psr * psr + psi * psi) * 1024 > c.threshold_q8 * ess * ess
+                if over.any():
+                    d0 = int(over.argmax())
+                elif base + span >= r.shape[0]:
+                    break
+                else:
+                    span *= 2
+            if d0 is None:
                 break
-            d0 = int(over.argmax())
             if base + d0 + need > r.shape[0]:
                 break                                   # the stream ends inside this frame
             o = self.run_one(r[base:base + d0 + need])
