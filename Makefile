@@ -2,7 +2,7 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017 e018 fpga-src fpga-ooc fpga arm board
+.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017 e018 fpga-src fpga-ooc fpga arm board viewer
 
 check: test-harness test-modem test-rtl
 
@@ -105,6 +105,12 @@ arm:
 	  $(ARM_GCC) -mcpu=cortex-a9 -marm -O2 -Wall -Wextra -ffreestanding -nostdlib -T link.ld start.S main.c -o loopback.elf
 board: arm
 	BUILD_DIR=$(BUILD_DIR) $(PY) -I tools/board.py all
+
+# The simulator viewer: a local web page drawing one frame's every stage
+# (tools/viewer.py); open http://localhost:$(VIEWER_PORT), from Windows too.
+VIEWER_PORT ?= 8050
+viewer: modem
+	$(PY) -I tools/viewer.py --port $(VIEWER_PORT)
 
 # Golden vectors for the RTL (committed); regenerate only for an intended
 # change to a fixed-point block.

@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radio Simulator Viewer</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --good: #0ca30c; --bad: #d03b3b; --warn: #fab219;
+  --heat0: #fcfcfb; --heat1: #9ec5f4; --heat2: #2a78d6; --heat3: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --heat0: #1a1a19; --heat1: #184f95; --heat2: #3987e5; --heat3: #cde2fb;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --heat0: #1a1a19; --heat1: #184f95; --heat2: #3987e5; --heat3: #cde2fb;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: baseline; gap: 16px; padding: 14px 20px 6px; flex-wrap: wrap; }
+header h1 { font-size: 18px; margin: 0; }
+header .sub { color: var(--ink2); }
+header button { margin-left: auto; }
+.layout { display: grid; grid-template-columns: 290px 1fr; gap: 16px; padding: 8px 20px 24px; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; padding: 8px 16px 24px; } }
+aside { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 14px; align-self: start; position: sticky; top: 8px; }
+@media (max-width: 860px) { aside { position: static; } }
+aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+aside h2:first-child { margin-top: 0; }
+label.row { display: block; margin: 8px 0; color: var(--ink2); }
+label.row span.v { float: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+label.row small { display: block; color: var(--muted); }
+input[type=range], select { width: 100%; }
+select, button { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); }
+button { cursor: pointer; }
+button.primary { background: var(--s1); color: #fff; border-color: var(--s1); }
+.check { display: flex; gap: 8px; align-items: center; margin: 6px 0; color: var(--ink2); }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.status { margin-top: 10px; color: var(--muted); min-height: 1.4em; }
+main { min-width: 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.tile { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 10px 12px; }
+.tile .k { color: var(--muted); font-size: 12px; }
+.tile .val { font-size: 20px; margin-top: 2px; }
+.tile .d { color: var(--ink2); font-size: 12px; }
+.ok::before { content: "\2714  "; color: var(--good); }
+.no::before { content: "\2716  "; color: var(--bad); }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1200px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 12px 14px; position: relative; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card p { margin: 2px 0 8px; color: var(--ink2); font-size: 13px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink2); margin-bottom: 4px; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.legend i.ramp { width: 120px; height: 10px; margin: 0 6px; background: linear-gradient(90deg, var(--heat0), var(--heat1), var(--heat2), var(--heat3)); border: 1px solid var(--ring); }
+.legend i.dot { width: 8px; height: 8px; border-radius: 50%; }
+canvas { width: 100%; display: block; }
+.c-line { height: 230px; } .c-tall { height: 300px; } .c-sq { height: 300px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
+.pair .t { font-size: 12px; color: var(--muted); text-align: center; }
+.tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--ring);
+       border-radius: 6px; padding: 5px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.18); display: none; z-index: 10;
+       font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cws { display: flex; flex-wrap: wrap; gap: 4px; }
+.cws span { font-size: 12px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--ring); }
+.busy { opacity: .55; transition: opacity .2s; }
+details { color: var(--ink2); font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Radio Simulator Viewer</h1>
+  <span class="sub">One radio frame through the simulated link: transmitter, air, receiver</span>
+  <button id="theme" title="Switch light / dark">Light / dark</button>
+</header>
+<div class="layout">
+<aside>
+  <h2>Transmitter</h2>
+  <label class="row">Speed setting <small>modulation and error-correction rate</small><select id="mcs"></select></label>
+  <label class="row">Pilot symbols per frame <small>known reference symbols; 3 copes with faster fading</small>
+    <select id="pilots"><option value="2">2 (normal)</option><option value="3">3 (fast motion)</option></select></label>
+  <h2>Air</h2>
+  <label class="row">Signal to noise <span class="v" id="esno_db_v"></span><small>energy per symbol over noise, dB</small>
+    <input type="range" id="esno_db" min="-5" max="40" step="0.5"></label>
+  <label class="row">Channel <small>how the signal travels</small>
+    <select id="channel">
+      <option value="awgn">Clean line, noise only</option>
+      <option value="tdl-d">Line of sight plus echoes</option>
+      <option value="tdl-c">Echoes only, no line of sight</option>
+    </select></label>
+  <label class="row">Echo spread <span class="v" id="delay_spread_ns_v"></span><small>how long echoes keep arriving, ns</small>
+    <input type="range" id="delay_spread_ns" min="10" max="1000" step="10"></label>
+  <label class="row">Motion (Doppler) <span class="v" id="doppler_hz_v"></span><small>how fast the channel changes, Hz; 600 Hz is 130 km/h at 5.8 GHz</small>
+    <input type="range" id="doppler_hz" min="0" max="2500" step="50"></label>
+  <label class="row">Wi-Fi interference strength <span class="v" id="sir_db_v"></span><small>our signal over the Wi-Fi burst, dB</small>
+    <input type="range" id="sir_db" min="-5" max="30" step="1"></label>
+  <label class="check"><input type="checkbox" id="wifi"> Wi-Fi burst on top of our band</label>
+  <h2>Receiver radio</h2>
+  <label class="row">Frequency mismatch <span class="v" id="cfo_v"></span><small>difference between the two radios' oscillators, kHz</small>
+    <input type="range" id="cfo_khz" min="-150" max="150" step="1"></label>
+  <label class="check"><input type="checkbox" id="phase_noise"> Oscillator jitter (phase noise)</label>
+  <label class="check"><input type="checkbox" id="sco"> Sample clock mismatch</label>
+  <h2>Receiver</h2>
+  <label class="row">Arithmetic <select id="receiver">
+    <option value="float">Floating point (exact maths)</option>
+    <option value="fixed">Fixed point (as the chip does it)</option></select></label>
+  <label class="row">Frame finding <select id="sync">
+    <option value="sync">Real: the receiver finds the frame itself</option>
+    <option value="genie">Ideal: told where the frame is</option></select></label>
+  <label class="row">Frames per run <small>frame 0 is drawn; error counts cover all of them</small>
+    <select id="frames"><option>1</option><option>10</option><option>100</option><option>500</option></select></label>
+  <div class="buttons">
+    <button class="primary" id="new">New frame</button>
+    <button id="play">Play</button>
+  </div>
+  <div class="status" id="status"></div>
+</aside>
+<main id="main">
+  <div class="tiles" id="tiles"></div>
+  <div class="cards">
+    <section class="card wide">
+      <h3>Spectrum</h3>
+      <p>Power at each frequency of our 10 MHz channel, averaged over the frame. The receiver's curve is normalised to the same height; its floor is the noise.</p>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Sent</span><span><i style="background:var(--s2)"></i>Received</span><span><i style="background:var(--s3)"></i>After the frame (noise and interference only)</span></div>
+      <canvas id="spectrum" class="c-line"></canvas>
+    </section>
+    <section class="card wide">
+      <h3>Waterfall</h3>
+      <p>Frequency (up) against time (right) of everything the receiver heard: silence, the preamble, then the frame.</p>
+      <div class="legend">weak <i class="ramp"></i> strong</div>
+      <canvas id="waterfall" class="c-tall"></canvas>
+    </section>
+    <section class="card wide">
+      <h3>Waveform</h3>
+      <p>Signal strength over time, each normalised to its own average. Marks: where the frame truly starts, and where the receiver thinks it starts.</p>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Sent</span><span><i style="background:var(--s2)"></i>Received</span></div>
+      <canvas id="waveform" class="c-line"></canvas>
+    </section>
+    <section class="card">
+      <h3>Finding the frame</h3>
+      <p>The preamble repeats itself; the receiver measures how similar the signal is to itself 32 samples later. A frame is detected where this crosses the threshold.</p>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Self-similarity</span><span><i style="background:var(--muted)"></i>Threshold</span></div>
+      <canvas id="metric" class="c-line"></canvas>
+    </section>
+    <section class="card">
+      <h3>Echoes the receiver found</h3>
+      <p>Channel impulse response: the direct signal and its echoes, by arrival delay in samples (100 ns each) after the frame start the receiver chose.</p>
+      <canvas id="cir" class="c-line"></canvas>
+    </section>
+    <section class="card wide">
+      <h3>Constellation</h3>
+      <p>Every data point of frame 0 on the I/Q plane. Left: as received (rotated and scaled by the channel). Right: after the receiver undoes the channel. Red points land on the wrong grid point before error correction.</p>
+      <div class="pair">
+        <div><div class="t">Before correction</div><canvas id="con_pre" class="c-sq"></canvas></div>
+        <div><div class="t">After correction</div><canvas id="con_eq" class="c-sq"></canvas></div>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Channel per subcarrier</h3>
+      <p>How strongly each subcarrier gets through, on the middle symbol: the receiver's estimate against the simulator's true channel.</p>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Receiver's estimate</span><span><i style="background:var(--s3)"></i>True channel</span></div>
+      <canvas id="chan" class="c-line"></canvas>
+    </section>
+    <section class="card">
+      <h3>Phase drift correction</h3>
+      <p>The phase the tracker removes from each OFDM symbol, from leftover frequency mismatch. Pilot symbols are marked.</p>
+      <canvas id="phase" class="c-line"></canvas>
+    </section>
+    <section class="card wide">
+      <h3>Error per data point</h3>
+      <p>The whole frame: OFDM symbols across, subcarriers up. Colour is how far each point lands from where it was sent. Pilot cells are blank.</p>
+      <div class="legend">on target <i class="ramp"></i> far off</div>
+      <canvas id="grid" class="c-tall"></canvas>
+    </section>
+    <section class="card">
+      <h3>Bit confidence</h3>
+      <p>How sure the receiver is about each coded bit before error correction. Wrong bits should be the unsure ones on the left; the decoder fixes those.</p>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Right bits</span><span><i style="background:var(--s2)"></i>Wrong bits</span></div>
+      <canvas id="llr" class="c-line"></canvas>
+    </section>
+    <section class="card">
+      <h3>Codewords of frame 0</h3>
+      <p>The frame carries one or more error-correction blocks; each must decode for the frame to be good.</p>
+      <div class="cws" id="cws"></div>
+      <details><summary>Words used here</summary>
+        <p><b>OFDM</b>: the signal is many narrow subcarriers sent side by side, like Wi-Fi. <b>Symbol</b>: one time slot of all subcarriers together (28.8 µs).
+        <b>Pilots</b>: points whose value the receiver knows, for measuring the channel. <b>Constellation</b>: the grid of allowed points; each carries 2, 4 or 6 bits.
+        <b>Error correction (LDPC)</b>: extra bits that let the receiver repair wrong bits.</p>
+      </details>
+    </section>
+  </div>
+</main>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let data = null, seed = 1, playing = false, busy = false, pending = false;
+
+// ---- theme ----
+$("theme").onclick = () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  document.documentElement.dataset.theme = cur === "dark" ? "light" : "dark";
+  try { localStorage.setItem("viewer-theme", document.documentElement.dataset.theme); } catch (e) {}
+  if (data) drawAll();
+};
+try { const t = localStorage.getItem("viewer-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+// ---- canvas helpers ----
+function setup(cv) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  return { g, w, h };
+}
+function ticks(lo, hi, n) {
+  const span = hi - lo || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => span / s <= n) || 10 * mag;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+const fmt = v => Math.abs(v) >= 1000 ? (v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1) + "k" : (+v.toFixed(2)).toString();
+
+// A chart: frame, axes and scales. cfg: {xr, yr, xlabel, ylabel, pad}
+function frame(cv, cfg) {
+  const { g, w, h } = setup(cv);
+  const P = Object.assign({ l: 46, r: 12, t: 8, b: 34 }, cfg.pad || {});
+  const [x0, x1] = cfg.xr, [y0, y1] = cfg.yr;
+  const X = v => P.l + (v - x0) / (x1 - x0) * (w - P.l - P.r);
+  const Y = v => h - P.b - (v - y0) / (y1 - y0) * (h - P.t - P.b);
+  g.font = "11px system-ui, sans-serif"; g.lineWidth = 1;
+  g.fillStyle = css("--muted"); g.strokeStyle = css("--grid");
+  g.textAlign = "right"; g.textBaseline = "middle";
+  for (const v of ticks(y0, y1, Math.max(2, Math.floor((h - P.t - P.b) / 40)))) {
+    g.beginPath(); g.moveTo(P.l, Y(v) + .5); g.lineTo(w - P.r, Y(v) + .5); g.stroke();
+    g.fillText(fmt(v), P.l - 6, Y(v));
+  }
+  g.textAlign = "center"; g.textBaseline = "top";
+  for (const v of ticks(x0, x1, Math.max(2, Math.floor((w - P.l - P.r) / 70)))) g.fillText(fmt(v), X(v), h - P.b + 5);
+  g.strokeStyle = css("--axis"); g.beginPath(); g.moveTo(P.l, h - P.b + .5); g.lineTo(w - P.r, h - P.b + .5); g.stroke();
+  if (cfg.xlabel) { g.fillText(cfg.xlabel, (P.l + w - P.r) / 2, h - 14); }
+  if (cfg.ylabel) { g.save(); g.translate(11, (P.t + h - P.b) / 2); g.rotate(-Math.PI / 2); g.textBaseline = "middle"; g.fillText(cfg.ylabel, 0, 0); g.restore(); }
+  g.save(); g.beginPath(); g.rect(P.l, P.t, w - P.l - P.r, h - P.t - P.b); g.clip();
+  return { g, w, h, X, Y, P, done: () => g.restore() };
+}
+function polyline(f, xs, ys, color, width = 2, dash) {
+  const g = f.g; g.strokeStyle = color; g.lineWidth = width; g.setLineDash(dash || []); g.lineJoin = "round";
+  g.beginPath(); let on = false;
+  for (let i = 0; i < ys.length; i++) {
+    if (ys[i] === null || !isFinite(ys[i])) { on = false; continue; }
+    const px = f.X(xs[i]), py = f.Y(ys[i]);
+    on ? g.lineTo(px, py) : g.moveTo(px, py); on = true;
+  }
+  g.stroke(); g.setLineDash([]);
+}
+function vmark(f, x, color, text, row = 0) {
+  const g = f.g; g.strokeStyle = color; g.lineWidth = 1.5; g.setLineDash([4, 3]);
+  g.beginPath(); g.moveTo(f.X(x), f.P.t); g.lineTo(f.X(x), f.h - f.P.b); g.stroke(); g.setLineDash([]);
+  if (text) { g.fillStyle = css("--ink2"); g.textAlign = "left"; g.textBaseline = "top"; g.font = "11px system-ui, sans-serif";
+    g.fillText(text, f.X(x) + 4, f.P.t + 2 + 13 * row); }
+}
+const range = (a, pad = 0.05) => {
+  let lo = Infinity, hi = -Infinity;
+  for (const arr of a) for (const v of arr) if (v !== null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (!isFinite(lo)) return [0, 1];
+  const s = (hi - lo) || 1; return [lo - s * pad, hi + s * pad];
+};
+
+// ---- hover: crosshair + tooltip on line charts, cell value on heatmaps ----
+const hovers = new Map();
+function hover(cv, fn) { hovers.set(cv, fn); }
+document.addEventListener("mousemove", ev => {
+  const tip = $("tip"); const fn = hovers.get(ev.target);
+  if (!fn || !data) { tip.style.display = "none"; return; }
+  const r = ev.target.getBoundingClientRect(); const text = fn(ev.clientX - r.left, ev.clientY - r.top);
+  if (!text) { tip.style.display = "none"; return; }
+  tip.innerHTML = text; tip.style.display = "block";
+  const tw = tip.offsetWidth; let x = ev.clientX + 14; if (x + tw > innerWidth - 8) x = ev.clientX - tw - 14;
+  tip.style.left = x + "px"; tip.style.top = (ev.clientY + 14) + "px";
+});
+function lineHover(cv, f, xs, series, xname, unit) {
+  // series: [{name, y}]; snaps to the nearest x and redraws the crosshair on an overlay
+  hover(cv, (mx) => {
+    const x = f.X.inv(mx); if (x === null) return null;
+    let i = 0, best = Infinity; for (let k = 0; k < xs.length; k++) { const d = Math.abs(xs[k] - x); if (d < best) { best = d; i = k; } }
+    let s = `<b>${xname} ${fmt(xs[i])}</b>`;
+    for (const se of series) if (se.y[i] !== null && se.y[i] !== undefined) s += `<br>${se.name}: ${(+se.y[i]).toFixed(2)} ${unit}`;
+    return s;
+  });
+}
+function invertible(f, cfg) {
+  f.X.inv = px => { const v = cfg.xr[0] + (px - f.P.l) / (f.w - f.P.l - f.P.r) * (cfg.xr[1] - cfg.xr[0]);
+    return (v < cfg.xr[0] || v > cfg.xr[1]) ? null : v; };
+  return f;
+}
+
+// ---- colour ramp for heatmaps (sequential blue) ----
+function hex(c) { c = c.replace("#", ""); return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16)); }
+function ramp(t) {
+  const stops = ["--heat0", "--heat1", "--heat2", "--heat3"].map(n => hex(css(n)));
+  t = Math.min(1, Math.max(0, t)) * 3; const i = Math.min(2, Math.floor(t)), u = t - i;
+  return stops[i].map((v, k) => Math.round(v + (stops[i + 1][k] - v) * u));
+}
+
+// ---- the panels ----
+function drawSpectrum() {
+  const s = data.spectrum, cv = $("spectrum");
+  const ser = [s.tx_db, s.rx_db].concat(s.noise_db ? [s.noise_db] : []);
+  const yr = range(ser); yr[0] = Math.max(yr[0], yr[1] - 70);
+  const cfg = { xr: [s.f_mhz[0], s.f_mhz[s.f_mhz.length - 1]], yr, xlabel: "frequency from the carrier, MHz", ylabel: "dB" };
+  const f = invertible(frame(cv, cfg), cfg);
+  if (s.noise_db) polyline(f, s.f_mhz, s.noise_db, css("--s3"), 1.5);
+  polyline(f, s.f_mhz, s.rx_db, css("--s2"), 2);
+  polyline(f, s.f_mhz, s.tx_db, css("--s1"), 2);
+  f.done();
+  lineHover(cv, f, s.f_mhz, [{ name: "Sent", y: s.tx_db }, { name: "Received", y: s.rx_db }].concat(s.noise_db ? [{ name: "Noise", y: s.noise_db }] : []), "MHz", "dB");
+}
+
+function drawWaterfall() {
+  const wf = data.waterfall, info = data.info, cv = $("waterfall");
+  const cols = wf.db.length, rows = wf.db[0].length;
+  const cfg = { xr: [0, (cols * wf.hop + wf.n) / info.fs_mhz], yr: [-info.fs_mhz / 2, info.fs_mhz / 2], xlabel: "time, µs", ylabel: "MHz" };
+  const f = invertible(frame(cv, cfg), cfg);
+  const img = document.createElement("canvas"); img.width = cols; img.height = rows;
+  const ig = img.getContext("2d"), id = ig.createImageData(cols, rows);
+  // colour scale from the quietest 5 % (the noise) to the loudest 0.5 %
+  const all = wf.db.flat().sort((a, b) => a - b);
+  const lo = all[Math.floor(all.length * 0.05)], hi = Math.max(lo + 6, all[Math.floor(all.length * 0.995)]);
+  for (let x = 0; x < cols; x++) for (let y = 0; y < rows; y++) {
+    const c = ramp((wf.db[x][y] - lo) / (hi - lo)), o = ((rows - 1 - y) * cols + x) * 4;
+    id.data[o] = c[0]; id.data[o + 1] = c[1]; id.data[o + 2] = c[2]; id.data[o + 3] = 255;
+  }
+  ig.putImageData(id, 0, 0);
+  f.g.imageSmoothingEnabled = false;
+  const x0 = f.X(wf.n / 2 / info.fs_mhz), x1 = f.X((cols * wf.hop + wf.n / 2) / info.fs_mhz);
+  f.g.drawImage(img, x0, f.P.t, x1 - x0, f.h - f.P.t - f.P.b);
+  const us = n => n / info.fs_mhz;
+  vmark(f, us(info.lead), css("--muted"), "preamble");
+  vmark(f, us(info.lead + info.preamble), css("--ink2"), "frame", 1);
+  f.done();
+  hover(cv, (mx, my) => {
+    const t = f.X.inv(mx); if (t === null) return null;
+    const x = Math.round((t * info.fs_mhz - wf.n / 2) / wf.hop), fr = cfg.yr[1] - (my - f.P.t) / (f.h - f.P.t - f.P.b) * info.fs_mhz;
+    if (x < 0 || x >= cols || fr < cfg.yr[0] || fr > cfg.yr[1]) return null;
+    const y = Math.min(rows - 1, Math.max(0, Math.floor((fr + info.fs_mhz / 2) / info.fs_mhz * rows)));
+    return `<b>${t.toFixed(1)} µs, ${fr.toFixed(2)} MHz</b><br>${wf.db[x][y]} dB`;
+  });
+}
+
+function drawWaveform() {
+  const w = data.waveform, info = data.info, sy = data.sync, cv = $("waveform");
+  const n = w.rx.length, xs = Array.from({ length: n }, (_, i) => i / info.fs_mhz);
+  const cfg = { xr: [0, n / info.fs_mhz], yr: [0, Math.max(3, range([w.rx])[1])], xlabel: "time, µs", ylabel: "strength" };
+  const f = invertible(frame(cv, cfg), cfg);
+  polyline(f, xs, w.rx, css("--s2"), 1);
+  polyline(f, xs, w.tx, css("--s1"), 1);
+  vmark(f, info.true_start / info.fs_mhz, css("--ink2"), "true frame start");
+  if (sy.detected) vmark(f, sy.start / info.fs_mhz, css("--s2"), "found here", 1);
+  f.done();
+  lineHover(cv, f, xs, [{ name: "Sent", y: w.tx }, { name: "Received", y: w.rx }], "µs", "");
+}
+
+function drawMetric() {
+  const s = data.sync, info = data.info, cv = $("metric");
+  const xs = s.metric.map((_, i) => (i * s.metric_step + s.metric_offset) / info.fs_mhz);
+  const cfg = { xr: [0, info.buf_len / info.fs_mhz], yr: [0, 1.05], xlabel: "time, µs", ylabel: "similarity" };
+  const f = invertible(frame(cv, cfg), cfg);
+  f.g.strokeStyle = css("--muted"); f.g.setLineDash([5, 4]); f.g.lineWidth = 1.5;
+  f.g.beginPath(); f.g.moveTo(f.P.l, f.Y(s.threshold)); f.g.lineTo(f.w - f.P.r, f.Y(s.threshold)); f.g.stroke(); f.g.setLineDash([]);
+  polyline(f, xs, s.metric, css("--s1"), 2);
+  vmark(f, info.lead / info.fs_mhz, css("--muted"), "preamble sent");
+  f.done();
+  lineHover(cv, f, xs, [{ name: "Similarity", y: s.metric }], "µs", "");
+}
+
+function drawCir() {
+  const s = data.sync, cv = $("cir");
+  const cfg = { xr: [s.cir_lags[0] - 1, s.cir_lags[s.cir_lags.length - 1] + 1], yr: [-40, 3], xlabel: "delay, samples", ylabel: "dB below the strongest" };
+  const f = invertible(frame(cv, cfg), cfg);
+  const g = f.g, c = css("--s1");
+  s.cir_lags.forEach((l, i) => {
+    g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); g.moveTo(f.X(l), f.Y(-40)); g.lineTo(f.X(l), f.Y(s.cir_db[i])); g.stroke();
+    if (s.cir_db[i] > -20) { g.fillStyle = c; g.beginPath(); g.arc(f.X(l), f.Y(s.cir_db[i]), 3.5, 0, 7); g.fill(); }
+  });
+  vmark(f, 0, css("--ink2"), "frame start chosen");
+  f.done();
+  lineHover(cv, f, s.cir_lags, [{ name: "Power", y: s.cir_db }], "delay", "dB");
+}
+
+function drawConst(id, pts, wrong, levels, lim) {
+  const cv = $(id);
+  const { g, w, h } = setup(cv);
+  const size = Math.min(w, h), ox = (w - size) / 2 + 4, oy = 4, sz = size - 8;
+  const S = v => (v + lim) / (2 * lim) * sz;
+  g.strokeStyle = css("--grid"); g.lineWidth = 1;
+  g.strokeRect(ox + .5, oy + .5, sz, sz);
+  g.beginPath(); g.moveTo(ox + sz / 2, oy); g.lineTo(ox + sz / 2, oy + sz); g.moveTo(ox, oy + sz / 2); g.lineTo(ox + sz, oy + sz / 2); g.stroke();
+  const ok = css("--s1"), bad = css("--bad");
+  g.globalAlpha = pts.length > 3000 ? 0.45 : 0.7;
+  for (let pass = 0; pass < 2; pass++) {
+    g.fillStyle = pass ? bad : ok;
+    for (let i = 0; i < pts.length; i++) {
+      if (!!(wrong && wrong[i]) !== !!pass) continue;
+      const x = ox + S(pts[i][0]), y = oy + sz - S(pts[i][1]);
+      if (x < ox || x > ox + sz || y < oy || y > oy + sz) continue;
+      g.fillRect(x - 1.5, y - 1.5, 3, 3);
+    }
+  }
+  g.globalAlpha = 1;
+  if (levels) {
+    g.strokeStyle = css("--ink"); g.lineWidth = 1.5;
+    for (const a of levels) for (const b of levels) {
+      const x = ox + S(a), y = oy + sz - S(b);
+      g.beginPath(); g.moveTo(x - 4, y); g.lineTo(x + 4, y); g.moveTo(x, y - 4); g.lineTo(x, y + 4); g.stroke();
+    }
+  }
+}
+
+function drawChannel() {
+  const c = data.channel, cv = $("chan");
+  const offs = c.offsets;
+  const est = new Array(offs.length).fill(null); c.f.forEach((fi, i) => est[fi] = c.est_db[i]);
+  const yr = range([c.true_db, c.est_db]); yr[0] = Math.min(Math.max(yr[0], -35), -3); yr[1] = Math.max(yr[1], 3);
+  const cfg = { xr: [offs[0], offs[offs.length - 1]], yr, xlabel: `subcarrier (symbol ${c.symbol})`, ylabel: "dB" };
+  const f = invertible(frame(cv, cfg), cfg);
+  polyline(f, offs, c.true_db, css("--s3"), 2);
+  polyline(f, offs, est, css("--s1"), 2, [5, 3]);
+  f.done();
+  lineHover(cv, f, offs, [{ name: "Estimate", y: est }, { name: "True", y: c.true_db }], "subcarrier", "dB");
+}
+
+function drawPhase() {
+  const t = data.tracker, info = data.info, cv = $("phase");
+  const deg = t.phi.map(v => v * 180 / Math.PI), xs = deg.map((_, i) => i);
+  const m = Math.max(2, ...deg.map(Math.abs)) * 1.15;
+  const cfg = { xr: [-0.5, deg.length - 0.5], yr: [-m, m], xlabel: "OFDM symbol", ylabel: "degrees removed" };
+  const f = invertible(frame(cv, cfg), cfg);
+  for (const ps of info.pilot_symbols) vmark(f, ps, css("--muted"), "pilot");
+  polyline(f, xs, deg, css("--s1"), 2);
+  f.g.fillStyle = css("--s1"); xs.forEach(i => { f.g.beginPath(); f.g.arc(f.X(i), f.Y(deg[i]), 4, 0, 7); f.g.fill(); });
+  if (!t.on) { f.g.fillStyle = css("--ink2"); f.g.textAlign = "center"; f.g.fillText("tracker off with 3 pilot symbols (the time filter follows the drift)", f.w / 2, f.P.t + 30); }
+  f.done();
+  lineHover(cv, f, xs, [{ name: "Phase", y: deg }], "symbol", "°");
+}
+
+function drawGrid() {
+  const gd = data.grid, cv = $("grid");
+  const cfg = { xr: [-0.5, gd.S - 0.5], yr: [-0.5, gd.F - 0.5], xlabel: "OFDM symbol", ylabel: "subcarrier" };
+  const f = invertible(frame(cv, cfg), cfg);
+  const img = document.createElement("canvas"); img.width = gd.S; img.height = gd.F;
+  const ig = img.getContext("2d"), id = ig.createImageData(gd.S, gd.F);
+  for (let s = 0; s < gd.S; s++) for (let k = 0; k < gd.F; k++) {
+    const v = gd.err_db[s * gd.F + k], o = ((gd.F - 1 - k) * gd.S + s) * 4;
+    if (v === null) { id.data[o + 3] = 0; continue; }
+    const c = ramp((v + 40) / 45); id.data[o] = c[0]; id.data[o + 1] = c[1]; id.data[o + 2] = c[2]; id.data[o + 3] = 255;
+  }
+  ig.putImageData(id, 0, 0); f.g.imageSmoothingEnabled = false;
+  f.g.drawImage(img, f.X(-0.5), f.Y(gd.F - 0.5), f.X(gd.S - 0.5) - f.X(-0.5), f.Y(-0.5) - f.Y(gd.F - 0.5));
+  f.done();
+  hover(cv, (mx, my) => {
+    const s = Math.round(f.X.inv(mx)), k = Math.round(cfg.yr[1] - (my - f.P.t) / (f.h - f.P.t - f.P.b) * gd.F);
+    if (isNaN(s) || s < 0 || s >= gd.S || k < 0 || k >= gd.F) return null;
+    const v = gd.err_db[s * gd.F + k];
+    return `<b>symbol ${s}, subcarrier ${k}</b><br>` + (v === null ? "pilot" : `error ${v} dB`);
+  });
+}
+
+function drawLlr() {
+  const l = data.llr, cv = $("llr"), e = l.edges, step = e[1] - e[0];
+  const xs = l.hist_ok.map((_, i) => e[i] + step / 2);
+  const tot = l.hist_ok.reduce((a, b) => a + b, 0) + l.hist_bad.reduce((a, b) => a + b, 0) || 1;
+  const ok = l.hist_ok.map(v => 100 * v / tot), bad = l.hist_bad.map(v => 100 * v / tot);
+  const cfg = { xr: [0, e[e.length - 1]], yr: [0, Math.max(1, ...ok, ...bad) * 1.1], xlabel: "confidence (0 = a coin toss, right = sure)", ylabel: "% of bits" };
+  const f = invertible(frame(cv, cfg), cfg);
+  const bw = f.X(step) - f.X(0) - 2;
+  const g = f.g;
+  const bar = (x, v, c, off) => { if (v <= 0) return; g.fillStyle = c; const px = f.X(x - step / 2) + 1 + off, py = f.Y(v);
+    g.beginPath(); g.roundRect ? g.roundRect(px, py, bw / 2, f.Y(0) - py, [3, 3, 0, 0]) : g.rect(px, py, bw / 2, f.Y(0) - py); g.fill(); };
+  xs.forEach((x, i) => { bar(x, ok[i], css("--s1"), 0); bar(x, bad[i], css("--s2"), bw / 2); });
+  f.done();
+  lineHover(cv, f, xs, [{ name: "Right bits %", y: ok }, { name: "Wrong bits %", y: bad }], "confidence", "");
+}
+
+function tiles() {
+  const e = data.errors, s = data.sync, c = data.constellation, info = data.info, p = data.params;
+  const good = e.frame_errors === 0;
+  const t = [
+    ["Frames received correctly", `<span class="${good ? "ok" : "no"}">${e.frames - e.frame_errors} of ${e.frames}</span>`,
+      e.missed ? `${e.missed} not found at all` : "every frame was found"],
+    ["Wrong bits before correction", (100 * e.raw_bit_errors / e.coded_bits).toFixed(2) + " %", `${e.raw_bit_errors.toLocaleString()} of ${e.coded_bits.toLocaleString()}`],
+    ["Wrong bits after correction", (100 * e.bit_errors / e.info_bits).toFixed(e.bit_errors ? 2 : 0) + " %", `decoder used ${e.mean_iterations.toFixed(1)} of ${e.max_iterations} rounds on average`],
+    ["Measured signal to noise", c.snr_db.toFixed(1) + " dB", `set in the air: ${p.esno_db} dB (frame 0, after the receiver)`],
+    ["Frame found", s.detected ? `<span class="ok">${s.start_error === 0 ? "exact" : (s.start_error > 0 ? "+" : "") + s.start_error + " samples"}</span>` : `<span class="no">missed</span>`,
+      s.detected ? `frequency error ${s.cfo_error_hz.toFixed(0)} Hz` : "the preamble was too weak"],
+    ["Speed setting", `${info.rate_mbps.toFixed(1)} Mbit/s`, `${p.mcs}, ${info.codewords} codeword(s) of ${info.k} bits per frame`],
+  ];
+  $("tiles").innerHTML = t.map(([k, v, d]) => `<div class="tile"><div class="k">${k}</div><div class="val">${v}</div><div class="d">${d}</div></div>`).join("");
+  $("cws").innerHTML = e.frame0_codewords.map((x, i) => `<span class="${x ? "no" : "ok"}">block ${i + 1}</span>`).join("");
+}
+
+function drawAll() {
+  if (!data) return;
+  hovers.clear();
+  tiles();
+  drawSpectrum(); drawWaterfall(); drawWaveform(); drawMetric(); drawCir();
+  const c = data.constellation, lim = Math.max(...c.levels) * 1.6;
+  drawConst("con_pre", c.pre, c.wrong, null, 2.0);
+  drawConst("con_eq", c.eq, c.wrong, c.levels, lim);
+  drawChannel(); drawPhase(); drawGrid(); drawLlr();
+}
+
+// ---- controls ----
+const sliders = { esno_db: v => v + " dB", delay_spread_ns: v => v + " ns", doppler_hz: v => v + " Hz", sir_db: v => v + " dB" };
+function params() {
+  return {
+    mcs: $("mcs").value, pilots: +$("pilots").value, esno_db: +$("esno_db").value, channel: $("channel").value,
+    delay_spread_ns: +$("delay_spread_ns").value, doppler_hz: +$("doppler_hz").value, cfo_hz: 1000 * $("cfo_khz").value,
+    phase_noise: $("phase_noise").checked, sco: $("sco").checked, wifi: $("wifi").checked, sir_db: +$("sir_db").value,
+    receiver: $("receiver").value, sync: $("sync").value, frames: +$("frames").value, seed,
+  };
+}
+function labels() {
+  for (const [k, f] of Object.entries(sliders)) $(k + "_v").textContent = f($(k).value);
+  $("cfo_v").textContent = $("cfo_khz").value + " kHz";
+  const tdl = $("channel").value !== "awgn";
+  $("delay_spread_ns").disabled = $("doppler_hz").disabled = !tdl;
+  $("sir_db").disabled = !$("wifi").checked;
+}
+async function run() {
+  if (busy) { pending = true; return; }
+  busy = true; $("main").classList.add("busy"); $("status").textContent = "simulating…";
+  try {
+    const r = await fetch("/api/capture", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params()) });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    data = j; drawAll();
+    $("status").textContent = `frame seed ${seed}, ${j.elapsed_s.toFixed(2)} s` + (j.elapsed_s > 2 ? " (first run of a setting builds the link)" : "");
+  } catch (e) { $("status").textContent = "error: " + e.message; }
+  busy = false; $("main").classList.remove("busy");
+  if (pending) { pending = false; run(); }
+  else if (playing) setTimeout(() => { if (playing) { seed++; run(); } }, 250);
+}
+let timer = null;
+function changed() { labels(); clearTimeout(timer); timer = setTimeout(run, 200); }
+$("new").onclick = () => { seed++; run(); };
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Play"; if (playing) { seed++; run(); } };
+addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(drawAll, 150); });
+
+(async function init() {
+  const o = await (await fetch("/api/options")).json(), d = Object.assign({}, o.defaults);
+  // starting values from the address, e.g. ?channel=tdl-d&doppler_hz=600&theme=dark
+  for (const [k, v] of new URLSearchParams(location.search)) {
+    if (k === "theme") document.documentElement.dataset.theme = v;
+    else if (k in d) d[k] = typeof d[k] === "boolean" ? v === "1" || v === "true" : typeof d[k] === "number" ? +v : v;
+  }
+  $("mcs").innerHTML = o.mcs.map(m => `<option>${m}</option>`).join(""); $("mcs").value = d.mcs;
+  for (const k of ["esno_db", "delay_spread_ns", "doppler_hz", "sir_db", "pilots", "channel", "receiver", "sync", "frames"]) $(k).value = d[k];
+  $("cfo_khz").value = d.cfo_hz / 1000;
+  for (const k of ["phase_noise", "sco", "wifi"]) $(k).checked = d[k];
+  seed = d.seed;
+  document.querySelectorAll("aside input, aside select").forEach(el => el.addEventListener("input", changed));
+  labels(); run();
+})();
+</script>
+</body>
+</html>

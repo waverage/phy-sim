@@ -248,3 +248,21 @@ the loopback alone), `make arm` (the bare-metal error counter in
 board over JTAG and requires its counters to equal e018's, writing
 `results/e019_board_loopback.json`). Vivado 2026.1 is the Windows
 install; the build folder is `BUILD_DIR` (default `/mnt/e/phy-sim-build`).
+
+## The simulator viewer
+
+`make viewer` starts a local web page at http://localhost:8050 (WSL
+forwards it, so a Windows browser works too). Each run sends one frame
+through the M5 chain (`harness/viewer.capture`, built on `SyncLink`):
+the fixed-point transmitter behind its preamble, the TDL channel, the
+oscillator (carrier offset set exactly, phase noise, sampling clock),
+an optional Wi-Fi burst, noise, AGC and ADC, the synchroniser (real or
+genie) and the float or fixed-point receiver with its probes. The page
+draws the spectrum, a waterfall, the waveform with the true and the found
+frame start, the synchroniser's metric and impulse response, the
+constellation before and after equalisation, the channel estimate against
+the true channel, the tracker's phase per symbol, the error of every
+resource element and the LLR histogram, and counts frame, codeword and
+bit errors before and after decoding over 1 to 500 frames. Settings can
+be given in the address (`/?channel=tdl-d&doppler_hz=600&theme=dark`).
+A new setting builds its link in about 3 s; later frames take 20 ms.

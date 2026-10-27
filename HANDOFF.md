@@ -26,6 +26,7 @@ and `make check` gates everything.
 | M6 link layer and video model | done 2026-10-26 | `harness/fading.py`, `harness/phytrace.py`, `harness/linklayer.py`, `results/e016_phy_traces.json`, `results/e016_traces/`, `results/e017_video_link.json`, `tests/test_m6_link.py`, `tests/test_e016_reference.py`, `tests/test_e017_reference.py` |
 | M7 first RTL blocks | done 2026-10-26 | `rtl/fft256/`, `rtl/cordic/`, `rtl/stf_corr/`, `rtl/nco_rot/` (cocotb, Verilator and Icarus), `rtl/synth.sh`, `tools/gen_rtl.py`, `tests/test_m7_rtl.py` |
 | M8 receiver in RTL and the Arty Z7 loopback | done 2026-10-27 | `rtl/ldpc_dec/`, `rtl/rx/`, `rtl/chan_emu/`, `rtl/loopback/`, `fpga/`, `harness/rtlcfg.py`, `harness/chanemu.py`, `harness/loopback.py`, `results/e018_board_emulator.json`, `results/e019_board_loopback.json`, `tests/test_m8_board.py` |
+| Simulator viewer (between M8 and M9, asked for by the user) | done 2026-10-27 | `make viewer`, `harness/viewer.py`, `tools/viewer.py`, `tools/viewer.html`, `tests/test_viewer.py`; README "The simulator viewer" |
 | M9 over a cable | not started | |
 
 Reference curves from e001 (10 MHz numerology, 5G LDPC, 20 BP iterations,
