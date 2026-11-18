@@ -2,9 +2,9 @@ PY := .venv/bin/python
 PYTEST := .venv/bin/pytest
 export PATH := $(HOME)/.local/bin:$(PATH)
 
-.PHONY: check test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017 e018 fpga-src fpga-ooc fpga arm board viewer
+.PHONY: check check-vectors test-harness test-modem test-rtl lint-rtl rtl-tables modem vectors e001 e002 e003 e004 e005 e006 e007 e008 e009 e010 e011 e012 e013 e014 e015 e016 e017 e018 fpga-src fpga-ooc fpga arm board viewer
 
-check: test-harness test-modem test-rtl
+check: test-harness test-modem test-rtl check-vectors
 
 # the harness tests load the release build of the modem through ctypes
 test-harness: modem
@@ -123,3 +123,7 @@ viewer: modem
 # change to a fixed-point block.
 vectors: modem
 	$(PY) -I tools/make_vectors.py
+
+# The committed vectors are what the code writes today (every draw is seeded).
+check-vectors: modem
+	$(PY) -I tools/make_vectors.py --check

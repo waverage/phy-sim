@@ -241,6 +241,8 @@ module tx_frame (
             bank_full <= 2'b00;
             enc_frame <= 32'd0;
             info_frame <= 32'hffffffff;        // not a frame yet: frame 0 is a change
+            ecw <= 2'd0;                       // info_addr is read from the first clock
+            ea <= 10'd0;
             ld_v <= 1'b0;
             op_v <= 1'b0;
             cw_we <= 1'b0;
