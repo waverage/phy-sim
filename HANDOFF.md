@@ -474,9 +474,11 @@ Open L2 work, alongside:
 - **64-QAM 3/4 on TDL-C is nearly floored even for the genie:** 1 % FER at
   29 to 31 dB and 0.4 % at 39 dB. Its 1 % point is noise, so e015 uses
   16-QAM 3/4 there.
-- **Sionna's AWGN draw is not pinned by torch.manual_seed either:**
-  regenerating `vectors/sync_*.npz` changes them. They are self-consistent;
-  regenerate only for an intended change.
+- **Sionna's AWGN draw is not pinned by torch.manual_seed either:** Sionna
+  draws from its own generator. `tools/make_vectors.py` now seeds
+  `sionna.phy.config.seed` as well, so `make vectors` writes the same
+  arrays every run and `make check-vectors` (part of `make check`) fails
+  when the committed vectors are not what the code writes today.
 
 ## Gotchas found in M4
 

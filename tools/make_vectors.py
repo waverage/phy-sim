@@ -13,6 +13,9 @@ preamble in an ADC buffer at a random time and carrier offset, the
 synchroniser's outputs, the aligned frame and the decoded bits.
 tests/test_m4_vectors.py and tests/test_m5_sync.py replay all of them
 through the Zig modem and the twins. Run:  .venv/bin/python -I tools/make_vectors.py
+Every random source is seeded, so a run writes the same arrays every time;
+`--check` regenerates into a scratch directory and fails if any array differs
+from the committed vectors (make check-vectors).
 """
 import dataclasses
 import functools
@@ -22,6 +25,7 @@ import pathlib
 import sys
 
 import numpy as np
+import sionna
 import torch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -50,6 +54,27 @@ FRAMES = {
 FRAMES_PER_FILE = 2
 
 
+def seed_all(seed: int):
+    """Every random source a vector draws from: Sionna's own generator (its
+    bit source and AWGN do not follow torch.manual_seed), torch's (the
+    impairments) and NumPy's global one (the buffer's lead, the CFO), so
+    `make vectors` writes the same files on every run."""
+    sionna.phy.config.seed = seed
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+
+def describe(kw: dict) -> str:
+    """The link kwargs as text without memory addresses (a bound impairment's
+    repr has one), so the metadata is the same on every run."""
+    def text(v):
+        if isinstance(v, functools.partial):
+            args = ", ".join(f"{k}={a!r}" for k, a in sorted(v.keywords.items()))
+            return f"{v.func.__module__}.{v.func.__name__}({args})"
+        return repr(v)
+    return "{" + ", ".join(f"{k!r}: {text(v)}" for k, v in kw.items()) + "}"
+
+
 def twin_of(meta: dict, mask: np.ndarray) -> twin.TwinModem:
     from harness.waveform import Numerology
     num = Numerology(**{k: tuple(v) if isinstance(v, list) else v for k, v in meta["numerology"].items()})
@@ -65,7 +90,7 @@ def make_frame(name: str, seed: int = 1) -> dict:
     num, kw, design, mcs_name, esno = FRAMES[name]
     link = fm.FxOfdmLink(num, MCS[mcs_name], design=design, device="cpu", genie=False, **kw)
     p, fp = link.plan, link.fp
-    torch.manual_seed(seed)
+    seed_all(seed)
     no = 10 ** (-esno / 10)
     link.set_noise(no)
     b = link.ref.source([FRAMES_PER_FILE, p.num_codewords, p.k])
@@ -80,7 +105,7 @@ def make_frame(name: str, seed: int = 1) -> dict:
     meta = {"numerology": fields, "mcs": mcs_name, "bits_per_symbol": link.mcs.bits_per_symbol, "k": p.k, "n": p.n,
             "num_codewords": p.num_codewords, "fixed_point": fp.as_dict(), "design": design.as_dict(),
             "design_snr_db": design.design_snr_db(esno), "esno_db": esno, "l_min": link.ref.l_min,
-            "phase_track": link.ref.phase_track == "linear", "taps": design.taps, "channel": repr(kw)}
+            "phase_track": link.ref.phase_track == "linear", "taps": design.taps, "channel": describe(kw)}
     v = {"meta": np.array(json.dumps(meta)), "pilot_mask": mask, **{f"filt_{k}": a for k, a in link.fixed.filt.items()},
          "info": info, "coded": np.stack([zm.ldpc_encode(info[i], p.n) for i in range(FRAMES_PER_FILE)]),
          "tx": x, "rx": yq, "llr_scale": scale, "y": pr["y"].astype(np.int16), "phi": pr["phi"].astype(np.int32),
@@ -142,8 +167,7 @@ def make_sync_frame(name: str) -> dict:
     link = SyncLink(num, MCS[mcs_name], design=design, device="cpu", receivers={"fixed": {"fixed": True}},
                     syncs=("sync",), **kw)
     p, fp, sy = link.plan, link.fp, link.fxsync
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    seed_all(seed)
     no = 10 ** (-esno / 10)
     link.set_noise(no)
     info = link.ref.source([FRAMES_PER_FILE, p.num_codewords, p.k]).to(torch.uint8).cpu().numpy()
@@ -160,7 +184,7 @@ def make_sync_frame(name: str) -> dict:
     meta = {"numerology": fields, "mcs": mcs_name, "bits_per_symbol": link.mcs.bits_per_symbol, "k": p.k, "n": p.n,
             "num_codewords": p.num_codewords, "fixed_point": fp.as_dict(), "design": design.as_dict(),
             "design_snr_db": design.design_snr_db(esno), "esno_db": esno, "l_min": 0, "phase_track": True,
-            "taps": design.taps, "channel": repr(kw), "sync_config": cfg, "true_start": start.tolist(),
+            "taps": design.taps, "channel": describe(kw), "sync_config": cfg, "true_start": start.tolist(),
             "true_cfo_hz": (cfo * num.bandwidth_hz).tolist()}
     v = {"meta": np.array(json.dumps(meta)), "pilot_mask": mask, **{f"filt_{k}": a for k, a in rx.filt.items()},
          "info": info, "preamble": sy.preamble(), "rx": yq, **{f"sync_{f}": out[f] for f in SYNC_OUT_FIELDS},
@@ -188,16 +212,35 @@ def make_sync_frame(name: str) -> dict:
     return v
 
 
+def write_all(out: pathlib.Path) -> list[str]:
+    out.mkdir(exist_ok=True)
+    files = {"blocks.npz": make_blocks}
+    files.update({f"{n}.npz": functools.partial(make_frame, n) for n in FRAMES})
+    files.update({f"{n}.npz": functools.partial(make_sync_frame, n) for n in SYNC_FRAMES})
+    for f, make in files.items():
+        np.savez_compressed(out / f, **make())
+        print(f)
+    return list(files)
+
+
+def same_arrays(a: pathlib.Path, b: pathlib.Path) -> bool:
+    """Compare the arrays, not the bytes: the zip members carry a timestamp."""
+    with np.load(a) as x, np.load(b) as y:
+        return sorted(x.files) == sorted(y.files) and all(
+            x[k].dtype == y[k].dtype and np.array_equal(x[k], y[k]) for k in x.files)
+
+
 def main():
-    VECTORS.mkdir(exist_ok=True)
-    np.savez_compressed(VECTORS / "blocks.npz", **make_blocks())
-    print("blocks.npz")
-    for name in FRAMES:
-        np.savez_compressed(VECTORS / f"{name}.npz", **make_frame(name))
-        print(f"{name}.npz")
-    for name in SYNC_FRAMES:
-        np.savez_compressed(VECTORS / f"{name}.npz", **make_sync_frame(name))
-        print(f"{name}.npz")
+    if "--check" not in sys.argv[1:]:
+        write_all(VECTORS)
+        return
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        files = write_all(pathlib.Path(tmp))
+        bad = [f for f in files if not (VECTORS / f).exists() or not same_arrays(pathlib.Path(tmp) / f, VECTORS / f)]
+    for f in bad:
+        print(f"vectors/{f} differs from a fresh run of tools/make_vectors.py")
+    sys.exit(1 if bad else 0)
 
 
 if __name__ == "__main__":

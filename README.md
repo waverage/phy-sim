@@ -126,6 +126,9 @@ receivers on the same samples.
 frame file carries its configuration, taps, inputs and every intermediate
 result. `tests/test_m4_vectors.py` replays them through the Zig modem and
 the twin, so any change to a fixed-point block shows up as a vector diff.
+Every draw is seeded, so `make vectors` is reproducible, and
+`make check-vectors` (part of `make check`) regenerates them into a scratch
+directory and fails if any array differs from the committed ones.
 Regenerate the vectors only for an intended change. The fixed receiver
 decodes 9,000 to 24,000 frames/s on the 5900X.
 
